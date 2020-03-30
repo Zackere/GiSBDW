@@ -1,5 +1,6 @@
-#include <iostream>
 #include <cuda_runtime.h>
+
+#include <iostream>
 
 __global__ void asd() {
   printf("ASD\n");
@@ -10,5 +11,6 @@ __global__ void asd() {
 int main() {
   std::cout << "Hellow\n";
   asd<<<1, 2>>>();
+  cudaStreamSynchronize(0);
   return 0;
 }
