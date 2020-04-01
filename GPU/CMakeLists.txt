@@ -2,13 +2,11 @@
 
 project("TreeDepth" LANGUAGES CXX)
 
-file(GLOB source_files
-    ${CMAKE_SOURCE_DIR}/*.cu
-)
-add_executable(${PROJECT_NAME} ${source_files})
+file(GLOB source_files ${CMAKE_SOURCE_DIR}/src/**)
+add_executable(${PROJECT_NAME} main.cpp ${source_files})
 
 if(WIN32)
-    set(CUDA_TOOLKIT_ROOT_DIR "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.1/")
+    set(CUDA_TOOLKIT_ROOT_DIR "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.1")
     set(CMAKE_CUDA_COMPILER "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc.exe")
     set(CMAKE_CUDA_HOST_COMPILER cl.exe)
 else()
