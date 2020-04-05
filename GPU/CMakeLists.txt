@@ -21,3 +21,8 @@ set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 enable_language(CUDA)
 
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+
+file(GLOB hooks ${CMAKE_SOURCE_DIR}/../hooks/*)
+foreach(hook ${hooks})
+   configure_file(${hook} ${CMAKE_SOURCE_DIR}/../.git/hooks COPYONLY)
+endforeach()
