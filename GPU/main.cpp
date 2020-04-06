@@ -1,3 +1,5 @@
+// Copyright 2020 GISBDW. All rights reserved.
+
 #include <iostream>
 
 int main() {
