@@ -1,9 +1,24 @@
 ﻿cmake_minimum_required(VERSION 3.8)
 
-# Configure main project
-project("TreeDepth" LANGUAGES CXX)
-file(GLOB source_files ${CMAKE_SOURCE_DIR}/src/**)
-add_executable(${PROJECT_NAME} main.cpp ${source_files})
+project("TreeDepthGPU" LANGUAGES CXX)
+set(TEST_PROJECT_NAME "${PROJECT_NAME}Test")
+
+file(GLOB PROJECT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/** ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
+add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
+
+file(GLOB TEST_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/tests/**)
+add_executable(${TEST_PROJECT_NAME} ${TEST_SOURCES})
+target_link_libraries(${TEST_PROJECT_NAME} gtest_main)
+add_custom_command(TARGET ${TEST_PROJECT_NAME} POST_BUILD COMMAND ${TEST_PROJECT_NAME})
+
+find_program(CLANG_FORMAT_EXE NAMES "clang-format")
+if(NOT CLANG_FORMAT_EXE)
+  message(STATUS "clang-format not found. Consider isntalling it from https://llvm.org/builds/")
+else()
+  message(STATUS "clang-format found: ${CLANG_FORMAT_EXE}")
+  add_custom_target("clang-format-gpu" COMMAND ${CLANG_FORMAT_EXE} -i -style=Google ${PROJECT_SOURCES} ${TEST_SOURCES})
+  add_dependencies(${PROJECT_NAME} "clang-format-gpu")
+endif()
 
 if(DEFINED ENV{OVERRIDE_CUDA_DIR})
     set(CUDA_TOOLKIT_ROOT_DIR $ENV{OVERRIDE_CUDA_DIR})
@@ -28,53 +43,3 @@ set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 enable_language(CUDA)
 
 include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-
-# Configure test project
-file(GLOB test_sources ${CMAKE_SOURCE_DIR}/tests/**)
-add_executable("${PROJECT_NAME}Test" ${test_sources})
-
-# Download and unpack googletest at configure time
-configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-  RESULT_VARIABLE result
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
-if(result)
-  message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-  RESULT_VARIABLE result
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
-if(result)
-  message(FATAL_ERROR "Build step for googletest failed: ${result}")
-endif()
-
-# Prevent overriding the parent project's compiler/linker
-# settings on Windows
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-
-# Add googletest directly to our build. This defines
-# the gtest and gtest_main targets.
-add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
-                 ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
-                 EXCLUDE_FROM_ALL)
-
-# The gtest/gtest_main targets carry header search path
-# dependencies automatically when using CMake 2.8.11 or
-# later. Otherwise we have to add them here ourselves.
-if (CMAKE_VERSION VERSION_LESS 2.8.11)
-  include_directories("${gtest_SOURCE_DIR}/include")
-endif()
-
-target_link_libraries("${PROJECT_NAME}Test" gtest_main)
-
-set(unit_test "${PROJECT_NAME}Test")
-add_custom_command(
-     TARGET ${unit_test}
-     COMMENT "Run tests"
-     POST_BUILD
-     COMMAND ${unit_test}
-)
-file(GLOB hooks ${CMAKE_SOURCE_DIR}/../hooks/*)
-foreach(hook ${hooks})
-   configure_file(${hook} ${CMAKE_SOURCE_DIR}/../.git/hooks COPYONLY)
-endforeach()
