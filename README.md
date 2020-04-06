@@ -10,10 +10,10 @@ When writing code, few things should be taken into account:
 2. Try to install cpplint from [here](https://github.com/cpplint/cpplint). It will be incorporated later on into the project.
 3. C++ sources should be created in src folder and their names should be in [Snake case](https://en.wikipedia.org/wiki/Snake_case) format. C++ headers should have `.hpp` extension and have corresponding `.cpp` file. Cuda source files should have `.cu` extension. Classes composing a module should be contained in a separate subfolder, e.g. `src/graph`.
 4. Class/namespace/function names should be in [Pascal case]([https://pl.wikipedia.org/wiki/PascalCase](https://pl.wikipedia.org/wiki/PascalCase)).
-5. Inside `.cu` sources it is a good idea to start it off like this:
-`// Copyright 2020 GISBDW. All rights reserved.`
-`#include "awesome_header.hpp"`
-`// clang-format on `
-`the rest of the file...`
+5. Inside `.cu` sources it is a good idea to start it off like this:<br/>
+`// Copyright 2020 GISBDW. All rights reserved.`<br/>
+`#include "awesome_header.hpp"`<br/>
+`// clang-format on `<br/>
+`the rest of the file...`<br/>
 This way clang-format won't mess up include order.
 6. Named constants in `.cpp` files should be defined as a `constexpr` in a anonymous namespace named in [Pascal case]([https://pl.wikipedia.org/wiki/PascalCase](https://pl.wikipedia.org/wiki/PascalCase)) prefixed by `k` e.g. `constexpr  int  kMatrixSize = 4;`
