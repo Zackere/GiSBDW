@@ -1,6 +1,6 @@
 #include <iostream>
 
 int main() {
-  std::cout << "Hello GPU\n";
+  std::cout << "Hello CPU\n";
   return 0;
 }
