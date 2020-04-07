@@ -9,7 +9,7 @@ jobs:
     - run: pip install cpplint
     - run: cpplint --recursive --extensions=hpp,cpp,cu .
   build:
-    runs-on: ubuntu-latest
+    runs-on: nvidia/cuda
     steps:
     - uses: actions/checkout@v1
     - run: mkdir bin
