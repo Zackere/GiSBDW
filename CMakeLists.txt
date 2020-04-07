@@ -31,11 +31,13 @@ if (CMAKE_VERSION VERSION_LESS 2.8.11)
   include_directories("${gtest_SOURCE_DIR}/include")
 endif()
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/GPU")
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/CPU")
 
-# Install git hooks
-file(GLOB HOOKS ${CMAKE_CURRENT_SOURCE_DIR}/hooks/*)
-foreach(HOOK ${HOOKS})
-   configure_file(${HOOK} ${CMAKE_CURRENT_SOURCE_DIR}/.git/hooks COPYONLY)
-endforeach()
+if(NOT DEFINED ENV{PIPELINE_ENV})
+  add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/GPU")
+  # Install git hooks
+  file(GLOB HOOKS ${CMAKE_CURRENT_SOURCE_DIR}/hooks/*)
+  foreach(HOOK ${HOOKS})
+     configure_file(${HOOK} ${CMAKE_CURRENT_SOURCE_DIR}/.git/hooks COPYONLY)
+  endforeach()
+endif()
