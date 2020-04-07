@@ -8,12 +8,11 @@ jobs:
     - uses: actions/setup-python@v1
     - run: pip install cpplint
     - run: cpplint --recursive --extensions=hpp,cpp,cu .
-  format:
+  tidy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - run: clang-format --help
-    - run: if [[ $(clang-format -n --style=Google `find CPU/ GPU/ | egrep '.+\.(cpp|hpp|cu)'`) ]]; then echo "Run clang-format on sources."; exit 1; fi
+    - run: clang-tidy --format-style=Google -checks=-*,cert-*,cppcoreguidelines-*,clang-analyzer-*,performance-*,modernize-*,bugprone-* `find CPU/ GPU/ | egrep '.+\.(cpp|hpp|cu)'`
   build:
     runs-on: ubuntu-latest
     steps:
