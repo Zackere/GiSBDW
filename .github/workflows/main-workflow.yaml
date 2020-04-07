@@ -12,9 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - uses: Zackere/cpp-linter-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: Zackere/Treedepth-action@master
   build:
     runs-on: ubuntu-latest
     steps:
