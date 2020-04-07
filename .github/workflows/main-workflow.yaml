@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - uses: Zackere/clang-tidy-action@master
+    - uses: Zackere/cpp-linter-action@master
   build:
     runs-on: ubuntu-latest
     steps:
