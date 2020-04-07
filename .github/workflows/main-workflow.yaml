@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - run: if [[ $(clang-format --dry-run --style=Google `find CPU/ GPU/ | egrep '.+\.(cpp|hpp|cu)'`) ]]; then echo "Run clang-format on sources."; exit 1; fi
+    - run: if [[ $(clang-format -n --style=Google `find CPU/ GPU/ | egrep '.+\.(cpp|hpp|cu)'`) ]]; then echo "Run clang-format on sources."; exit 1; fi
   build:
     runs-on: ubuntu-latest
     steps:
