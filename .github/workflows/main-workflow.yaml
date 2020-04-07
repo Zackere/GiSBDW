@@ -12,7 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - run: clang-tidy --format-style=Google -checks=-*,cert-*,cppcoreguidelines-*,clang-analyzer-*,performance-*,modernize-*,bugprone-* `find CPU/ GPU/ | egrep '.+\.(cpp|hpp|cu)'`
+    - uses: Zackere/clang-tidy-action@master
+    - env:
+        - GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   build:
     runs-on: ubuntu-latest
     steps:
