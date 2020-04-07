@@ -8,6 +8,11 @@ jobs:
     - uses: actions/setup-python@v1
     - run: pip install cpplint
     - run: cpplint --recursive --extensions=hpp,cpp,cu .
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - run: if [[ $(git-clang-format --diff --style=Google GPU/ CPU/) != "no modified files to format" ]]; then echo "Suggested formatting:" ; git-clang-format --diff --style=Google GPU/ CPU/; exit 1; fi
   build:
     runs-on: ubuntu-latest
     steps:

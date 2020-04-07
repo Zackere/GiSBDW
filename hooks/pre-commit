@@ -48,3 +48,5 @@ fi
 git diff-index --check --cached $against -- || exit 1
 
 git ls-files -z | while IFS= read -rd '' f; do tail -c1 < "$f" | read -r _ || { echo "$f does not end with a newline" ; exit 1; }; done
+
+if [[ $(git-clang-format --diff --style=Google GPU/ CPU/) != "no modified files to format" ]]; then echo "Suggested formatting:" ; git-clang-format --diff --style=Google GPU/ CPU/; exit 1; fi
