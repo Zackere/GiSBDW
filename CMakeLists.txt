@@ -33,7 +33,7 @@ endif()
 
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/CPU")
 
-if(NOT DEFINED ENV{PIPELINE_ENV})
+if(PIPELINE_ENV)
   add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/GPU")
   # Install git hooks
   file(GLOB HOOKS ${CMAKE_CURRENT_SOURCE_DIR}/hooks/*)
