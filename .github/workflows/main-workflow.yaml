@@ -8,16 +8,8 @@ jobs:
     - uses: actions/setup-python@v1
     - run: pip install cpplint
     - run: cpplint --recursive --extensions=hpp,cpp,cu .
-  tidy:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - uses: Zackere/Treedepth-action@master
   build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - run: mkdir bin
-    - run: cd bin
-    - run: cmake -DPIPELINE_ENV=True .
-    - run: make
+    - uses: Zackere/Treedepth-action@master
