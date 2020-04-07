@@ -13,3 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: Zackere/Treedepth-action@master
+    - run: mkdir bin
+    - run: cd bin
+    - run: cmake .
