@@ -12,4 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
-    - run: g++ -n `find GPU CPU | egrep '.+\.(cpp|hpp|cu)'`
+    - run: mkdir bin
+    - run: cd bin
+    - run: export PIPELINE_ENV=1
+    - run: cmake .
+    - run: make
