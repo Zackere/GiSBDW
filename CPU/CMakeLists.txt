@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 
 project("TreeDepthCPU" LANGUAGES CXX)
 
-file(GLOB PROJECT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/** ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
+file(GLOB_RECURSE PROJECT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/* ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
 find_program(CLANG_FORMAT_EXE NAMES "clang-format")
