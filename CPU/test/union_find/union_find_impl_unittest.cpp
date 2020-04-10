@@ -104,6 +104,33 @@ TEST(UnionFindTest, GetValueTest5) {
   EXPECT_EQ(3, uf.GetMaxValue());
 }
 
+TEST(UnionFindTest, GetValueTest6) {
+  // Tree decomposition of P_7
+  auto uf = td::UnionFindImpl(12);
+  uf.Union(uf.Find(1), uf.Find(0));
+  EXPECT_EQ(2, uf.GetMaxValue());
+  EXPECT_EQ(2, uf.GetValue(uf.Find(1)));
+  uf.Union(uf.Find(1), uf.Find(2));
+  EXPECT_EQ(2, uf.GetMaxValue());
+  EXPECT_EQ(2, uf.GetValue(uf.Find(1)));
+  uf.Union(uf.Find(5), uf.Find(4));
+  EXPECT_EQ(2, uf.GetMaxValue());
+  EXPECT_EQ(2, uf.GetValue(uf.Find(4)));
+  uf.Union(uf.Find(3), uf.Find(1));
+  EXPECT_EQ(3, uf.GetMaxValue());
+  EXPECT_EQ(3, uf.GetValue(uf.Find(3)));
+  uf.Union(uf.Find(5), uf.Find(6));
+  EXPECT_EQ(3, uf.GetMaxValue());
+  EXPECT_EQ(2, uf.GetValue(uf.Find(6)));
+  uf.Union(uf.Find(3), uf.Find(5));
+  EXPECT_EQ(3, uf.GetMaxValue());
+  EXPECT_EQ(3, uf.GetValue(uf.Find(6)));
+  for (int i = 0; i < uf.GetNumberOfElements(); ++i) {
+    EXPECT_EQ(3, uf.Find(i));
+    EXPECT_EQ(3, uf.GetValue(uf.Find(i)));
+  }
+}
+
 TEST(UnionFindTest, CloneReturnsSameObject) {
   auto uf = td::UnionFindImpl(10);
   uf.Union(uf.Find(5), uf.Find(7));
