@@ -19,12 +19,12 @@ TEST(UnionFindConstructorTest, DoesFindReturnCorrectSetId) {
   }
 }
 
-TEST (UnionFindConstructorTest, DoesKeyEqualToOneByDefault) {
-    for (int i = 0; i < 10; ++i) {
-        auto uf = td::UnionFindImpl (i);
-        for (int j = 0; j < i; ++j)
-            EXPECT_EQ (1, uf.GetValue(j));
-    }
+TEST(UnionFindConstructorTest, DoesKeyEqualToOneByDefault) {
+  for (int i = 0; i < 10; ++i) {
+    auto uf = td::UnionFindImpl(i);
+    for (int j = 0; j < i; ++j)
+      EXPECT_EQ(1, uf.GetValue(j));
+  }
 }
 
 TEST(UnionFindTest, AreElementsInTheSameSetAfterUnion) {
