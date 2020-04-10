@@ -32,6 +32,7 @@ TEST(UnionFindTest, AreElementsInTheSameSetAfterUnion) {
 
   auto id0 = uf.Find(0);
   EXPECT_EQ(id0, uf.Union(id0, uf.Find(5)));
+  EXPECT_EQ(id0, uf.Find(0));
   EXPECT_EQ(uf.Find(0), uf.Find(5));
 
   EXPECT_NE(uf.Find(0), uf.Find(2));
@@ -41,6 +42,7 @@ TEST(UnionFindTest, AreElementsInTheSameSetAfterUnion) {
 
   auto id8 = uf.Find(8);
   EXPECT_EQ(id8, uf.Union(id8, uf.Find(2)));
+  EXPECT_EQ(id8, uf.Find(8));
   EXPECT_EQ(uf.Find(2), uf.Find(8));
 
   EXPECT_NE(uf.Find(0), uf.Find(2));
@@ -49,6 +51,7 @@ TEST(UnionFindTest, AreElementsInTheSameSetAfterUnion) {
   EXPECT_NE(uf.Find(5), uf.Find(8));
 
   EXPECT_EQ(id0, uf.Union(uf.Find(0), uf.Find(2)));
+  EXPECT_EQ(id0, uf.Find(0));
   EXPECT_EQ(uf.Find(0), uf.Find(2));
   EXPECT_EQ(uf.Find(0), uf.Find(8));
   EXPECT_EQ(uf.Find(5), uf.Find(2));
