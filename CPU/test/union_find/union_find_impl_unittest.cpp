@@ -19,6 +19,14 @@ TEST(UnionFindConstructorTest, DoesFindReturnCorrectSetId) {
   }
 }
 
+TEST (UnionFindConstructorTest, DoesKeyEqualToOneByDefault) {
+    for (int i = 0; i < 10; ++i) {
+        auto uf = td::UnionFindImpl (i);
+        for (int j = 0; j < i; ++j)
+            EXPECT_EQ (1, uf.GetValue(j));
+    }
+}
+
 TEST(UnionFindTest, AreElementsInTheSameSetAfterUnion) {
   auto uf = td::UnionFindImpl(11);
 
@@ -47,33 +55,53 @@ TEST(UnionFindTest, AreElementsInTheSameSetAfterUnion) {
   EXPECT_EQ(uf.Find(5), uf.Find(8));
 }
 
-TEST(UnionFindTest, GetSetValueTest) {
+TEST(UnionFindTest, GetValueTest1) {
   auto uf = td::UnionFindImpl(12);
   uf.Union(uf.Find(5), uf.Find(7));
-  uf.Union(uf.Find(2), uf.Find(7));
-  uf.Union(uf.Find(0), uf.Find(9));
+  EXPECT_EQ(2, uf.GetValue(uf.Find(5)));
+  EXPECT_EQ(2, uf.GetMaxValue());
+}
 
-  uf.SetValue(uf.Find(5), 123);
-  EXPECT_EQ(uf.GetValue(uf.Find(5)), 123);
-  EXPECT_EQ(uf.GetMaxValue(), 123);
+TEST(UnionFindTest, GetValueTest2) {
+  auto uf = td::UnionFindImpl(12);
+  uf.Union(uf.Find(2), uf.Find(3));
+  uf.Union(uf.Find(2), uf.Find(5));
+  EXPECT_EQ(2, uf.GetValue(uf.Find(5)));
+  EXPECT_EQ(2, uf.GetMaxValue());
+}
 
-  uf.SetValue(uf.Find(5), 12);
-  EXPECT_EQ(uf.GetValue(uf.Find(5)), 12);
-  EXPECT_EQ(uf.GetMaxValue(), 12);
+TEST(UnionFindTest, GetValueTest3) {
+  auto uf = td::UnionFindImpl(12);
+  uf.Union(uf.Find(2), uf.Find(3));
+  uf.Union(uf.Find(5), uf.Find(2));
+  EXPECT_EQ(3, uf.GetValue(uf.Find(5)));
+  EXPECT_EQ(3, uf.GetMaxValue());
+}
 
-  uf.SetValue(uf.Find(0), 15);
-  EXPECT_EQ(uf.GetValue(uf.Find(0)), 15);
-  EXPECT_EQ(uf.GetMaxValue(), 15);
+TEST(UnionFindTest, GetValueTest4) {
+  auto uf = td::UnionFindImpl(12);
+  uf.Union(uf.Find(2), uf.Find(3));
+  uf.Union(uf.Find(2), uf.Find(5));
+  uf.Union(uf.Find(0), uf.Find(5));
+  EXPECT_EQ(3, uf.GetValue(uf.Find(5)));
+  uf.Union(uf.Find(11), uf.Find(0));
+  EXPECT_EQ(4, uf.GetValue(uf.Find(5)));
+  EXPECT_EQ(4, uf.GetMaxValue());
+}
 
-  uf.SetValue(uf.Find(0), -15);
-  EXPECT_EQ(uf.GetValue(uf.Find(0)), -15);
-  EXPECT_EQ(uf.GetMaxValue(), -15);
-
-  uf.SetValue(uf.Find(5), 123);
-  EXPECT_EQ(uf.GetValue(uf.Find(5)), 123);
-  EXPECT_EQ(uf.GetMaxValue(), 123);
-
-  EXPECT_EQ(uf.GetValue(uf.Find(0)), -15);
+TEST(UnionFindTest, GetValueTest5) {
+  auto uf = td::UnionFindImpl(12);
+  uf.Union(uf.Find(3), uf.Find(8));
+  uf.Union(uf.Find(2), uf.Find(3));
+  uf.Union(uf.Find(2), uf.Find(5));
+  EXPECT_EQ(3, uf.GetValue(uf.Find(5)));
+  EXPECT_EQ(3, uf.GetMaxValue());
+  uf.Union(uf.Find(11), uf.Find(0));
+  EXPECT_EQ(2, uf.GetValue(uf.Find(0)));
+  EXPECT_EQ(3, uf.GetMaxValue());
+  uf.Union(uf.Find(2), uf.Find(11));
+  EXPECT_EQ(3, uf.GetValue(uf.Find(5)));
+  EXPECT_EQ(3, uf.GetMaxValue());
 }
 
 TEST(UnionFindTest, CloneReturnsSameObject) {
