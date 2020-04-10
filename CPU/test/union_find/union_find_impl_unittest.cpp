@@ -23,7 +23,7 @@ TEST(UnionFindConstructorTest, DoesKeyEqualToOneByDefault) {
   for (int i = 0; i < 10; ++i) {
     auto uf = td::UnionFindImpl(i);
     for (int j = 0; j < i; ++j)
-      EXPECT_EQ(1, uf.GetValue(j));
+      EXPECT_EQ(1, uf.GetValue(uf.Find(j)));
   }
 }
 
@@ -120,6 +120,6 @@ TEST(UnionFindTest, CloneReturnsSameObject) {
   ASSERT_EQ(uf.GetMaxValue(), uf_p->GetMaxValue());
   for (int i = 0; i < uf.GetNumberOfElements(); ++i) {
     EXPECT_EQ(uf.Find(i), uf_p->Find(i));
-    EXPECT_EQ(uf.GetValue(i), uf_p->GetValue(i));
+    EXPECT_EQ(uf.GetValue(uf.Find(i)), uf_p->GetValue(uf_p->Find(i)));
   }
 }
