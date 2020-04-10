@@ -1,21 +1,23 @@
+// Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 #include <iostream>
+#include <memory>
 
 #include "union_find.hpp"
 
 namespace td {
 class UnionFindImpl : public UnionFind {
  public:
-  UnionFindImpl(ElemType numberOfElements);
-  UnionFindImpl(UnionFindImpl const& uf);
-  virtual SetId Union(SetId set1, SetId set2) override;
-  virtual SetId Find(ElemType elem) override;
-  virtual std::unique_ptr<UnionFind> Clone() override;
-  virtual ElemType GetNumberOfElements() override;
+  explicit UnionFindImpl(ElemType numberOfElements);
+  explicit UnionFindImpl(UnionFindImpl const& uf);
+  SetId Union(SetId set1, SetId set2) override;
+  SetId Find(ElemType elem) override;
+  std::unique_ptr<UnionFind> Clone() override;
+  ElemType GetNumberOfElements() override;
   ~UnionFindImpl() override = default;
-  virtual ElemType GetMaxValue() override;
-  virtual ElemType GetValue(SetId setId) override;
-  virtual void SetValue(SetId setId, ElemType value) override;
+  ElemType GetMaxValue() override;
+  ElemType GetValue(SetId setId) override;
+  void SetValue(SetId setId, ElemType value) override;
 
  private:
   ElemType maxValue;

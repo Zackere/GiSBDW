@@ -1,5 +1,5 @@
+// Copyright 2020 GISBDW. All rights reserved.
 #pragma once
-#include <cstdint>
 #include <memory>
 
 namespace td {

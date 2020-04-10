@@ -1,3 +1,6 @@
+// Copyright 2020 GISBDW. All rights reserved.
+#include <memory>
+
 #include "union_find_impl.hpp"
 
 namespace td {
