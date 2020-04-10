@@ -11,8 +11,7 @@ jobs:
   clang-tidy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - uses: Zackere/clang-tidy-action@master
+      - name : clang-tidy
+        uses: smay1613/clang-tidy-action@master
     env:
-      secrets: ${{ secrets.GITHUB_TOKEN }}
-      args: "-checks=-*,cert-*,cppcoreguidelines-*,clang-analyzer-*,performance-*,modernize-*,bugprone-*"
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
