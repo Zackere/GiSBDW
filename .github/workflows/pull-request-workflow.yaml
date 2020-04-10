@@ -1,0 +1,17 @@
+name: main
+on: [pull_request]
+jobs:
+  cpplint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/setup-python@v1
+    - run: pip install cpplint
+    - run: cpplint --recursive --extensions=hpp,cpp,cu .
+    clang-tidy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: Zackere/clang-tidy-action@master
+    with:
+      secrets: ${{ secrets.GITHUB_TOKEN }}
+      args: "-checks=-*,cert-*,cppcoreguidelines-*,clang-analyzer-*,performance-*,modernize-*,bugprone-*"

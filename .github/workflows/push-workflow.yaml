@@ -1,5 +1,5 @@
 name: main
-on: [push, pull_request]
+on: [push]
 jobs:
   cpplint:
     runs-on: ubuntu-latest
@@ -8,8 +8,3 @@ jobs:
     - uses: actions/setup-python@v1
     - run: pip install cpplint
     - run: cpplint --recursive --extensions=hpp,cpp,cu .
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v1
-    - run: ./build-pipeline.sh
