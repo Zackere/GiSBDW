@@ -8,7 +8,7 @@ jobs:
     - uses: actions/setup-python@v1
     - run: pip install cpplint
     - run: cpplint --recursive --extensions=hpp,cpp,cu .
-    clang-tidy:
+  clang-tidy:
     runs-on: ubuntu-latest
     steps:
     - uses: Zackere/clang-tidy-action@master
