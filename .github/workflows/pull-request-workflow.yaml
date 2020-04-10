@@ -11,6 +11,7 @@ jobs:
   clang-tidy:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v1
     - uses: Zackere/clang-tidy-action@master
     env:
       secrets: ${{ secrets.GITHUB_TOKEN }}
