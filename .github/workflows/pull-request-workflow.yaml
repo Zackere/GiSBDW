@@ -11,7 +11,6 @@ jobs:
   clang-tidy:
     runs-on: ubuntu-latest
     steps:
-      - name : clang-tidy
-        uses: smay1613/clang-tidy-action@master
-    env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/checkout@v2
+    - name: Run clang-format style check for C programs.
+      uses: jidicula/clang-format-action@master
