@@ -6,14 +6,14 @@
 
 TEST(UnionFindConstructorTest, IsSizeCorrect) {
   for (int i = 0; i < 10; ++i) {
-    auto uf = td::UnionFindImpl(i);
+    td::UnionFindImpl uf(i);
     EXPECT_EQ(i, uf.GetNumberOfElements());
   }
 }
 
 TEST(UnionFindConstructorTest, DoesFindReturnCorrectSetId) {
   for (int i = 0; i < 10; ++i) {
-    auto uf = td::UnionFindImpl(i);
+    td::UnionFindImpl uf(i);
     for (int j = 0; j < i; ++j)
       EXPECT_EQ(j, uf.Find(j));
   }
@@ -21,14 +21,14 @@ TEST(UnionFindConstructorTest, DoesFindReturnCorrectSetId) {
 
 TEST(UnionFindConstructorTest, DoesKeyEqualToOneByDefault) {
   for (int i = 0; i < 10; ++i) {
-    auto uf = td::UnionFindImpl(i);
+    td::UnionFindImpl uf(i);
     for (int j = 0; j < i; ++j)
       EXPECT_EQ(1, uf.GetValue(uf.Find(j)));
   }
 }
 
 TEST(UnionFindTest, AreElementsInTheSameSetAfterUnion) {
-  auto uf = td::UnionFindImpl(11);
+  td::UnionFindImpl uf(11);
 
   auto id0 = uf.Find(0);
   EXPECT_EQ(id0, uf.Union(id0, uf.Find(5)));
@@ -59,14 +59,14 @@ TEST(UnionFindTest, AreElementsInTheSameSetAfterUnion) {
 }
 
 TEST(UnionFindTest, GetValueTest1) {
-  auto uf = td::UnionFindImpl(12);
+  td::UnionFindImpl uf(12);
   uf.Union(uf.Find(5), uf.Find(7));
   EXPECT_EQ(2, uf.GetValue(uf.Find(5)));
   EXPECT_EQ(2, uf.GetMaxValue());
 }
 
 TEST(UnionFindTest, GetValueTest2) {
-  auto uf = td::UnionFindImpl(12);
+  td::UnionFindImpl uf(12);
   uf.Union(uf.Find(2), uf.Find(3));
   uf.Union(uf.Find(2), uf.Find(5));
   EXPECT_EQ(2, uf.GetValue(uf.Find(5)));
@@ -74,7 +74,7 @@ TEST(UnionFindTest, GetValueTest2) {
 }
 
 TEST(UnionFindTest, GetValueTest3) {
-  auto uf = td::UnionFindImpl(12);
+  td::UnionFindImpl uf(12);
   uf.Union(uf.Find(2), uf.Find(3));
   uf.Union(uf.Find(5), uf.Find(2));
   EXPECT_EQ(3, uf.GetValue(uf.Find(5)));
@@ -82,7 +82,7 @@ TEST(UnionFindTest, GetValueTest3) {
 }
 
 TEST(UnionFindTest, GetValueTest4) {
-  auto uf = td::UnionFindImpl(12);
+  td::UnionFindImpl uf(12);
   uf.Union(uf.Find(2), uf.Find(3));
   uf.Union(uf.Find(2), uf.Find(5));
   uf.Union(uf.Find(0), uf.Find(5));
@@ -93,7 +93,7 @@ TEST(UnionFindTest, GetValueTest4) {
 }
 
 TEST(UnionFindTest, GetValueTest5) {
-  auto uf = td::UnionFindImpl(12);
+  td::UnionFindImpl uf(12);
   uf.Union(uf.Find(3), uf.Find(8));
   uf.Union(uf.Find(2), uf.Find(3));
   uf.Union(uf.Find(2), uf.Find(5));
@@ -109,7 +109,7 @@ TEST(UnionFindTest, GetValueTest5) {
 
 TEST(UnionFindTest, GetValueTest6) {
   // Tree decomposition of P_7
-  auto uf = td::UnionFindImpl(7);
+  td::UnionFindImpl uf(7);
   uf.Union(uf.Find(1), uf.Find(0));
   EXPECT_EQ(2, uf.GetMaxValue());
   EXPECT_EQ(2, uf.GetValue(uf.Find(1)));
@@ -135,7 +135,7 @@ TEST(UnionFindTest, GetValueTest6) {
 }
 
 TEST(UnionFindTest, CloneReturnsSameObject) {
-  auto uf = td::UnionFindImpl(10);
+  td::UnionFindImpl uf(10);
   uf.Union(uf.Find(5), uf.Find(7));
   uf.Union(uf.Find(2), uf.Find(7));
   uf.Union(uf.Find(1), uf.Find(9));
