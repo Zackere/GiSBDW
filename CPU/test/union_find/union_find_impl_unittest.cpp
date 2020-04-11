@@ -139,9 +139,7 @@ TEST(UnionFindTest, CloneReturnsSameObject) {
   uf.Union(uf.Find(5), uf.Find(7));
   uf.Union(uf.Find(2), uf.Find(7));
   uf.Union(uf.Find(1), uf.Find(9));
-  uf.SetValue(uf.Find(5), 123);
-  uf.SetValue(uf.Find(8), 321);
-  uf.SetValue(uf.Find(0), -112);
+  uf.Union(uf.Find(0), uf.Find(3));
 
   auto uf_clone = uf.Clone();
   auto* uf_p = dynamic_cast<td::UnionFindImpl*>(uf_clone.get());
