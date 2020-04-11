@@ -9,7 +9,7 @@ namespace td {
 class UnionFindImpl : public UnionFind {
  public:
   explicit UnionFindImpl(ElemType numberOfElements);
-  explicit UnionFindImpl(UnionFindImpl const& uf);
+  UnionFindImpl(UnionFindImpl const& uf);
   SetId Union(SetId set1, SetId set2) override;
   SetId Find(ElemType elem) override;
   std::unique_ptr<UnionFind> Clone() override;
@@ -17,6 +17,8 @@ class UnionFindImpl : public UnionFind {
   ~UnionFindImpl() override = default;
   ElemType GetMaxValue() override;
   ElemType GetValue(SetId setId) override;
+
+ protected:
   void SetValue(SetId setId, ElemType value) override;
 
  private:

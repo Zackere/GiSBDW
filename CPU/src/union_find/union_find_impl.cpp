@@ -39,7 +39,10 @@ UnionFind::SetId UnionFindImpl::Find(ElemType elem) {
   return SetId(iterator);
 }
 UnionFind::SetId UnionFindImpl::Union(SetId set1, SetId set2) {
+  ElemType set1Val = GetValue(set1);
+  ElemType set2Val = GetValue(set2);
   arr[set2] = set1;
+  SetValue(set1, set1Val > set2Val ? set1Val : set2Val + 1);
   return set1;
 }
 std::unique_ptr<UnionFind> UnionFindImpl::Clone() {

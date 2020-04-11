@@ -15,6 +15,8 @@ class UnionFind {
   virtual ~UnionFind() = default;
   virtual ElemType GetMaxValue() =  0;
   virtual ElemType GetValue(SetId setId) = 0;
+
+ protected:
   virtual void SetValue(SetId setId, ElemType value) = 0;
 };
 }  // namespace td
