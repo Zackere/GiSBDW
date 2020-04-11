@@ -109,7 +109,7 @@ TEST(UnionFindTest, GetValueTest5) {
 
 TEST(UnionFindTest, GetValueTest6) {
   // Tree decomposition of P_7
-  auto uf = td::UnionFindImpl(12);
+  auto uf = td::UnionFindImpl(7);
   uf.Union(uf.Find(1), uf.Find(0));
   EXPECT_EQ(2, uf.GetMaxValue());
   EXPECT_EQ(2, uf.GetValue(uf.Find(1)));
