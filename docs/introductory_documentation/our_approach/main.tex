@@ -1,1 +1,119 @@
 \section{Our approach}
+\subsection{Dynamic Algorithm}
+\subsubsection{Binomial Encoding}
+In this section we shall present a simple method to optimally encode $k$-element subsets of $\{0,...,n-1\}$ for $k\in\left[0;n\right]$:
+\begin{lstlisting}[language=C++]
+size_t Encode(Set s, size_t n, size_t k) {
+	size_t ret = 0;
+	--n;
+	while (k > 0) {
+		if (s.contains(n)) {
+			ret += NChooseK(n, k);
+			--k;
+		}
+		--n;
+	}
+	return ret;
+}
+
+Set Decode(size_t code, size_t n, size_t k) {
+  Set ret;
+  --n;
+  while (k > 0) {
+    size_t nk = NChooseK(n, k);
+    if (code >= nk) {
+      ret.insert(n);
+      code -= nk;
+      --k;
+    }
+    --n;
+  }
+  return ret;
+}
+\end{lstlisting}
+This method of encoding is optimal beacuse they it forms a bijection: ${\left[0; {n \choose k}\right) \choose k}\rightarrow\left[0; {n \choose k}\right)$.\\
+It is capable of running in $O(n)$ time provided that Pascal Traingle is precomputed.
+\subsubsection{UnionFind Data Structure}
+UnionFind data structure is crucial in this approach. It will allow us to compute treedepth efficiently. With each set it associates some value, which will be managed by union-find data structure internally. Our implementation shall satisfy following contract:
+\begin{itemize}
+	\item It can be constructed from integer $n$. As a result, we get a union-find data structure representing $n$ disjont one-element subsets of $\{0,...,n-1\}$ and has associated value equal to 1. Each set has an id equal to the element it contains.
+	\item \texttt{UnionFind Clone()} clones given object.
+	\item \texttt{ValueType GetValue(SetIdType)} returns value associated with given set.
+	\item \texttt{ValueType GetMaxValue()} returns maximum of all values associated with sets represented by the object.
+	\item \texttt{SetIdType Find(ElemType)} returns id of a set in which given element is contained.
+	\item \texttt{SetIdType Union(SetIdType s1, SetIdType s2)} sums two given sets. As a result of this operation:
+	\begin{itemize}
+		\item \texttt{s1} will not change its id.
+		\item Every element of \texttt{s2} will be contained in \texttt{s1}.
+		\item Value associated with \texttt{s1} will be replaced with the greatest of values: \texttt{GetValue(s1)}, \texttt{GetValue(s2)+1}
+	\end{itemize}
+\end{itemize}
+The data structure difined this way allows to compute treedepth very efficiently, as values associated with contained sets changes in the same way as treedepth if we were to attach one tree to the root of another tree. Complexity of each operation is not much bigger than $O(1)$ except for construction and copying which have $O(n)$ time complexity.
+\subsubsection{The Algorithm}
+Having described all necessary tools, we shall now proceed to describe dynamic approach to computing treedepth value as well as treedepth decomposition. As mentioned earlier, this method trades off space complexity of $O\left(2^{\left|G\right|}\right)$ for time complexity of  $O^{*}\left(2^{\left|G\right|}\right)$.\\\\
+We well be building the treedepth decomposition in bottom-to-top manner. It generates an array of pairs \texttt{(UnionFind, size\_t)} from another array of the same type. We start off with an array of one element: unmodified UnionFind constructed from $\left|G\right|$ and -1. Then, given a UnionFind object, for every vertex $v$ in it we shall generate a new one by:
+\begin{itemize}
+	\item activating element in question
+	\item performing \texttt{Union(Find($v$), Find($w$))} for every active neighbour $w$ of $v$ in $G$
+\end{itemize}
+This very action adds vertex $v$ to treedepth decomposition of $G$ induced on set of active verticies.\\
+At this point it would be appropriate what an active vertex is. It is nothing but a illusion. With a UnionFind object we associate an index in an array. This index shall be decoded into a subset of $\{0,...,n-1\}$ which will tell us what verticies are active in object in question (nevertheless nothing stops us from accessing other elements).\\
+Having generated a new UnionFind we shall store it in output array under the index equal to encoding of a set of active verticies contained in generated UnionFind object. With it we store an index from which we recieved our original UnionFind object. It will be useful in treedepth decomposition construction. If there is some UnionFind object in the designated space, we replace the object in it only if our UnionFind has lower max value.
+\begin{lstlisting}[language=C++]
+void TDDynamicStep(Graph g, size_t step_number, (UnionFind, size_t)[] prev, (UnionFind, size_t)[] next){
+  for(size_t subset_index = 0; subset_index < NChooseK(V(g).size(), step_number); ++subset_index) {
+    Set s = Decode(subset_index, V(g).size(), step_number);
+    for(ElemType x : V(g)\s){
+      UnionFind uf_x = prev[subset_index].first.Clone();
+      Set ids = {};
+      for(ElemType v : g.neigh(x))
+        if(s.contains(v))
+          ids.insert(uf_x.Find(v));
+      SetIdType new_set_id = uf_x.Find(x);
+      for(SetIdType id : ids)
+        new_set_id = uf_x.Union(new_set_id, id)
+      s.insert(x);
+      size_t dest = Encode(s, V(g).size(), step_number + 1);
+      if(next[dest].first.GetMaxValue() > uf_x.GetMaxValue())
+        next[dest] = (uf_x, subset_index)
+    }
+  }
+}
+
+(UnionFind, size_t)[][] TDDynamicAlgorithm(Graph g) {
+  (UnionFind, size_t)[][] history = new (UnionFind, size_t)[V(g).size()][];
+  history[0] = new (UnionFind, size_t)[1];
+  history[0][0] = UnionFind(V(g).size());
+  for(size_t i = 0; i < V(g).size(); ++i) {
+    history[i + 1] = new (UnionFind, size_t)[NChooseK(V(g).size(), i + 1)];
+    TDDynamicStep(g, i, history[i], history[i + 1]);
+  }
+  return history;
+}
+\end{lstlisting}
+Having completed the algorithm, the object on the last page of history holds the treedepth of our graph. Based on the history we can reconstruct the treedepth decomposition in $O(|G|)$ time:
+\begin{lstlisting}[language=C++]
+Graph TDDecomposition(Graph g, (union_find, size_t)[][]history) {
+  size_t current_entry = 0, current_page = V(g).size() - 1;
+  List indices = {current_entry};
+  while(current_page > 0) {
+    indices.push_front(history[current_page][current_entry].second);
+    current_entry = history[current_page][current_entry].second;
+    --current_page;
+  }
+  Graph ret(V(g).size());
+  while(current_page < V(g).size()) {
+    size_t current_entry = indices.pop_front();
+    Set s = Decode(current_entry, V(g).size(), current_page);
+    ElemType v = Decode(indices.front(), V(g).size(), current_page)\s;
+    ret.add_vertex(v);
+    UnionFind uf = history[current_page][current_entry].first;
+    for(ElemType w : g.neigh(v))
+      if(s.contains(w))
+        ret.add_edge(v, uf.Find(w));
+    ++current_page;
+  }
+  return ret;
+}
+\end{lstlisting}
+This algorithm finds what verticies have been added an joins appropriate trees under common parent vertex.
