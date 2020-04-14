@@ -29,9 +29,9 @@ Set Decode(size_t code, size_t n, size_t k) {
   return ret;
 }
 \end{lstlisting}
-This method of encoding is optimal beacuse it forms a bijection: ${\left[0; {n \choose k}\right) \choose k}\rightarrow\left[0; {n \choose k}\right)$.\\
-It is capable of running in $O(n)$ time, provided that Pascal's Traingle is precomputed.
-\subsubsection{UnionFind Data Structure}
+This method of encoding is optimal beacuse it forms a bijection: $\binom{\{0,...,n-1\}}{k}\rightarrow\left[0; \binom{n}{k}\right)$.\\
+It is capable of running in $O(n)$ time, provided that Pascals' Traingle is precomputed.
+\subsubsection{UnionFind data structure}
 UnionFind data structure is crucial in this approach. It will allow us to compute treedepth efficiently. With each set it associates some value, which will be managed by union-find data structure internally. Our implementation shall satisfy following contract:
 \begin{itemize}
 	\item It can be constructed from integer $n$. As a result, we get a union-find data structure representing $n$ disjont one-element subsets of $\{0,...,n-1\}$ and has associated value equal to 1. Each set has an id equal to the element it contains.
@@ -47,16 +47,17 @@ UnionFind data structure is crucial in this approach. It will allow us to comput
 	\end{itemize}
 \end{itemize}
 The data structure difined this way allows to compute treedepth very efficiently, as values associated with contained sets change in the same way as treedepth if we were to attach one tree to the root of another tree. Complexity of each operation is not much bigger than $O(1)$ (if not exactly $O(1)$) except for construction and copying which have $O(n)$ time complexity.
-\subsubsection{The Algorithm}
-Having described all necessary tools, we shall now proceed to describe dynamic approach to computing treedepth value as well as treedepth decomposition. As mentioned earlier, this method trades off space complexity of $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ for time complexity of  $O^{*}\left(2^{\left|G\right|}\right)$.\\
+\subsubsection{Idea behind the algorithm}
+Having described all necessary tools, we shall now proceed to describe dynamic approach to computing treedepth value as well as treedepth decomposition. As mentioned earlier, this method trades off space complexity of $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ for time complexity of  $O^{*}\left(2^{\left|G\right|}\right)$.
 The algorithm builds the treedepth decomposition in bottom-to-top manner. It generates an array of pairs \texttt{(UnionFind, size\_t)} from another array of the same type. We start off with an array of one element: unmodified UnionFind constructed from $\left|G\right|$ and 0. Then, given a UnionFind object, for every inactive vertex $v$ in it we shall generate a new one by:
 \begin{itemize}
 	\item activating vertex in question
 	\item performing \texttt{Union(Find($v$), Find($w$))} for every active neighbour $w$ of $v$ in $G$
 \end{itemize}
-This very action adds vertex $v$ to some treedepth decomposition of $G$ induced on set of active verticies.\\
-At this point it would be appropriate what an active vertex is. It is nothing but a illusion. With a UnionFind object we associate an index in an array. This index shall be decoded into a subset of $\{0,...,n-1\}$ which will tell us what verticies are active in object in question (nevertheless nothing stops us from accessing other elements).\\
-Having generated a new UnionFind we shall store it in output array under the index equal to encoding of a set of active verticies contained in generated UnionFind object. With it we store an index from which we recieved our original UnionFind object. It will be useful in treedepth decomposition reconstruction. If there is some UnionFind object in the designated space, we replace the object in it only if our UnionFind has lower max value.
+This very action adds vertex $v$ to some treedepth decomposition of $G$ induced on set of active vertices.\\
+At this point it would be appropriate to explain what an active vertex is and how we will handle them. It is a concept which tells us whether a vertex is in a solution represented by given UnionFind object. With a UnionFind object we associate an index in an array. This index shall be decoded into a subset of $\{0,...,n-1\}$ which will tell us what vertices are active in object in question (nevertheless nothing stops us from accessing other elements).\\
+Having generated a new UnionFind we shall store it in output array under the index equal to encoding of a set of active vertices contained in generated UnionFind object. With it we store an index from which we recieved the original UnionFind object. It will be useful in treedepth decomposition reconstruction. If there is some UnionFind object in the designated space, we replace the object in it only if our UnionFind has lower max value.
+\subsubsection{The Algorithm}
 \begin{lstlisting}[language=C++]
 void TDDynamicStep(Graph g, size_t step_number, (UnionFind, size_t)[] prev, (UnionFind, size_t)[] next) {
   for(size_t subset_index = 0; subset_index < prev.size(); ++subset_index) {
