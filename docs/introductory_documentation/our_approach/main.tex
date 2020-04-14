@@ -61,25 +61,31 @@ Having generated a new UnionFind we shall store it in output array under the ind
 \begin{lstlisting}[language=C++]
 void TDDynamicStep(Graph g, size_t step_number, (UnionFind, size_t)[] prev, (UnionFind, size_t)[] next) {
   for(size_t subset_index = 0; subset_index < prev.size(); ++subset_index) {
+    // Get set of active vertices
     Set s = Decode(subset_index, V(g).size(), step_number);
     for(ElemType x : V(g)\s) {
       UnionFind uf_x = prev[subset_index].first.Clone();
       Set ids = {};
+      // Find trees containing neighbours of v
       for(ElemType v : g.neigh(x))
         if(s.contains(v))
           ids.insert(uf_x.Find(v));
       SetIdType new_set_id = uf_x.Find(x);
+      // Ensure that we are still in compliance with treedepth decomposition definition when adding x to active vertices
       for(SetIdType id : ids)
         new_set_id = uf_x.Union(new_set_id, id)
       s.insert(x);
+      // Determine designated index of our new object
       size_t dest = Encode(s, V(g).size(), step_number + 1);
-      if(next[dest].first.GetMaxValue() > uf_x.GetMaxValue())
+      // Check if we have improved current result for combination of active vertices represented by s
+      if(next[dest] == null || next[dest].first.GetMaxValue() > uf_x.GetMaxValue())
         next[dest] = (uf_x, subset_index)
     }
   }
 }
 
 (UnionFind, size_t)[][] TDDynamicAlgorithm(Graph g) {
+  // Base of the algorithm: object representing empty set of active vertices
   (UnionFind, size_t)[][] history = new (UnionFind, size_t)[V(g).size()][];
   history[0] = new (UnionFind, size_t)[1];
   history[0][0] = UnionFind(V(g).size());
@@ -90,30 +96,35 @@ void TDDynamicStep(Graph g, size_t step_number, (UnionFind, size_t)[] prev, (Uni
   return history;
 }
 \end{lstlisting}
-Having completed the algorithm, the object on the last page of history holds the treedepth of our graph. Based on the history we can reconstruct the treedepth decomposition in $O(|G|)$ time:
+Having completed the dynamic algorithm, the object on the last page of history holds the treedepth of our graph. Based on the history we can reconstruct the treedepth decomposition in $O(|G|)$ time:
 \begin{lstlisting}[language=C++]
-Graph TDDecomposition(Graph g, (union_find, size_t)[][]history) {
+(Graph, int) TDDecomposition(Graph g, (UnionFind, size_t)[][]history) {
   size_t current_entry = 0, current_page = V(g).size() - 1;
+  int depth = history[current_page][current_entry].second;
+  // This list will hold permutation of vertices that made up the object in history[current_page][current_entry]
   List indices = {current_entry};
   while(current_page > 0) {
     indices.push_front(history[current_page][current_entry].second);
     current_entry = history[current_page][current_entry].second;
     --current_page;
   }
-  Graph ret(V(g).size());
+  Graph tree(V(g).size());
   while(current_page < V(g).size()) {
     size_t current_entry = indices.pop_front();
     Set s = Decode(current_entry, V(g).size(), current_page);
+    // Find vertex that had beed added in considered transition
     ElemType v = Decode(indices.front(), V(g).size(), current_page)\s;
     UnionFind uf = history[current_page][current_entry].first;
+    // Add edges required by the definition of treedepth decomposistion
     for(ElemType w : g.neigh(v))
       if(s.contains(w))
-        ret.add_edge(v, uf.Find(w));
+        tree.add_edge(v, uf.Find(w));
     ++current_page;
   }
-  return ret;
+  return tree, depth;
 }
 \end{lstlisting}
-This algorithm finds what verticies have been added on consequent steps and joins appropriate trees under common parent vertex.
+This algorithm finds what vertices have been added on consequent steps and joins appropriate trees under common parent vertex.
 \subsubsection{Remarks}
-As we can see, this algorithm provides an obvious improvement in time complexity of $O^{*}\left(2^{\left|G\right|}\right)$ compared to naive approach with time complexity of $O\left(\left|G\right|!\right)$, but it requires additional $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ space to run. It is particularly important for set encoding to be very efficient as it will be executed many times, therefore presented method for such encoding might not make it into final implementation and be replaced with different method or be modified. So much space is necessary by this algorithm to run, that it can be too much for large graphs. We try to overcome this difficulty in section 4. It also has some useful properties which we will exploit, but this will be discussed in section 4.
+As we can see, this algorithm provides an obvious improvement in time complexity of $O^{*}\left(2^{\left|G\right|}\right)$ compared to naive approach with time complexity of $O\left(\left|G\right|!\right)$, but it requires additional $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ space to run. It is particularly important for set encoding to be very efficient as it will be executed many times, therefore presented method for such encoding might not make it into final implementation and be replaced with different method or be modified. So much space is necessary by this algorithm to run, that it can be too much for large graphs. We will try to overcome this difficulty later. It also has some useful properties which we will exploit, but this will be also discussed later.
+\subsection{Branch and Bound algorithm}
