@@ -1,7 +1,7 @@
 \section{Our approach}
 \subsection{Dynamic Algorithm}
 \subsubsection{Binomial Encoding~\cite{binomial_encoding}}
-In this section we shall present a simple method to optimally encode $k$-element subsets of $\{0,...,n-1\}$ for $k\in\left[0;n\right]$:
+In this section we shall present a simple method to optimally encode $k$-element subsets of $\{0,...,n-1\}$ for $k\in\left[0;n\right]$ called binomial encoding:
 \begin{lstlisting}[language=C++]
 size_t Encode(Set s, size_t n, size_t k) {
 	size_t ret = 0;
@@ -32,9 +32,9 @@ Set Decode(size_t code, size_t n, size_t k) {
 This method of encoding is optimal beacuse it forms a bijection: $\binom{\{0,...,n-1\}}{k}\rightarrow\left[0; \binom{n}{k}\right)$.\\
 It is capable of running in $O(n)$ time, provided that Pascals' Traingle is precomputed.
 \subsubsection{UnionFind data structure}
-UnionFind data structure is crucial in this approach. It will allow us to compute treedepth efficiently. With each set it associates some value, which will be managed by union-find data structure internally. Our implementation shall satisfy following contract:
+UnionFind data structure is crucial in this approach. It will allow us to compute treedepth efficiently. With each set it associates some value, which will be managed by UnionFind data structure internally. Our implementation shall satisfy following contract:
 \begin{itemize}
-	\item It can be constructed from integer $n$. As a result, we get a union-find data structure representing $n$ disjont one-element subsets of $\{0,...,n-1\}$ and has associated value equal to 1. Each set has an id equal to the element it contains.
+	\item It can be constructed from integer $n$. As a result, we get a UnionFind data structure representing $n$ disjont one-element subsets of $\{0,...,n-1\}$ and has associated value equal to 1. Each set has an id equal to the element it contains.
 	\item \texttt{UnionFind Clone()} clones given object.
 	\item \texttt{ValueType GetValue(SetIdType)} returns value associated with given set.
 	\item \texttt{ValueType GetMaxValue()} returns maximum of all values associated with sets represented by the object.
@@ -55,7 +55,7 @@ The algorithm builds the treedepth decomposition in bottom-to-top manner. It gen
 	\item performing \texttt{Union(Find($v$), Find($w$))} for every active neighbour $w$ of $v$ in $G$
 \end{itemize}
 This very action adds vertex $v$ to some treedepth decomposition of $G$ induced on set of active vertices.\\
-At this point it would be appropriate to explain what an active vertex is and how we will handle them. It is a concept which tells us whether a vertex is in a solution represented by given UnionFind object. With a UnionFind object we associate an index in an array. This index shall be decoded into a subset of $\{0,...,n-1\}$ which will tell us what vertices are active in object in question (nevertheless nothing stops us from accessing other elements).\\
+At this point it would be appropriate to explain what an active vertex is and how we will handle them. It is a concept which tells us whether a vertex is in a solution represented by given UnionFind object. With an index in an array we associate a UnionFind object. This index shall be decoded into a subset of $\{0,...,n-1\}$ which will tell us what vertices are active in object in question (nevertheless nothing stops us from accessing other elements).\\
 Having generated a new UnionFind we shall store it in output array under the index equal to encoding of a set of active vertices contained in generated UnionFind object. With it we store an index from which we recieved the original UnionFind object. It will be useful in treedepth decomposition reconstruction. If there is some UnionFind object in the designated space, we replace the object in it only if our UnionFind has lower max value.
 \subsubsection{The Algorithm}
 \begin{lstlisting}[language=C++]
@@ -126,11 +126,11 @@ Having completed the dynamic algorithm, the object on the last page of history h
 \end{lstlisting}
 This algorithm finds what vertices have been added on consequent steps and joins appropriate trees under common parent vertex.
 \subsubsection{Remarks}
-As we can see, this algorithm provides an obvious improvement in time complexity of $O^{*}\left(2^{\left|G\right|}\right)$ compared to naive approach with time complexity of $O\left(\left|G\right|!\right)$, but it requires additional $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ space to run. It is particularly important for set encoding to be very efficient as it will be executed many times, therefore presented method for such encoding might not make it into final implementation and be replaced with different method or be modified. So much space is necessary by this algorithm to run, that it can be too much for large graphs. We will try to overcome this difficulty later. It also has some useful properties which we will exploit, but this will be also discussed later.
+As we can see, this algorithm provides an obvious improvement in time complexity of $O^{*}\left(2^{\left|G\right|}\right)$ compared to naive approach with time complexity of $O\left(\left|G\right|!\right)$, but it requires additional $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ space to run. It is particularly important for set encoding to be very efficient as it will be executed many times, therefore presented method for such encoding might not make it into final implementation and be replaced with different method or be modified significantly. So much space is necessary by this algorithm to run, that it can be too much for large graphs. We will try to overcome this difficulty later. It also has some useful properties which we will exploit, but this will be also discussed later.
 \subsection{Branch and Bound algorithm}
-In contrary to dynamic algorithm, this time we will try to build treedepth decomposition in top-to-bottom manner. To make this approach efficient, we shall incorporate branch and bound technique. Please note that this approach assumes connected input graph.
+In contrary to dynamic algorithm, this time we will try to build treedepth decomposition in top-to-bottom manner. To make this approach efficient, we shall incorporate branch and bound technique. Please note that this approach assumes connected input graph. This assumption is valid as for disconnected graphs we can run this algorithm for every connected component.
 \subsubsection{Idea behind the algorithm}
-As in every branch and bound algorithm, we shall start with some valid solution to our problem. We can try to find some good heuristic solution, but for now $P_{\left|G\right|}$ will be sufficient. Along this solution we must store its treedepth of $\left|G\right|$ as we will improve this number and eliminate some unnecessary attempts. We can now proceed to generating our solutions. First, we will choose a root of our tree. Then, we will choose its children. Then we will choose their children and so on. We will be building our solution generation after generation (like generations of a family). When chosen generation is too deep in our tree, we terminate current attempt and try different configuration.\\
+As in every branch and bound algorithm, we shall start with some valid solution to our problem. We can try to find some good heuristic solution, but for now $P_{\left|G\right|}$ will be sufficient. Along this solution we must store its treedepth of $\left|G\right|$ as we will improve this number and eliminate some unnecessary attempts. We can now proceed to generating our solutions. First, we will choose a root of our tree. Then, we will choose its children. Then we will choose their children and so on. We will be building our solution generation after generation (like generations of a family). When chosen generation is too deep in our tree, we terminate current attempt and try different configuration.
 \subsubsection{Determining which vertices are valid as children}
 Not every vertex will be suitable as a child of another vertex in treedepth decomposition. Take as an example $P_5$ and its decomposition generation. Let's say that we chose as a root of our tree vertex 2. Then we know, for sure, that vertices 1 and 3, as neighbours of 2, must be in a subtree of 2. Let's say that we decided, that 1 and 3 will be the only children of 2. Now we know for sure, that vertex 0 must be in a subtree of 1 and vertex 4 must be in a subtree of 3. A tree when vertex 0 is a child of vertex 3 will not be valid treedepth decomposition.\\
 General rule is: every neghbour of $v$ in $G$ must be either its child or ancestor in a valid treedepth decomposition (as definition of treedepth decomposition states).\\
@@ -147,15 +147,15 @@ Graph current_tree = Graph();
 
 // Finds treedepth decomposition with its treedepth using branch and bound technique
 (Graph, int) TDBnB() {
-  for(int x = 0; x < V(g).size(); ++x) {
+  for(int root = 0; root < V(g).size(); ++root) {
     // Vertices which will have its children generated next. Right now it's just root.
-    Set active_vertices = {x}
+    Set active_vertices = {root}
     for(int y = 0; y < V(g).size(); ++y)
       // Every vertex will end up in a subtree of trees' root.
-      preference[y] = x;
+      preference[y] = root;
     current_tree = Graph();
-    current_tree.add_vertex(x);
-    preference[x] = Taken;
+    current_tree.add_vertex(root);
+    preference[root] = Taken;
     NextLevel(1, active_vertices);
   }
   return best_tree, best_td;
@@ -172,7 +172,7 @@ Collision NextLevel(int depth, Set active_vertices) {
   return GenerateFrom(depth + 1, active_vertices, {}, 0);
 }
 
-// This function tries to add child to active_vertices_new as a child of parent and update both current_tree and history. When it contradics with treedepth decomposition definition, it returns an error and makes no changes to current state.
+// Tries to add child to active_vertices_new as a child of parent and update both current_tree and history. When it contradics with treedepth decomposition definition, it returns an error and makes no changes to current state.
 Collision TryVertexAsAChild(int child, int parent) {
  ...
  return collision;
@@ -184,7 +184,7 @@ bool Critical(Collision collision) {
   return false;
 }
 
-// This function considers vertex from as a child of consecutive vertices from active_vertices. At the time of calling this function, every vertex v < from has been considered on this level.
+// This function considers vertex from as a child of consecutive vertices from active_vertices. At the time of calling this function, every vertex v < from has been considered on this level to some extent. Note that calling this function does not change current state i.e. after this function returns state is how it was before the call.
 Collision GenerateFrom(int depth, Set active_vertices, Set active_vertices_new, int from) {
   if(history[from] != Taken) {
     for(int x : active_vertices) {
