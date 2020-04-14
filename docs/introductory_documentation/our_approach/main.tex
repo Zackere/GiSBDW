@@ -128,3 +128,94 @@ This algorithm finds what vertices have been added on consequent steps and joins
 \subsubsection{Remarks}
 As we can see, this algorithm provides an obvious improvement in time complexity of $O^{*}\left(2^{\left|G\right|}\right)$ compared to naive approach with time complexity of $O\left(\left|G\right|!\right)$, but it requires additional $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ space to run. It is particularly important for set encoding to be very efficient as it will be executed many times, therefore presented method for such encoding might not make it into final implementation and be replaced with different method or be modified. So much space is necessary by this algorithm to run, that it can be too much for large graphs. We will try to overcome this difficulty later. It also has some useful properties which we will exploit, but this will be also discussed later.
 \subsection{Branch and Bound algorithm}
+In contrary to dynamic algorithm, this time we will try to build treedepth decomposition in top-to-bottom manner. To make this approach efficient, we shall incorporate branch and bound technique. Please note that this approach assumes connected input graph.
+\subsubsection{Idea behind the algorithm}
+As in every branch and bound algorithm, we shall start with some valid solution to our problem. We can try to find some good heuristic solution, but for now $P_{\left|G\right|}$ will be sufficient. Along this solution we must store its treedepth of $\left|G\right|$ as we will improve this number and eliminate some unnecessary attempts. We can now proceed to generating our solutions. First, we will choose a root of our tree. Then, we will choose its children. Then we will choose their children and so on. We will be building our solution generation after generation (like generations of a family). When chosen generation is too deep in our tree, we terminate current attempt and try different configuration.\\
+\subsubsection{Determining which vertices are valid as children}
+Not every vertex will be suitable as a child of another vertex in treedepth decomposition. Take as an example $P_5$ and its decomposition generation. Let's say that we chose as a root of our tree vertex 2. Then we know, for sure, that vertices 1 and 3, as neighbours of 2, must be in a subtree of 2. Let's say that we decided, that 1 and 3 will be the only children of 2. Now we know for sure, that vertex 0 must be in a subtree of 1 and vertex 4 must be in a subtree of 3. A tree when vertex 0 is a child of vertex 3 will not be valid treedepth decomposition.\\
+General rule is: every neghbour of $v$ in $G$ must be either its child or ancestor in a valid treedepth decomposition (as definition of treedepth decomposition states).\\
+During execution of branch and bound algorithm we will keep track of preferences (in subtree of which vertex it must be placed) of each vertex along with information about what vertices are already in the tree.
+\subsubsection{The Algorithm}
+\begin{lstlisting}[language=C++]
+// Global variables used by the algorithm (Current state)
+const int Taken = -1;
+const Graph g = GetConnectedGraph();
+int[] preference = new int[V(g).size()];
+Graph best_tree = Path(V(g));
+int best_td = V(g).size();
+Graph current_tree = Graph();
+
+// Finds treedepth decomposition with its treedepth using branch and bound technique
+(Graph, int) TDBnB() {
+  for(int x = 0; x < V(g).size(); ++x) {
+    // Vertices which will have its children generated next. Right now it's just root.
+    Set active_vertices = {x}
+    for(int y = 0; y < V(g).size(); ++y)
+      // Every vertex will end up in a subtree of trees' root.
+      preference[y] = x;
+    current_tree = Graph();
+    current_tree.add_vertex(x);
+    preference[x] = Taken;
+    NextLevel(1, active_vertices);
+  }
+  return best_tree, best_td;
+}
+
+// This function is called whenever we have finished generating a level in current_tree. active_vertices is a set of vertices which will have its children chosen next. Depth tells us how deep finished level is. It checks whether we have a chance improving previous results and starts generation of next level.
+Collision NextLevel(int depth, Set active_vertices) {
+  if(V(current_tree).size() == V(g).size() && depth < best_td) {
+    (best_tree, best_td) = (current_tree, depth)
+    return null
+  }
+  if(active_vertices.empty() || depth + 1 >= best_td)
+    return null;
+  return GenerateFrom(depth + 1, active_vertices, {}, 0);
+}
+
+// This function tries to add child to active_vertices_new as a child of parent and update both current_tree and history. When it contradics with treedepth decomposition definition, it returns an error and makes no changes to current state.
+Collision TryVertexAsAChild(int child, int parent) {
+ ...
+ return collision;
+}
+
+// Determines whether given collision makes current state contradictory with treedepth decomposition definition
+bool Critical(Collision collision) {
+  ...
+  return false;
+}
+
+// This function considers vertex from as a child of consecutive vertices from active_vertices. At the time of calling this function, every vertex v < from has been considered on this level.
+Collision GenerateFrom(int depth, Set active_vertices, Set active_vertices_new, int from) {
+  if(history[from] != Taken) {
+    for(int x : active_vertices) {
+      // Dump all information that might change as a result of TryVertexAsAChild
+      State previous_state = CurrentState.save();
+      Collision collision = TryVertexAsAChild(from , x);
+      if(collision == null) {
+        State current_state = CurrentState.save();
+        if(from + 1 < V(g).size()) {
+          // Try continuing generation from next vertex
+          collision = GenerateFrom(depth, active_vertices, active_vertices_new, from + 1);
+          // Rollback changes made
+          previous_state.apply();
+          if(Critical(collision))
+            return collision;
+         current_state.apply();
+        }
+        // Try finishing generating this level
+        collision = NextLevel(depth, active_vertices_new);
+        // Rollback changes made
+        previous_state.apply();
+        if(Critical(collision))
+          return collision;
+      }
+      else if(Critical(collision))
+        return collision;
+    }
+  }
+  // Try not adding from as a child of any vertex on this level
+  if(from + 1 < V(g).size())
+    return GenerateFrom(depth, active_vertices, active_vertices_new, from + 1);
+  return NextLevel(depth, active_vertices_new);
+}
+\end{lstlisting}
