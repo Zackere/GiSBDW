@@ -219,3 +219,5 @@ Collision GenerateFrom(int depth, Set active_vertices, Set active_vertices_new, 
   return NextLevel(depth, active_vertices_new);
 }
 \end{lstlisting}
+\subsubsection{Remarks}
+Despite very high pesymistic time complexity being at most $O^*\left(\left|G\right|^{\left|G\right|-2}\right)$ it is expected for this algorithm to perform reasonably well, just as TSP algorithm using branch and bound technique~\cite{tsp_bnb} does. With every improvement of initial heuristic this algorithm will significantly reduce its running time. It has small space complexity of $O\left(\left|G\right|^2\right)$ which is much better than dynamic algorithms' space complexity of $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$. The depth of recursion of this algorithm is at most $2\cdot\left|G\right|$ which is small enough to not worry about stack overflow when implementing it on a standard machine.
