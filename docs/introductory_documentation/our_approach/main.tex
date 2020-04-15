@@ -184,6 +184,8 @@ bool InSubtreeOf(Graph tree, int v1, int v2) {
 
 // Tries to add child to active_vertices_new as a child of parent and update both current_tree and history. When it contradics with treedepth decomposition definition, it returns an error and makes no changes to current state.
 Collision TryVertexAsAChild(int child, int parent) {
+ if(!InSubtreeOf(current_tree, preference[child], parent))
+   return {};
  for(int v : g.neigh(child))
    if(preference[v] != Taken && !InSubtreeOf(current_tree, preference[v], parent))
      return Collision{v1: preference[v], v2: child, w: v};
