@@ -1,1 +1,30 @@
 \section{Typical approaches}
+\subsection{Exaxct}
+\subsubsection{Na\"ive}
+Recall the defintion of treedepth:
+\begin{equation*}
+td(G)={\begin{cases}1,&{\text{if }}|G|=1;\\1+\min _{{v\in V}}td(G-v),&{\text{if }}G{\text{ is connected and }}|G|>1;\\\max _{{i}}td(G_{i}),&{\text{otherwise}};\end{cases}}\tag{\ref{td_def}}
+\end{equation*}
+Let's say that we have permutation $\sigma$ of vertices of $G$. Let's approximate treedepth using this permutation:
+\begin{equation}
+td(G, \sigma, i)={
+	\begin{cases}
+	1,&{\text{if }}|G|=1;\\
+	td(G, \sigma, i + 1), &{\text{if }}\sigma(i)\notin V(G);\\
+	1+td(G-\sigma(i), \sigma, i+1),&{\text{if }}{\sigma(i)\in V(G)\text{ and }}G{\text{ is connected and }}|G|>1;\\
+	\max _{{j}}td(G_{j}, \sigma, i),&{\text{otherwise}};
+	\end{cases}
+}
+\end{equation}
+then our approximation would be $td(G, \sigma, 0)$. Let $\sigma_G$ be a permutation that satisfies $td(G) = td(G, \sigma_G, 0)$. Finding $\sigma_G$ takes $O\left(\left|G\right|!\right)$ time using brute force search. This permutation can be build using standard definition of treedepth:
+\begin{itemize}
+	\item When $\left|G\right| = 1$, return permutation of the only vertex of $G$.
+	\item When $G{\text{ is connected and }}|G|>1$, find $v$ such that minimizes $td(G-v)$ and store permutation $\sigma$ returned by $td(G-v)$. Return $v\sigma$.
+	\item Lastly, let $\sigma_i$ be permutation returned by $td(G_i)$. Return $\sigma_0...\sigma_k$.
+\end{itemize}
+which also requires at least $O\left(\left|G\right|!\right)$ time.\\
+Having found $\sigma_G$, we can reconstruct treedepth decomposition in $O\left(\left|G\right|\right)$ time. Method for such reconstruction is very simillar to reconstruction described in 'Our approach' in section devoted to dynamic algorithm thus it won't be described here.
+\subsubsection{Dynamic}
+
+\subsection{Approximate}
+\subsubsection{Bodlaenders' heuristic}
