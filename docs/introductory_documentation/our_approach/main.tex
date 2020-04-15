@@ -190,8 +190,8 @@ Collision TryVertexAsAChild(int child, int parent) {
  current_tree.add_vertex(child);
  current_tree.add_edge(child, parent);
  for(int v : g.neigh(child))
-   history[v] = child;
- history[child] = Taken;
+   preference[v] = child;
+ preference[child] = Taken;
  return null;
 }
 
