@@ -177,7 +177,7 @@ bool InSubtreeOf(Graph tree, int v1, int v2) {
   while(v2 != tree.root()) {
     if(v1 == v2)
       return true;
-    v2 = v2.parent();
+    v2 = tree.parent(v2);
   }
   return v1 == v2;
 }
