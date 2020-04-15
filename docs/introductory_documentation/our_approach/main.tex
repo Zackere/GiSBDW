@@ -172,10 +172,30 @@ Collision NextLevel(int depth, Set active_vertices) {
   return GenerateFrom(depth + 1, active_vertices, {}, 0);
 }
 
+// Checks if v2 is a child of v1 in tree
+bool InSubtreeOf(Graph tree, int v1, int v2) {
+  while(v2 != tree.root()) {
+    if(v1 == v2)
+      return true;
+    v2 = v2.parent();
+  }
+  return v1 == v2;
+}
+
 // Tries to add child to active_vertices_new as a child of parent and update both current_tree and history. When it contradics with treedepth decomposition definition, it returns an error and makes no changes to current state.
 Collision TryVertexAsAChild(int child, int parent) {
- ...
- return collision;
+ for(int v : g.neigh(child))
+   if(!InSubtreeOf(current_tree, preference[v], parent)) {
+     current_tree.remove_edge(child, parent);
+     current_tree.remove_vertex(child);
+     return Collision{v1: preference[v], v2: child, w: v};
+   }
+ current_tree.add_vertex(child);
+ current_tree.add_edge(child, parent);
+ for(int v : g.neigh(child))
+   history[v] = child;
+ history[child] = Taken;
+ return null;
 }
 
 // Determines whether given collision makes current state contradictory with treedepth decomposition definition
