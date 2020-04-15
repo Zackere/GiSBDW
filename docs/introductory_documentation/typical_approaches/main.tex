@@ -27,4 +27,12 @@ Having found $\sigma_G$, we can reconstruct treedepth decomposition in $O\left(\
 \subsubsection{Dynamic}
 In order to reduce time complexity of an algorithm, one may store intermediate solutions to avoid re-computation. When calculating treedepth, we can trade off space complexity for quite significant improvement in time complexity (from $O\left(\left|G\right|!\right)$ to $O^{*}\left(2^{\left|G\right|}\right)$). The most classical approach is described in section 'Our approach' in section 'Dynamic'. In 2013, team of Fedor V. Fomin, Archontia C. Giannopoulou and Michał Pilipczuk came up with an improvement to classical dynamic algorithm which reduces its time complexity from $O^{*}\left(2^{\left|G\right|}\right)$ to $O^{*}\left(1.9602^{\left|G\right|}\right)$ \cite{mimuw_td}. As dynamic approach is based on treedepth decompositions of induced subgraphs, they restrict what kind of subgraphs will be considered in subsequent iterations of the algorithm. In order to ensure pruned subgraphs which would've led to optimal solutions are not lost, it is shown that those graphs share very special properties (minimal trees) and can be recovered easily. For further details about their work please refer to \cite{mimuw_td}.
 \subsection{Approximate}
-\subsubsection{Bodlaenders' heuristic}
+\subsubsection{Bodlaenders' heuristic \cite{bodlaender_td_approx}}
+A notion strongly connected to the notion of treedepth is the notion of treewidth ($tw\left(G\right)$). Treewidth can be described as:
+\emph{Given a graph G, we can eliminate a vertex v by removing it from the graph, and turning its neighborhood into a clique. The treewidth of a graph is at most k, if there exists an elimination order such that all vertices have degree at most k at the time they are eliminated.\cite{tw_gpu}. Then, the smallest k such that there exists elimination order which satisfies $td(G)\leq k$ is called treewidth of $G$}. For the definition of treewidth decomposition please refer to \cite{tw_decomp}.\\
+Bodlaenders' approach is based on inequality \cite{mimuw_td}\cite{bodlaender_td_approx}:
+\begin{equation}
+tw(G) \leq td(G) \leq tw(G)\cdot \log\left(\left|G\right|\right)
+\end{equation}
+First, he finds an approximate treewidth decomposition which is at most $O\left(\log\left(\left|G\right|\right)\right)$ times worse than the optimal solution.
+Then, by finding Georges' nested dissection ordering \cite{george}\cite{bodlaender_td_approx} finds treedepth decomposition which is at most $O\left(\log^2\left(\left|G\right|\right)\right)$ times worse than the optimal one.
