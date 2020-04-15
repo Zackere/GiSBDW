@@ -1,5 +1,5 @@
 \section{Typical approaches}
-\subsection{Exaxct}
+\subsection{Exact}
 \subsubsection{Na\"ive}
 Recall the defintion of treedepth:
 \begin{equation*}
@@ -25,6 +25,6 @@ then our approximation would be $td(G, \sigma, 0)$. Let $\sigma_G$ be a permutat
 which also requires at least $O\left(\left|G\right|!\right)$ time.\\
 Having found $\sigma_G$, we can reconstruct treedepth decomposition in $O\left(\left|G\right|\right)$ time. Method for such reconstruction is very simillar to reconstruction described in 'Our approach' in section devoted to dynamic algorithm thus it won't be described here.
 \subsubsection{Dynamic}
-
+In order to reduce time complexity of an algorithm, one may store intermediate solutions to avoid re-computation. When calculating treedepth, we can trade off space complexity for quite significant improvement in time complexity (from $O\left(\left|G\right|!\right)$ to $O^{*}\left(2^{\left|G\right|}\right)$). The most classical approach is described in section 'Our approach' in section 'Dynamic'. In 2013, team of Fedor V. Fomin, Archontia C. Giannopoulou and Michał Pilipczuk came up with an improvement to classical dynamic algorithm which reduces its time complexity from $O^{*}\left(2^{\left|G\right|}\right)$ to $O^{*}\left(1.9602^{\left|G\right|}\right)$ \cite{mimuw_td}. As dynamic approach is based on treedepth decompositions of induced subgraphs, they restrict what kind of subgraphs will be considered in subsequent iterations of the algorithm. In order to ensure pruned subgraphs which would've led to optimal solutions are not lost, it is shown that those graphs share very special properties (minimal trees) and can be recovered easily. For further details about their work please refer to \cite{mimuw_td}.
 \subsection{Approximate}
 \subsubsection{Bodlaenders' heuristic}
