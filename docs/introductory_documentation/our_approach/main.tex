@@ -247,3 +247,15 @@ Collision GenerateFrom(int depth, Set active_vertices, Set active_vertices_new, 
 \end{lstlisting}
 \subsubsection{Remarks}
 Despite very high pesymistic time complexity being at most $O^*\left(\left|G\right|^{\left|G\right|-2}\right)$ it is expected for this algorithm to perform reasonably well, just as TSP algorithm using branch and bound technique~\cite{tsp_bnb} does. With every improvement of initial heuristic this algorithm will significantly reduce its running time. It has small space complexity of $O\left(\left|G\right|^2\right)$ which is much better than dynamic algorithms' space complexity of $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$. The depth of recursion of this algorithm is at most $2\cdot\left|G\right|$ which is small enough to not worry about stack overflow when implementing it on a standard machine.
+\subsection{Modifications}
+This section is devoted to acknowledging some interesting properties of just described algorithms. Since we aim to incorporate GPUs into our project it revolves around this idea.
+\subsubsection{Dynamic algorithm}
+The Dynamic algorithm is very easy to parallelize on level of one step. Each subset can be processed independently of the others. The only synchorization will be needed to update output array but this should impose no problem at all. Another interesting property of this algorithm is possibility of reconstructing treedepth decompositions in parallel. If we were to terminate this algorithm at, let's say 18-element subsets of 50-element set, we can, for each of these subsets, reconstruct the treedepth decomposition independently of anothers, provided that operation \texttt{SetId Find(ElemType)} will not change the UnionFind object i.e. will not perform path compression if told not to do so.
+\subsubsection{Branch and Bound algorithm}
+Obiously we will make an attempt to implement this algorithm on a GPU. It may require some modifications to it, but we will not be deterred. The most important modification to this will be combining this and the dynamic algorithm together so called \emph{Hybrid algorithm}. It goes as follows:
+\begin{itemize}
+	\item Run the dynamic algorithm until we have insufficient amount of memory for the next iteration
+	\item Reconstruct intermediate solutions (so-called \emph{endings}) provided by the last iteration of the dynamic algorithm
+	\item Launch Branch and Bound algorithm taking \emph{endings} into account
+\end{itemize}
+The last step is yet unclear, but poses final modification to Branch and Bound algorithm. It shows how those to approaches can be combined together, in hope of increasing efficiency to a maximum. Of course it will be implemented on a GPU to further decrease its running time. The method of combining is in development as of writing this document.
