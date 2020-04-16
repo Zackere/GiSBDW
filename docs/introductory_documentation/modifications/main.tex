@@ -1,1 +1,15 @@
 \section{Proposed modifications}
+\subsection{GPU implementation}
+Most important modification proposed by us is an attempt to use a computing power of GPU to implement above algorithms.
+There are some obstacles on our way such as: high memory complexity of dynamic algorithm, recursive nature of Branch and Bound algorithm, finding an optimal way to parallelize these algorithms. In case of succesful implementation we expect high performance gain comparing to CPU version.
+
+\subsection{Dynamic algorithm}
+The dynamic approach per see is nothing new, but we introduce two small modifications. Firstly, we will use GPU rather than CPU as a target. Secondly, we will use Binomial Encoding to guarantee instant lookup time of any subset in memory.
+
+\subsection{Branch and Bound}
+We could not find an example of this type of approach to our problem of calculating tree-depth. This method, thanks to quadratic space complexity, should be feasible for larger graphs. We expect that proper bounding will highly reduce time complexity.
+As a downside, this method does not look as a good candidate to efficiently parallelize. It also depends on recursion which is not a strong point of GPU.
+
+\subsection{Hybrid algorithm}
+To solve problem of lack of memory on GPU for dynamic algorithm, we propose hybrid algorithm. Hybrid algorithm will continue to calculate tree-depth using dynamic approach and switch to slower but significantly less memory hungry Branch and Bound version.
+Combining these two algorithms should not be a big hassle.
