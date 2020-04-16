@@ -6,8 +6,12 @@
 #include "union_find.hpp"
 
 namespace td {
+    //Implementation of UnionFind abstract data type in array
 class UnionFindImpl : public UnionFind {
  public:
+  //Constructor of UnionFindImpl
+  //Params
+  //numberOfElements - number of starting distinct sets
   explicit UnionFindImpl(ElemType numberOfElements);
   UnionFindImpl(UnionFindImpl const& uf);
   ~UnionFindImpl() override = default;
