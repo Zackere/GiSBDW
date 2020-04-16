@@ -127,6 +127,7 @@ Having completed the dynamic algorithm, the object on the last page of history h
 This algorithm finds what vertices have been added on consequent steps and joins appropriate trees under common parent vertex.
 \subsubsection{Remarks}
 As we can see, this algorithm provides an obvious improvement in time complexity of $O^{*}\left(2^{\left|G\right|}\right)$ compared to naive approach with time complexity of $O\left(\left|G\right|!\right)$, but it requires additional $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ space to run. It is particularly important for set encoding to be very efficient as it will be executed many times, therefore, presented method for such encoding might not make it into final implementation and be replaced with different method or be modified significantly. Space complexity of this algorithm makes it unusable for larger graphs. The method to overcome this problem and some useful properties of this algorithm which we will exploit are presented later.
+\clearpage
 \subsection{Branch and Bound algorithm}
 In contrary to dynamic algorithm, this time we will build treedepth decomposition in top-to-bottom manner. To make this approach efficient, we shall incorporate branch and bound technique. Please note that this approach assumes connected input graph. This assumption is valid as for disconnected graphs we can run this algorithm for every connected component.
 \subsubsection{Idea behind the algorithm}
