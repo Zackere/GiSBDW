@@ -1,12 +1,15 @@
 \section{Expected results}
-\subsection{General thoughts}
-As we mentioned before we are going to try a few variants with diffrent degree of complexity and in this point we are not sure if we manage to accomplish all of them. The most uncertain variant is branch and bound algorith on GPU as this alogorithm seems to be very hard to be made parallel. As a result it may not be possible to provide  GPU implementation for hybrid algorithm, but it is not sure, we will try to figure it out.\\
+
 \subsection{Dynamic}
-We most likely will manage to do dynamic algorithm both GPU and CPU implementation and the GPU implementation of dynamic algorithm will probably perform very well as long as memory will allow it to do so.The GPU implementation is our first modification to well-known algorithm and we expect, that it will be 30 times quicker than its CPU version. We predict that the limits on memory will be reached for graphs with around 30 vertices. The exact value depends on union-find structure implementation.\\
+We most likely will manage to implement dynamic algorithm both for GPU and CPU. The GPU implementation of dynamic algorithm will probably perform very well as long as memory will allow it to do so. The GPU implementation is our first modification to well-known algorithm and we expect, that it will be 30 times quicker than its CPU version. We predict that the limits on memory will be reached for graphs with around 30 vertices. The exact value depends on union-find structure implementation.
 
 \subsection{Branch and bound}
-This algorithm has higher complexity than dynamic algorithm and most likely it will perform worse than dynamic algorithm, however it does not have limits on memory as its memory complexity is polinomial. It is very possible that we will manage to provide CPU implementation, but because of its recursive nature it may cause a lot of trouble to accomplish GPU one. The need of creating this algorithm came from dynamic algoritm memory limit.\\
-
+This algorithm has higher complexity than dynamic algorithm and most likely it will perform worse than dynamic algorithm, however it does not have limits on memory as its memory complexity is polynomial. It is very possible that we will manage to provide CPU implementation, but because of its recursive nature it may cause a lot of trouble to accomplish GPU one. This algorithm was designed to address memory issues that the dynamic algorithm imposes.
 
 \subsection{Hybrid}
-This algorithm has similar complexity to branch and bound algorith as branch and bound is main part of it, but we assume that it will perform way better than its basic version because of \emph{endings} precalculated by dynamic algorithm and the same time it will not have the limit on memory, so this is our idea to handle the dynamic algorithm memory issue. Most likely we will provide CPU implementation. Unfortunately, we think that the GPU implementation is very unlikly to be accomplished.
+This algorithm has similar complexity to branch and bound algorith as branch and bound is main part of it, but we assume that it will perform way better than its basic version because of
+\emph{endings} %what are endings, never defined earlier?
+precalculated by dynamic algorithm and the same time it will not have the limit on memory, so this is our idea to handle the dynamic algorithm memory issue. Most likely we will provide CPU implementation.We suspect, that GPU implementation will be very hard to accomplish. Nevertheless we are highly motivated to come up with GPU implementation of this algorithm even if it requires launching seperate project.
+
+\subsection{General thoughts}
+Having presented our ideas for computing treedepth along with its decomposition, we acknowledge that they highly vary in degree of complexity. Some of them are very easy to be implemented both on GPU and CPU, and some seem to pose a challenge to be implemented on a GPU. Nevertheless we aim to accomplish all of the goals set, including the hardest of all: hybrid approach implemented on a GPU.
