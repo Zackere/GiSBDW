@@ -1,18 +1,56 @@
 \documentclass[a4paper]{article}
 \usepackage{subfiles}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage[export]{adjustbox}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsrefs}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
-\title{Calculating Treedepth on a GPU- introduction}
+\lstdefinestyle{codestyle}{
+	backgroundcolor=\color{backcolour},
+	commentstyle=\color{codegreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{codegray},
+	stringstyle=\color{codepurple},
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,
+	breaklines=true,
+	captionpos=b,
+	keepspaces=true,
+	numbersep=5pt,
+	showspaces=false,
+	showstringspaces=false,
+	showtabs=false,
+	tabsize=2,
+	numbers=left
+}
+\lstset{style=codestyle}
+
+\title{Calculating tree-depth\\Introduction}
 \author{Dymitr Lubczyk \and Wojciech Replin \and Bartosz Różański}
-\date{}
+\lstset{style=codestyle}
 
 \begin{document}
 \maketitle
+\begin{abstract}
+We present several methods for computing treedepth on both CPU and GPU. We also set goals for the future of our project. Presented algorithm is a combination of well known dynamic algorithm and our own innovatory approach using branch and bound technique.
+\end{abstract}
 \newpage
 \tableofcontents
 \newpage
 \subfile{./introduction/main.tex}
+\clearpage
 \subfile{./typical_approaches/main.tex}
+\clearpage
 \subfile{./our_approach/main.tex}
-\subfile{./modifications/main.tex}
+\clearpage
 \subfile{./expected_results/main.tex}
+\clearpage
+\subfile{./references/main.tex}
 \end{document}

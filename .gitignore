@@ -1,4 +1,8 @@
 **/.vs
 build*
-**/*.user
-
+**.user
+**.aux
+**.log
+**.out
+**.synctex.gz
+**.toc
