@@ -1,6 +1,6 @@
 \section{Our approach}
 \subsection{Dynamic Algorithm}
-\subsubsection{Binomial Encoding~\cite{binomial_encoding}}
+\subsubsection{Binomial Encoding \cite{binomial_encoding}}
 In this section we shall present a simple method to optimally encode $k$-element subsets of $\{0,...,n-1\}$ for $k\in\left[0;n\right]$ called binomial encoding:
 \begin{lstlisting}[language=C++]
 size_t Encode(Set s, size_t n, size_t k) {
@@ -126,8 +126,7 @@ Having completed the dynamic algorithm, the object on the last page of history h
 \end{lstlisting}
 This algorithm finds what vertices have been added on consequent steps and joins appropriate trees under common parent vertex.
 \subsubsection{Remarks}
-As we can see, this algorithm provides an obvious improvement in time complexity of $O^{*}\left(2^{\left|G\right|}\right)$ compared to naive approach with time complexity of $O\left(\left|G\right|!\right)$, but it requires additional $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ space to run. It is particularly important for set encoding to be very efficient as it will be executed many times, therefore, presented method for such encoding might not make it into final implementation and be replaced with different method or be modified significantly. Space complexity of this algorithm makes it unusable for larger graphs. The method to overcome this problem and some useful properties of this algorithm which we will exploit are presented later.
-\clearpage
+As we can see, this algorithm provides an obvious improvement in time complexity of $O^{*}\left(2^{\left|G\right|}\right)$ compared to na\"ive approach with time complexity of $O\left(\left|G\right|!\right)$, but it requires additional $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ space to run. It is particularly important for set encoding to be very efficient as it will be executed many times, therefore, presented method for such encoding might not make it into final implementation and be replaced with different method or be modified significantly. So much space is necessary by this algorithm to run, that it can be too much for large graphs. We will try to overcome this difficulty later. It also has some useful properties which we will exploit, but this will be also discussed later.
 \subsection{Branch and Bound algorithm}
 In contrary to dynamic algorithm, this time we will build treedepth decomposition in top-to-bottom manner. To make this approach efficient, we shall incorporate branch and bound technique. Please note that this approach assumes connected input graph. This assumption is valid as for disconnected graphs we can run this algorithm for every connected component.
 \subsubsection{Idea behind the algorithm}
@@ -170,7 +169,11 @@ Collision NextLevel(int depth, Set active_vertices) {
   }
   if(active_vertices.empty() || depth + 1 >= best_td)
     return null;
-  return GenerateFrom(depth + 1, active_vertices, {}, 0);
+  int from = 0;
+  while(preference[from] == Taken) {
+    ++from;
+  }
+  return GenerateFrom(depth + 1, active_vertices, {}, from);
 }
 
 // Checks if v2 is a child of v1 in tree
@@ -183,8 +186,8 @@ bool InSubtreeOf(Graph tree, int v1, int v2) {
   return v1 == v2;
 }
 
-// Tries to add child to active_vertices_new as a child of parent and update both current_tree and history. When it contradics with treedepth decomposition definition, it returns an error and makes no changes to current state.
-Collision TryVertexAsAChild(int child, int parent) {
+// Tries to add child to av as a child of parent and update both current_tree and history. When it contradics with treedepth decomposition definition, it returns an error and makes no changes to current state.
+Collision TryVertexAsAChild(int child, int parent, Set av) {
  if(!InSubtreeOf(current_tree, preference[child], parent))
    return {};
  for(int v : g.neigh(child))
@@ -196,6 +199,7 @@ Collision TryVertexAsAChild(int child, int parent) {
    if(preference[v] != Taken)
      preference[v] = child;
  preference[child] = Taken;
+ av.insert(child);
  return null;
 }
 
@@ -205,40 +209,53 @@ bool Critical(Collision collision) {
   return false;
 }
 
-// This function considers vertex from as a child of consecutive vertices from active_vertices. At the time of calling this function, every vertex v < from has been considered on this level to some extent. Note that calling this function does not change current state i.e. after this function returns state is how it was before the call.
+// This function considers vertex from as a child of consecutive vertices from active_vertices. At the time of calling this function, every vertex v < from has been considered on this level to some extent. Note that calling this function does not change current state i.e. after this function returns state is how it was before the call. It is required that preference[from] != Taken.
 Collision GenerateFrom(int depth, Set active_vertices, Set active_vertices_new, int from) {
-  if(history[from] != Taken) {
-    for(int x : active_vertices) {
-      // Dump all information that might change as a result of TryVertexAsAChild
-      State previous_state = CurrentState.save();
-      Collision collision = TryVertexAsAChild(from , x);
-      if(collision == null) {
-        State current_state = CurrentState.save();
-        if(from + 1 < V(g).size()) {
-          // Try continuing generation from next vertex
-          collision = GenerateFrom(depth, active_vertices, active_vertices_new, from + 1);
-          // Rollback changes made
-          previous_state.apply();
-          if(Critical(collision))
-            return collision;
-          current_state.apply();
-        }
-        // Try finishing generating this level
-        collision = NextLevel(depth, active_vertices_new);
+  int next_available = from + 1;
+  while(next_available < V(g).size() && preference[next_available] == Taken)
+    ++next_available;
+  for(int x : active_vertices) {
+    // Dump all information that might change as a result of TryVertexAsAChild
+    State previous_state = CurrentState.save();
+    Collision collision = TryVertexAsAChild(from , x, active_vertices_new);
+    if(collision == null) {
+      State current_state = CurrentState.save();
+      if(next_available < V(g).size()) {
+        // Try continuing generation from next available vertex
+        collision = GenerateFrom(depth, active_vertices, active_vertices_new, next_available);
         // Rollback changes made
         previous_state.apply();
         if(Critical(collision))
           return collision;
+        current_state.apply();
       }
-      else if(Critical(collision))
+      // Try finishing generating this level
+      collision = NextLevel(depth, active_vertices_new);
+      // Rollback changes made
+      previous_state.apply();
+      if(Critical(collision))
         return collision;
     }
+    else if(Critical(collision))
+      return collision;
   }
-  // Try not adding from as a child of any vertex on this level
-  if(from + 1 < V(g).size())
-    return GenerateFrom(depth, active_vertices, active_vertices_new, from + 1);
+  // Try not adding from as a child of any vertex on this level if it makes sense
+  if(next_available < V(g).size() && depth + 1 < best_td)
+    return GenerateFrom(depth, active_vertices, active_vertices_new, next_available);
   return NextLevel(depth, active_vertices_new);
 }
 \end{lstlisting}
 \subsubsection{Remarks}
 Despite very high pesymistic time complexity being at most $O^*\left(\left|G\right|^{\left|G\right|-2}\right)$ it is expected for this algorithm to perform reasonably well, just as TSP algorithm using branch and bound technique~\cite{tsp_bnb} does. With every improvement of initial heuristic this algorithm will significantly reduce its running time. It has small space complexity of $O\left(\left|G\right|^2\right)$ which is much better than dynamic algorithms' space complexity of $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$. The depth of recursion of this algorithm is at most $2\cdot\left|G\right|$ which is small enough to not worry about stack overflow when implementing it on a standard machine.
+\subsection{Modifications}
+This section is devoted to acknowledging some interesting properties of just described algorithms. Since we aim to incorporate GPUs into our project it revolves around this idea.
+\subsubsection{Dynamic algorithm}
+The Dynamic algorithm is very easy to parallelize on level of one step. Each subset can be processed independently of the others. The only synchorization will be needed to update output array but this should impose no problem at all. Another interesting property of this algorithm is possibility of reconstructing treedepth decompositions in parallel. If we were to terminate this algorithm at, let's say 18-element subsets of 50-element set, we can, for each of these subsets, reconstruct the treedepth decomposition independently of anothers, provided that operation \texttt{SetId Find(ElemType)} will not change the UnionFind object i.e. will not perform path compression if told not to do so.
+\subsubsection{Branch and Bound algorithm}
+Obiously we will make an attempt to implement this algorithm on a GPU. It may require some modifications to it, but we will not be deterred. The most important modification to this will be combining this and the dynamic algorithm together so called \emph{Hybrid algorithm}. It goes as follows:
+\begin{itemize}
+	\item Run the dynamic algorithm until we have insufficient amount of memory for the next iteration
+	\item Reconstruct intermediate solutions (so-called \emph{endings}) provided by the last iteration of the dynamic algorithm
+	\item Launch Branch and Bound algorithm taking \emph{endings} into account
+\end{itemize}
+The last step is yet unclear, but poses final modification to Branch and Bound algorithm. It shows how those to approaches can be combined together, in hope of increasing efficiency to a maximum. Of course it will be implemented on a GPU to further decrease its running time. The method of combining is in development as of writing this document.
