@@ -5,7 +5,7 @@
 namespace td {
 
 class UnionFind {
-public:
+ public:
   using ElemType = int;
   using SetId = int;
   virtual ~UnionFind() = default;
@@ -40,4 +40,4 @@ public:
   // ElemType value associated with set represented by given setId
   virtual ElemType GetValue(SetId setId) = 0;
 };
-} // namespace td
+}  // namespace td

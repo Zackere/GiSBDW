@@ -7,12 +7,12 @@
 namespace td {
 // Implementation of UnionFind abstract data type in array
 class UnionFindImpl : public UnionFind {
-public:
+ public:
   // Constructor of UnionFindImpl
   // Params
   // numberOfElements - number of starting distinct sets
   explicit UnionFindImpl(ElemType numberOfElements);
-  UnionFindImpl(UnionFindImpl const &uf);
+  UnionFindImpl(UnionFindImpl const& uf);
   ~UnionFindImpl() override = default;
   SetId Union(SetId set1, SetId set2) override;
   SetId Find(ElemType elem) override;
@@ -21,11 +21,11 @@ public:
   ElemType GetMaxValue() override;
   ElemType GetValue(SetId setId) override;
 
-private:
+ private:
   void SetValue(SetId setId, ElemType value);
 
   ElemType numberOfElements;
   ElemType maxValue;
   std::unique_ptr<ElemType[]> parents;
 };
-} // namespace td
+}  // namespace td
