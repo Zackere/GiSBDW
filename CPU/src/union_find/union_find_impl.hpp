@@ -2,7 +2,6 @@
 #pragma once
 #include <iostream>
 #include <memory>
-#include <vector>
 #include "union_find.hpp"
 
 namespace td {
@@ -22,11 +21,11 @@ class UnionFindImpl : public UnionFind {
   ElemType GetMaxValue() override;
   ElemType GetValue(SetId setId) override;
 
- protected:
-  void SetValue(SetId setId, ElemType value) override;
+  private:
+  void SetValue(SetId setId, ElemType value);
 
- private:
+  ElemType numberOfElements;
   ElemType maxValue;
-  std::vector<ElemType> parents;
+  std::unique_ptr<ElemType[]> parents;
 };
 }  // namespace td

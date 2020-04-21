@@ -39,12 +39,5 @@ class UnionFind {
   //Return
   //ElemType value associated with set represented by given setId
   virtual ElemType GetValue(SetId setId) = 0;
-
- protected:
-  //Set a value associated with given set
-  //Params
-  //setId - id of set for which we want to set a value for
-  //value - value to set
-  virtual void SetValue(SetId setId, ElemType value) = 0;
 };
 }  // namespace td

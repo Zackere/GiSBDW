@@ -6,14 +6,17 @@
 namespace td {
 
 UnionFindImpl::UnionFindImpl(ElemType numberOfElements)
-    : maxValue(-1), parents(std::vector<ElemType>(numberOfElements)) {
-  for (ElemType i = 0; i < numberOfElements; ++i) {
-    std::fill(parents.begin(), parents.end(), -1);
-  }
+    : numberOfElements(numberOfElements), maxValue(-1), parents(new ElemType[numberOfElements]) {
+    std::fill(parents.get(), parents.get() + numberOfElements, -1);
 }
 
 UnionFindImpl::UnionFindImpl(UnionFindImpl const& uf)
-    : maxValue(uf.maxValue), parents(uf.parents) {}
+    : numberOfElements(uf.numberOfElements),
+      maxValue(uf.maxValue),
+      parents(new ElemType[numberOfElements]) {
+  std::copy(uf.parents.get(), uf.parents.get() + numberOfElements,
+            parents.get());
+}
 
 UnionFind::SetId UnionFindImpl::Find(ElemType elem) {
   ElemType iterator = elem;
@@ -42,7 +45,7 @@ std::unique_ptr<UnionFind> UnionFindImpl::Clone() {
 }
 
 UnionFind::ElemType UnionFindImpl::GetNumberOfElements() {
-  return parents.size();
+  return numberOfElements;
 }
 UnionFind::ElemType UnionFindImpl::GetMaxValue() { return maxValue; }
 UnionFind::ElemType UnionFindImpl::GetValue(SetId setId) {
