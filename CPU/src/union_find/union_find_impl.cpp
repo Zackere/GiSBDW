@@ -1,18 +1,16 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #include "union_find_impl.hpp"
 
-#include <memory>
-
 namespace td {
 
 UnionFindImpl::UnionFindImpl(ElemType numberOfElements)
-    : numberOfElements(numberOfElements), maxValue(-1), parents(new ElemType[numberOfElements]) {
-    std::fill(parents.get(), parents.get() + numberOfElements, -1);
+    : numberOfElements(numberOfElements), maxValue(-1),
+      parents(new ElemType[numberOfElements]) {
+  std::fill(parents.get(), parents.get() + numberOfElements, -1);
 }
 
-UnionFindImpl::UnionFindImpl(UnionFindImpl const& uf)
-    : numberOfElements(uf.numberOfElements),
-      maxValue(uf.maxValue),
+UnionFindImpl::UnionFindImpl(UnionFindImpl const &uf)
+    : numberOfElements(uf.numberOfElements), maxValue(uf.maxValue),
       parents(new ElemType[numberOfElements]) {
   std::copy(uf.parents.get(), uf.parents.get() + numberOfElements,
             parents.get());
@@ -52,7 +50,8 @@ UnionFind::ElemType UnionFindImpl::GetValue(SetId setId) {
   return -parents[setId];
 }
 void UnionFindImpl::SetValue(SetId setId, ElemType value) {
-  if (value > maxValue) maxValue = value;
+  if (value > maxValue)
+    maxValue = value;
   parents[setId] = -value;
 }
-}  // namespace td
+} // namespace td
