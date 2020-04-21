@@ -1,6 +1,6 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #include "union_find_impl.hpp"
-
+#include <algorithm>
 namespace td {
 
 UnionFindImpl::UnionFindImpl(ElemType numberOfElements)
