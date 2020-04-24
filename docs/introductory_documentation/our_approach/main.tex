@@ -129,131 +129,33 @@ This algorithm finds what vertices have been added on consequent steps and joins
 As we can see, this algorithm provides an obvious improvement in time complexity of $O^{*}\left(2^{\left|G\right|}\right)$ compared to na\"ive approach with time complexity of $O\left(\left|G\right|!\right)$, but it requires additional $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ space to run. It is particularly important for set encoding to be very efficient as it will be executed many times, therefore, presented method for such encoding might not make it into final implementation and be replaced with different method or be modified significantly. Space complexity of this algorithmm makes it impractical to be run on large graphs. We address this issue in next sections of this document. It also has some useful properties which we will exploit, but this will be also discussed later.
 \subsection{Branch and Bound algorithm}
 In contrary to dynamic algorithm, this time we will build treedepth decomposition in top-to-bottom manner. To make this approach efficient, we shall incorporate branch and bound technique. Please note that this approach assumes connected input graph. This assumption is valid as for disconnected graphs we can run this algorithm for every connected component.
-\subsubsection{Idea behind the algorithm}
-As in every branch and bound algorithm, we shall start with some valid solution to our problem. We can try to find some good heuristic solution, but let's choose $P_{\left|G\right|}$ for now. Along this solution we must store its treedepth (equal to $\left|G\right|$) as we will improve this number and eliminate some unnecessary attempts. We can now proceed to generating our solutions. First, we will choose a root of our tree. Then, we will choose its children. Then we will choose their children and so on. We will be building our solution generation after generation (like generations of a family). When chosen generation is too deep in our tree, we terminate current attempt and try different configuration.
-\subsubsection{Determining which vertices are valid as children}
-Not every vertex will be suitable as a child of another vertex in treedepth decomposition. Take as an example $P_5$ with vertices $\{ 0,1,2,3,4 \}$ and its decomposition generation. Let's say that we chose as a root of our tree vertex 2. Then we know, for sure, that vertices 1 and 3, as neighbours of 2, must be in a subtree of 2. Let's say that we decided, that 1 and 3 will be the only children of 2. Now we know for sure, that vertex 0 must be in a subtree of 1 and vertex 4 must be in a subtree of 3. A tree when vertex 0 is a child of vertex 3, will not be valid treedepth decomposition as it condradicts treedepth decomposition definition. Our algorithm is equipped with a collsion detection mechanism, which can react to such contradictory actions. Upon detection, many trees can be discarded from further consideration, thus decreasing runtime.\\\\
-During execution of branch and bound algorithm we will keep track of preferences (in subtree of which vertex must be placed) of each vertex along with information about what vertices are already in the tree.
-\subsubsection{The Algorithm}
-\begin{lstlisting}[language=C++]
-// Global variables used by the algorithm (current state)
-const int Taken = -1;
-const Graph g = GetConnectedGraph();
-int[] preference = new int[V(g).size()];
-Graph best_tree = Path(V(g));
-int best_td = V(g).size();
-Graph current_tree = Graph();
-
-// Finds treedepth decomposition with its treedepth using branch and bound technique
-(Graph, int) TDBnB() {
-  for(int root = 0; root < V(g).size(); ++root) {
-    // Vertices which will have its children generated next. Right now it's just root.
-    Set active_vertices = {root}
-    for(int y = 0; y < V(g).size(); ++y)
-      // Every vertex will end up in a subtree of trees' root.
-      preference[y] = root;
-    current_tree = Graph();
-    current_tree.add_vertex(root);
-    preference[root] = Taken;
-    NextLevel(1, active_vertices);
-  }
-  return best_tree, best_td;
-}
-
-// This function is called whenever a level in current_tree has been finished. active_vertices is a set of vertices which will have its children chosen next. Depth tells us how deep finished level is. It checks whether we have a chance improving previous results and starts generation of next level.
-Collision NextLevel(int depth, Set active_vertices) {
-  if(V(current_tree).size() == V(g).size() && depth < best_td) {
-    (best_tree, best_td) = (current_tree, depth)
-    return null
-  }
-  if(active_vertices.empty() || depth + 1 >= best_td)
-    return null;
-  int from = 0;
-  while(preference[from] == Taken)
-    ++from;
-  return GenerateFrom(depth + 1, active_vertices, {}, from);
-}
-
-// Checks if v2 is a child of v1 in tree
-bool InSubtreeOf(Graph tree, int v1, int v2) {
-  while(v2 != tree.root()) {
-    if(v1 == v2)
-      return true;
-    v2 = tree.parent(v2);
-  }
-  return v1 == v2;
-}
-
-// Tries to add child to av as a child of parent and update both current_tree and preferences. When it contradics with treedepth decomposition definition, it returns an error and makes no changes to current state.
-Collision TryVertexAsAChild(int child, int parent, Set av) {
- if(!InSubtreeOf(current_tree, preference[child], parent))
-   return {};
- for(int v : g.neigh(child))
-   if(preference[v] != Taken && !InSubtreeOf(current_tree, preference[v], parent))
-     return Collision{v1: preference[v], v2: child, w: v};
- current_tree.add_vertex(child);
- current_tree.add_edge(child, parent);
- for(int v : g.neigh(child))
-   if(preference[v] != Taken)
-     preference[v] = child;
- preference[child] = Taken;
- av.insert(child);
- return null;
-}
-
-// Determines whether given collision makes current state contradictory with treedepth decomposition definition
-bool Critical(Collision collision) {
-  ...
-  return false;
-}
-
-// This function considers vertex from as a child of consecutive vertices from active_vertices. At the time of calling this function, every vertex v < from has been considered on this level to some extent. Note that calling this function does not change current state i.e. after this function returns state is how it was before the call. It is required that preference[from] != Taken.
-Collision GenerateFrom(int depth, Set active_vertices, Set active_vertices_new, int from) {
-  int next_available = from + 1;
-  while(next_available < V(g).size() && preference[next_available] == Taken)
-    ++next_available;
-  for(int x : active_vertices) {
-    // Dump all information that might change as a result of TryVertexAsAChild
-    State previous_state = CurrentState.save();
-    Collision collision = TryVertexAsAChild(from , x, active_vertices_new);
-    if(collision == null) {
-      State current_state = CurrentState.save();
-      if(next_available < V(g).size()) {
-        // Try continuing generation from next available vertex
-        collision = GenerateFrom(depth, active_vertices, active_vertices_new, next_available);
-        // Rollback changes made
-        previous_state.apply();
-        if(Critical(collision))
-          return collision;
-        current_state.apply();
-      }
-      // Try finishing generating this level
-      collision = NextLevel(depth, active_vertices_new);
-      // Rollback changes made
-      previous_state.apply();
-      if(Critical(collision))
-        return collision;
-    }
-    else if(Critical(collision))
-      return collision;
-  }
-  // Try not adding from as a child of any vertex on this level if it makes sense
-  if(next_available < V(g).size() && depth + 1 < best_td)
-    return GenerateFrom(depth, active_vertices, active_vertices_new, next_available);
-  return NextLevel(depth, active_vertices_new);
-}
-\end{lstlisting}
+\subsubsection{Treedepth decomposition of incomplete elimination}
+\begin{definition}
+	Incomplete elimination $w$ is a word with distinct characters upon alphabet $V(G)$.
+\end{definition}
+\begin{definition}
+	Treedepth decomposition of incomplete elimination $w$ is a rooted tree $T_w$ such that:
+	\begin{itemize}
+		\item Treedepth decomposition of empty elimination is a single vertex represented by $G$.
+		\item Treedeph decomposition of incomplete elimination $wv$, is built from $T_w$, in the following way:
+		\begin{enumerate}
+			\item Find leaf $H$ in $T_w$ such that $v\in H$.
+			\item Add every connected component of $H-v$ as a child of $H$.
+			\item Replace node $H$ with $v$.
+		\end{enumerate}
+	\end{itemize}
+	Depth of a node $v$ in $T_w$ is defined as a length of a path between $T_w$ root and $v$.
+\end{definition}
+\subsubsection{The algorithm}
+As in every branch and bound algorithm, we shall start with some valid solution to our problem. This solution will be improved upon and be used to eliminate some unnecessary attempts. Our initial solution shall be $P_{\left|G\right|}$.\\
+Let $L$ be a language of permutations of $V\left(G\right)$. We shall traverse prefix tree built upon $L$.
+Let $w=\varepsilon$. For each $H$ such that $H$ is a leaf of $T_w$, if $td(H)+depth_{T_w}(H)$ is bigger than currently best known approximation of $td(G)$, then if $w=\varepsilon$ terminate algorithm, otherwise remove last letter from $w$ and continue tree traversal. If $|w|=|G|$, then update current best known approximation of treedepth decomposition with treedepth decomposition defined by $w$ if necessary. If $|w|<|G|$, then for each $v\notin w$, traverse subtree rooted in $wv$.\\
+Note that comparison between $td(H)+depth_{T_w}(H)$ and approximation of $td(G)$ can be performed if and only if $td(H)$ is known. If $td(H)$ is unknown, this comparison is skipped.
 \subsubsection{Remarks}
-Despite very high pesymistic time complexity being at most $O^*\left(\left|G\right|^{\left|G\right|-2}\right)$ it is expected for this algorithm to perform reasonably well, just as TSP algorithm using branch and bound technique does. With every improvement of initial heuristic this algorithm will significantly reduce its running time. It has small space complexity of $O\left(\left|G\right|^2\right)$ which is much better than dynamic algorithms' space complexity of $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$. The depth of recursion of this algorithm is at most $2\cdot\left|G\right|$ which is small enough to not worry about stack overflow when implementing it on a standard machine.
+This algorithm has very high pesymistic time complexity of $O\left(\left|G\right|!\right)$, but has small (polynomial) space complexity. Knowledge about treedepth value of induced subgraphs of $G$ as well as fast disovery of low-treedepth solutions can greatly benefit performance of this algorithm.
 \subsection{Modifications}
 This section is devoted to acknowledging some interesting properties of just described algorithms. Since we aim to incorporate GPUs into our project it revolves around this idea.
 \subsubsection{Dynamic algorithm}
 The Dynamic algorithm is very easy to parallelize on level of one step. Each subset can be processed independently of the others. The only synchorization will be needed to update output array but this should impose no problem at all. Another interesting property of this algorithm is possibility of reconstructing treedepth decompositions in parallel. If we were to terminate this algorithm at, let's say 18-element subsets of 50-element set, we can, for each of these subsets, reconstruct the treedepth decomposition independently of anothers, provided that operation \texttt{SetId Find(ElemType)} will not change the UnionFind object i.e. will not perform path compression if told not to do so.
 \subsubsection{Branch and Bound algorithm}
-Obiously we will make an attempt to implement this algorithm on a GPU. It may require some modifications to it, but we will not be deterred. The most important modification will be combining this algorithm and the dynamic algorithm together, to create so called \emph{Hybrid algorithm}. It goes as follows:
-\begin{itemize}
-	\item Run the dynamic algorithm until we have insufficient amount of memory for the next iteration
-	\item Reconstruct intermediate solutions (so-called \emph{endings}) provided by the history of execution of the dynamic algorithm
-	\item Launch Branch and Bound algorithm taking \emph{endings} into account
-\end{itemize}
-The last step is yet unclear, but poses final modification to Branch and Bound algorithm. It shows how those to approaches can be combined together, in hope of increasing efficiency to a maximum. Of course it will be implemented on a GPU to further decrease its running time. The method of combining is in development as of writing this document.
+Obiously we will make an attempt to implement this algorithm on a GPU. It may require some modifications to it, but we will not be deterred. The most important modification will be combining this algorithm and the dynamic algorithm together, to create so called \emph{Hybrid Algorithm}. This modification provides treedepth values of induced subgraphs requested by branch and bound algorithm from results of incomplete execution of the dynamic algorithm. This modification will reduce branch and algorithms' complexity to $O\left(\left(\left|G\right|-k\right)!\right)$, where $k$ is the number of last iteration performed by the dynamic algorithm.
