@@ -18,12 +18,12 @@ namespace td {
 template <typename T>
 class ArrayUnionFind {
  public:
-  using SignedNumeric = T;
-  using UnsignedNumeric = std::make_unsigned_t<T>;
-  using ElemType = UnsignedNumeric;
-  using SetIdType = UnsignedNumeric;
-  using ValueType = UnsignedNumeric;
-  explicit ArrayUnionFind(SignedNumeric nelems);
+  using SignedIntegral = T;
+  using UnsignedIntegral = std::make_unsigned_t<T>;
+  using ElemType = UnsignedIntegral;
+  using SetIdType = UnsignedIntegral;
+  using ValueType = UnsignedIntegral;
+  explicit ArrayUnionFind(SignedIntegral nelems);
   ArrayUnionFind(ArrayUnionFind const& other);
   ArrayUnionFind(ArrayUnionFind&&) = default;
 
@@ -70,15 +70,15 @@ class ArrayUnionFind {
   void SetValue(SetIdType set_id, ValueType value);
 
   ValueType max_value_ = 1;
-  UnsignedNumeric nelems_ = 0;
-  std::unique_ptr<SignedNumeric[]> parents_ = nullptr;
+  UnsignedIntegral nelems_ = 0;
+  std::unique_ptr<SignedIntegral[]> parents_ = nullptr;
 };
 
 template <typename T>
 inline ArrayUnionFind<T>::ArrayUnionFind(T nelems)
     : max_value_(1),
       nelems_(std::max(static_cast<T>(0), nelems)),
-      parents_(new SignedNumeric[nelems_]) {
+      parents_(new SignedIntegral[nelems_]) {
   std::fill(parents_.get(), parents_.get() + nelems_, -1);
 }
 
@@ -86,7 +86,7 @@ template <typename T>
 inline ArrayUnionFind<T>::ArrayUnionFind(ArrayUnionFind<T> const& other)
     : max_value_(other.max_value_),
       nelems_(other.nelems_),
-      parents_(new SignedNumeric[nelems_]) {
+      parents_(new SignedIntegral[nelems_]) {
   std::copy(other.parents_.get(), other.parents_.get() + nelems_,
             parents_.get());
 }
@@ -122,7 +122,7 @@ inline typename ArrayUnionFind<T>::SetIdType ArrayUnionFind<T>::Find(
   if (elem >= nelems_ || elem < 0)
     throw std::out_of_range("elem is out of range");
 #endif
-  auto root = static_cast<SignedNumeric>(elem);
+  auto root = static_cast<SignedIntegral>(elem);
   while (parents_[root] >= 0)
     root = parents_[root];
   return static_cast<SetIdType>(root);
@@ -149,7 +149,7 @@ inline typename ArrayUnionFind<T>::ValueType ArrayUnionFind<T>::GetMaxValue()
 template <typename T>
 inline void ArrayUnionFind<T>::SetValue(SetIdType set_id, ValueType value) {
   if (value > max_value_)
-    max_value_ = static_cast<UnsignedNumeric>(value);
-  parents_[set_id] = -static_cast<SignedNumeric>(value);
+    max_value_ = static_cast<UnsignedIntegral>(value);
+  parents_[set_id] = -static_cast<SignedIntegral>(value);
 }
 }  // namespace td
