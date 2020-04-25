@@ -1,34 +1,28 @@
 // Copyright 2020 GISBDW. All rights reserved.
 
-#include "../../src/union_find/union_find_impl.hpp"
+#include "../../src/union_find/array_union_find.hpp"
 
 #include "gtest/gtest.h"
 
-TEST(UnionFindConstructorTest, IsSizeCorrect) {
+TEST(ArrayUnionFindConstructorTest, DoesFindReturnCorrectSetId) {
   for (int i = 0; i < 10; ++i) {
-    td::UnionFindImpl uf(i);
-    EXPECT_EQ(i, uf.GetNumberOfElements());
-  }
-}
-
-TEST(UnionFindConstructorTest, DoesFindReturnCorrectSetId) {
-  for (int i = 0; i < 10; ++i) {
-    td::UnionFindImpl uf(i);
+    td::ArrayUnionFind<int> uf(i);
     for (int j = 0; j < i; ++j)
       EXPECT_EQ(j, uf.Find(j));
   }
 }
 
-TEST(UnionFindConstructorTest, DoesKeyEqualToOneByDefault) {
+TEST(ArrayUnionFindConstructorTest, DoesKeyEqualToOneByDefault) {
   for (int i = 0; i < 10; ++i) {
-    td::UnionFindImpl uf(i);
+    td::ArrayUnionFind<int> uf(i);
+    EXPECT_EQ(1, uf.GetMaxValue());
     for (int j = 0; j < i; ++j)
       EXPECT_EQ(1, uf.GetValue(uf.Find(j)));
   }
 }
 
-TEST(UnionFindTest, AreElementsInTheSameSetAfterUnion) {
-  td::UnionFindImpl uf(11);
+TEST(ArrayUnionFindTest, AreElementsInTheSameSetAfterUnion) {
+  td::ArrayUnionFind<int> uf(11);
 
   auto id0 = uf.Find(0);
   EXPECT_EQ(id0, uf.Union(id0, uf.Find(5)));
@@ -58,31 +52,31 @@ TEST(UnionFindTest, AreElementsInTheSameSetAfterUnion) {
   EXPECT_EQ(uf.Find(5), uf.Find(8));
 }
 
-TEST(UnionFindTest, GetValueTest1) {
-  td::UnionFindImpl uf(12);
+TEST(ArrayUnionFindTest, GetValueTest1) {
+  td::ArrayUnionFind<int> uf(12);
   uf.Union(uf.Find(5), uf.Find(7));
   EXPECT_EQ(2, uf.GetValue(uf.Find(5)));
   EXPECT_EQ(2, uf.GetMaxValue());
 }
 
-TEST(UnionFindTest, GetValueTest2) {
-  td::UnionFindImpl uf(12);
+TEST(ArrayUnionFindTest, GetValueTest2) {
+  td::ArrayUnionFind<int> uf(12);
   uf.Union(uf.Find(2), uf.Find(3));
   uf.Union(uf.Find(2), uf.Find(5));
   EXPECT_EQ(2, uf.GetValue(uf.Find(5)));
   EXPECT_EQ(2, uf.GetMaxValue());
 }
 
-TEST(UnionFindTest, GetValueTest3) {
-  td::UnionFindImpl uf(12);
+TEST(ArrayUnionFindTest, GetValueTest3) {
+  td::ArrayUnionFind<int> uf(12);
   uf.Union(uf.Find(2), uf.Find(3));
   uf.Union(uf.Find(5), uf.Find(2));
   EXPECT_EQ(3, uf.GetValue(uf.Find(5)));
   EXPECT_EQ(3, uf.GetMaxValue());
 }
 
-TEST(UnionFindTest, GetValueTest4) {
-  td::UnionFindImpl uf(12);
+TEST(ArrayUnionFindTest, GetValueTest4) {
+  td::ArrayUnionFind<int> uf(12);
   uf.Union(uf.Find(2), uf.Find(3));
   uf.Union(uf.Find(2), uf.Find(5));
   uf.Union(uf.Find(0), uf.Find(5));
@@ -92,8 +86,8 @@ TEST(UnionFindTest, GetValueTest4) {
   EXPECT_EQ(4, uf.GetMaxValue());
 }
 
-TEST(UnionFindTest, GetValueTest5) {
-  td::UnionFindImpl uf(12);
+TEST(ArrayUnionFindTest, GetValueTest5) {
+  td::ArrayUnionFind<int> uf(12);
   uf.Union(uf.Find(3), uf.Find(8));
   uf.Union(uf.Find(2), uf.Find(3));
   uf.Union(uf.Find(2), uf.Find(5));
@@ -107,9 +101,9 @@ TEST(UnionFindTest, GetValueTest5) {
   EXPECT_EQ(3, uf.GetMaxValue());
 }
 
-TEST(UnionFindTest, GetValueTest6) {
+TEST(ArrayUnionFindTest, GetValueTest6) {
   // Tree decomposition of P_7
-  td::UnionFindImpl uf(7);
+  td::ArrayUnionFind<int> uf(7);
   uf.Union(uf.Find(1), uf.Find(0));
   EXPECT_EQ(2, uf.GetMaxValue());
   EXPECT_EQ(2, uf.GetValue(uf.Find(1)));
@@ -128,26 +122,23 @@ TEST(UnionFindTest, GetValueTest6) {
   uf.Union(uf.Find(3), uf.Find(5));
   EXPECT_EQ(3, uf.GetMaxValue());
   EXPECT_EQ(3, uf.GetValue(uf.Find(6)));
-  for (int i = 0; i < uf.GetNumberOfElements(); ++i) {
+  for (int i = 0; i < 7; ++i) {
     EXPECT_EQ(3, uf.Find(i));
     EXPECT_EQ(3, uf.GetValue(uf.Find(i)));
   }
 }
 
-TEST(UnionFindTest, CloneReturnsSameObject) {
-  td::UnionFindImpl uf(10);
+TEST(ArrayUnionFindTest, CopyConstructorTest) {
+  td::ArrayUnionFind<int> uf(10);
   uf.Union(uf.Find(5), uf.Find(7));
   uf.Union(uf.Find(2), uf.Find(7));
   uf.Union(uf.Find(1), uf.Find(9));
   uf.Union(uf.Find(0), uf.Find(3));
 
-  auto uf_clone = uf.Clone();
-  auto* uf_p = dynamic_cast<td::UnionFindImpl*>(uf_clone.get());
-  ASSERT_NE(nullptr, uf_p);
-  ASSERT_EQ(uf.GetNumberOfElements(), uf_p->GetNumberOfElements());
-  ASSERT_EQ(uf.GetMaxValue(), uf_p->GetMaxValue());
-  for (int i = 0; i < uf.GetNumberOfElements(); ++i) {
-    EXPECT_EQ(uf.Find(i), uf_p->Find(i));
-    EXPECT_EQ(uf.GetValue(uf.Find(i)), uf_p->GetValue(uf_p->Find(i)));
+  auto uf_clone = uf;
+  ASSERT_EQ(uf.GetMaxValue(), uf.GetMaxValue());
+  for (int i = 0; i < 10; ++i) {
+    EXPECT_EQ(uf.Find(i), uf_clone.Find(i));
+    EXPECT_EQ(uf.GetValue(uf.Find(i)), uf_clone.GetValue(uf_clone.Find(i)));
   }
 }
