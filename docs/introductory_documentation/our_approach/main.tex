@@ -47,6 +47,17 @@ UnionFind data structure is crucial in this approach. It will allow us to comput
 	\end{itemize}
 \end{itemize}
 The data structure defined this way allows to compute treedepth very efficiently, as values associated with contained sets change in the same way as treedepth if we were to attach one tree to the root of another tree. Complexity of each operation is not much bigger than $O(1)$ (if not exactly $O(1)$) except for construction and copying which have $O(n)$ time complexity.
+\subsubsection{UnionFind implementation}
+To implement UnionFind data structure we use an array of size $n$ (number of disjoint sets at the beggining) and two variables to store currently the highest assigned value to any of sets and the size of the array. In this array we store a forest where each tree is a representation of one of subsets.
+
+$Find$ is capable of performing $path-compression$ i.e. each call to this method is changing the structure of forest to maximaly flatten the tree which contained sought element.
+
+On the other hand, $Union$ method is implemented trivially. We always attach tree representing the set of second argument to the tree representing the set of first argument. We do not risk here the uncontrolled growth of the tree, because our algorithm always join sets where one of them is single element set.
+
+To take into account the architecture of the GPU we will try to use SoA (Structure of Arrays) rather than AoS (Array of Structures) approach to encourage coalescing and minimaze memory bank conflicts. This different layout of data in memory should greatly reduce time spent by GPU on memory access activities.
+
+To slightly reduce memory usage of this structure instead of storing the value assigned to each tree next to them and using another integer, we store this value in a root as a negative value which tells us that this is a root and its absolute value is assigned value.
+
 \subsubsection{Idea behind the algorithm}
 Having described all necessary tools, we shall now proceed to describe dynamic approach to computing treedepth value as well as treedepth decomposition. As mentioned earlier, this method trades off space complexity of $O\left(2^{\left|G\right|}\cdot\left|G\right|\right)$ for time complexity of  $O^{*}\left(2^{\left|G\right|}\right)$.
 The algorithm builds the treedepth decomposition in bottom-to-top manner. It generates an array of pairs \texttt{(UnionFind, size\_t)} from another array of the same type. We start off with an array of one element: unmodified UnionFind constructed from $\left|G\right|$ and index 0. Then, given a UnionFind object, for every inactive vertex $v$ in it, we shall generate a new one by:
