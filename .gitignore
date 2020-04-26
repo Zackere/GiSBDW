@@ -6,3 +6,8 @@ build*
 **.out
 **.synctex.gz
 **.toc
+**.cpp-*
+**.hpp-*
+**.cu-*
+**/out
+out
