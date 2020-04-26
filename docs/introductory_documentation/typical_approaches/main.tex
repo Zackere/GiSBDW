@@ -1,7 +1,7 @@
 \section{Typical approaches}
 \subsection{Exact}
 \subsubsection{Na\"ive}
-Recall the defintion of treedepth:
+Recall the definition of treedepth:
 \begin{equation*}
 td(G)={\begin{cases}1,&{\text{if }}|G|=1;\\1+\min _{{v\in V}}td(G-v),&{\text{if }}G{\text{ is connected and }}|G|>1;\\\max _{{i}}td(G_{i}),&{\text{otherwise}};\end{cases}}\tag{\ref{td_def}}
 \end{equation*}
@@ -15,17 +15,18 @@ td(G, \sigma, i)={
 	\max _{{j}}td(G_{j}, \sigma, i),&{\text{otherwise}};
 	\end{cases}
 }
+\label{td_def_paermutation}
 \end{equation}
-then our approximation would be $td(G, \sigma, 0)$. Let $\sigma_G$ be a permutation that satisfies $td(G) = td(G, \sigma_G, 0)$. Finding $\sigma_G$ takes $O\left(\left|G\right|!\right)$ time using brute force search. This permutation can be build using standard definition of treedepth:
+then our approximation would be $td(G, \sigma, 0)$. Let $\sigma_G$ be a permutation that satisfies $td(G) = td(G, \sigma_G, 0)$. Finding $\sigma_G$ takes $O\left(\left|G\right|!\right)$ time using brute force search. This permutation can be built using a standard definition of treedepth:
 \begin{itemize}
 	\item When $\left|G\right| = 1$, return permutation of the only vertex of $G$.
 	\item When $G{\text{ is connected and }}|G|>1$, find $v$ such that minimizes $td(G-v)$ and store permutation $\sigma$ returned by $td(G-v)$. Return $v\sigma$.
 	\item Lastly, let $\sigma_i$ be permutation returned by $td(G_i)$. Return $\sigma_0...\sigma_k$.
 \end{itemize}
 which also requires at least $O\left(\left|G\right|!\right)$ time.\\
-Having found $\sigma_G$, we can reconstruct treedepth decomposition in $O\left(\left|G\right|\right)$ time. Method for such reconstruction is very simillar to reconstruction described in 'Our approach' in section devoted to dynamic algorithm thus it won't be described here.
+Having found $\sigma_G$, we can reconstruct treedepth decomposition in $O\left(\left|G\right|\right)$ time. Method for such reconstruction is very similar to reconstruction described in 'Our approach' in section devoted to dynamic algorithm thus it won't be described here.
 \subsubsection{Dynamic}
-In order to reduce time complexity of an algorithm, one may store intermediate solutions to avoid re-computation. When calculating treedepth, we can trade off space complexity for quite significant improvement in time complexity (from $O\left(\left|G\right|!\right)$ to $O^{*}\left(2^{\left|G\right|}\right)$). The most classical approach is described in section 'Our approach' in section 'Dynamic'. In 2013, team of Fedor V. Fomin, Archontia C. Giannopoulou and Michał Pilipczuk came up with an improvement to classical dynamic algorithm which reduces its time complexity from $O^{*}\left(2^{\left|G\right|}\right)$ to $O^{*}\left(1.9602^{\left|G\right|}\right)$ \cite{mimuw_td}. As dynamic approach is based on treedepth decompositions of induced subgraphs, they restrict what kind of subgraphs will be considered in subsequent iterations of the algorithm. In order to ensure pruned subgraphs which would've led to optimal solutions are not lost, it is shown that those graphs share very special properties (minimal trees) and can be recovered easily. For further details about their work please refer to \cite{mimuw_td}.
+To reduce time complexity of an algorithm, one may store intermediate solutions to avoid re-computation. When calculating treedepth, we can trade-off space complexity for quite significant improvement in time complexity (from $O\left(\left|G\right|!\right)$ to $O^{*}\left(2^{\left|G\right|}\right)$). The most classical approach is described in section 'Our approach' in section 'Dynamic'. In 2013, the team of Fedor V. Fomin, Archontia C. Giannopoulou and Michał Pilipczuk came up with an improvement to classical dynamic algorithm which reduces its time complexity from $O^{*}\left(2^{\left|G\right|}\right)$ to $O^{*}\left(1.9602^{\left|G\right|}\right)$ \cite{mimuw_td}. As dynamic approach is based on treedepth decompositions of induced subgraphs, they restrict what kind of subgraphs will be considered in subsequent iterations of the algorithm. To ensure pruned subgraphs that would've led to optimal solutions are not lost, it is shown that those graphs share very special properties (minimal trees) and can be recovered easily. For further details about their work please refer to \cite{mimuw_td}.
 \newpage
 \subsection{Approximate}
 \subsubsection{Bodlaenders' heuristic \cite{bodlaender_td_approx}}
@@ -36,4 +37,4 @@ Bodlaenders' approach is based on inequality \cite{mimuw_td}\cite{bodlaender_td_
 tw(G) \leq td(G) \leq tw(G)\cdot \log\left(\left|G\right|\right)
 \end{equation}
 First, he finds an approximate treewidth decomposition which is at most $O\left(\log\left(\left|G\right|\right)\right)$ times worse than the optimal solution.
-Then, by finding Georges' nested dissection ordering \cite{george}\cite{bodlaender_td_approx} finds treedepth decomposition which is at most $O\left(\log^2\left(\left|G\right|\right)\right)$ times worse than the optimal one. Note that this algorithm is one of the best approximations of treedepth decmpostions and works in polynomial time.
+Then, by finding Georges' nested dissection ordering \cite{george}\cite{bodlaender_td_approx} finds treedepth decomposition which is at most $O\left(\log^2\left(\left|G\right|\right)\right)$ times worse than the optimal one. Note that this algorithm is one of the best approximations of treedepth decompositions and works in polynomial time.
