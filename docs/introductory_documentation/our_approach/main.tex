@@ -146,14 +146,14 @@ In this section we shall define notions that will be crucial in further sections
 	\item Depth of a node $v$ in $T_w$ is defined as a length of a path between $T_w$ root and $v$ and is denoted as $depth_{T_w}\left(v\right)$.
 \end{enumerate}
 Those notions embrace the history of treedepth decomposition, i.e. how it used to be called elimination tree. The $T_w$ structure really shows how vertex elimination affects the graph while preserving information about the elimination and is capable of illustrating an elimination in progress.
-There are some observations that can be made to familliarize oneself with incomplete elimiation $w$ and $T_w$:
+There are some observations that can be made to familiarize oneself with incomplete elimination $w$ and $T_w$:
 \begin{itemize}
 	\item $w$ tells us which vertices have been removed from $G$ and in which order. $T_w$ pictures state of a graph after elimination of vertices from $w$
-	\item $T_\varepsilon$ is represented by $G$ alone beacuse that is how the graph looks when no vertices were eliminated
-	\item $T_w$ is a tree with leaves being induced subgraphs of $G$. Internal nodes are single vertices from $G$ which are also incuded subgraphs of $G$
+	\item $T_\varepsilon$ is represented by $G$ alone because that is how the graph looks when no vertices were eliminated
+	\item $T_w$ is a tree with leaves being induced subgraphs of $G$. Internal nodes are single vertices from $G$ which are also induced subgraphs of $G$
 	\item $T_w$ root is $G$ when $w=\varepsilon$ otherwise it's the first letter of $w$
 	\item Construction of $T_{wv}$ breaks down exactly one of its leaves into connected components. Those new leaves are one step lower than its ancestor, to show how their treedepth has changed upon elimination of $v$
-	\item Path from  root to leaf $H$ shows which vertices had to be removed in order to acquire $H$ as a connected conponent
+	\item Path from  root to leaf $H$ shows which vertices had to be removed in order to acquire $H$ as a connected component
 	\item $T_w$ of complete elimination (when $\left|w\right|=\left|G\right|$), after removal of empty leaves, is a treedepth decomposition of $G$ (or maybe rather an elimination tree at this point)
 \end{itemize}
 \subsubsection{The algorithm}
@@ -165,7 +165,7 @@ Let $w=\varepsilon$. For each $H$ such that $H$ is a leaf of $T_w$, if $lbtd(H)+
 	\item otherwise remove last letter from $w$ and continue tree traversal
 \end{enumerate} If $|w|=|G|$, then update current best known treedepth decomposition with treedepth decomposition defined by $w$ if necessary. If $|w|<|G|$, then, for each $v\notin w$, traverse subtree rooted in $wv$.\\\\
 Note: $lbtd(H)$ denotes lower bound of $td\left(H\right)$ and for non-empty graphs is at least 1. When $td\left(H\right)$ is known, it can be used instead of $lbtd(H)$.\\
-Note: Upon elemination, one can find leaf $H$ in $T_w$ which maximizes $\left|H\right| + depth_{T_w}(H)$. Then $\left|H\right| + depth_{T_w}(H)$ is an upper-bound of $td(G)$, possibly improving upon it.
+Note: Upon elimination, one can find leaf $H$ in $T_w$ which maximizes $\left|H\right| + depth_{T_w}(H)$. Then $\left|H\right| + depth_{T_w}(H)$ is an upper-bound of $td(G)$, possibly improving upon it.
 \subsubsection{Remarks}
 This algorithm has very high pessimistic time complexity of $O\left(\left|G\right|!\right)$, but has small (polynomial) space complexity. Knowledge about treedepth value of induced subgraphs of $G$ as well as fast discovery of low-treedepth solutions can greatly benefit performance of this algorithm.
 \subsection{Modifications}
