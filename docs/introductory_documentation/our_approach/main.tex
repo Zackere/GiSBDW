@@ -48,8 +48,8 @@ UnionFind data structure is crucial in this approach. It will allow us to comput
 \end{itemize}
 The data structure defined this way allows to compute treedepth very efficiently, as values associated with contained sets change in the same way as treedepth if we were to attach one tree to the root of another tree. Complexity of each operation is not much bigger than $O(1)$ (if not exactly $O(1)$) except for construction and copying which have $O(n)$ time complexity.
 \subsubsection{UnionFind implementation}
-To implement UnionFind data structure we use an array of size $n$ (number of disjoint sets at the beginning) and two variables to store currently the highest assigned value to any of sets and the size of the array. In this array we store a forest where each tree is a representation of one of subsets. In $array[v]$ we store the parent of $v$ node.
-If $array[v] < 0$ it means that v is the root of a tree and a representant of set. As not to waste space, we use this negative number to assign a value to this set. $|array[v]|$ is the assigned value.
+To implement UnionFind data structure we use an array of size $|G|$ (number of disjoint sets at the beginning) and two variables to store currently the highest assigned value to any of sets and the size of the array. In this array we store a forest where each tree is a representation of one of subsets. In $array[v]$ we store the parent of $v$ node.
+If $array[v] < 0$ it means that v is the root of a tree and a representative of set. As not to waste space, we use this negative number to assign a value to this set. $|array[v]|$ is the assigned value.
 
 $Find$ is capable of performing $path\ compression$ i.e. each call to this method is changing the structure of forest to flatten the tree which contained sought element as much as possible without causing too much computational overhead.
 
