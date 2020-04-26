@@ -130,11 +130,10 @@ As we can see, this algorithm provides an obvious improvement in time complexity
 \subsection{Branch and Bound algorithm}
 In contrary to dynamic algorithm, this time we will build treedepth decomposition in top-to-bottom manner. To make this approach efficient, we shall incorporate branch and bound technique. Please note that this approach assumes connected input graph. This assumption is valid as for disconnected graphs we can run this algorithm for every connected component.
 \subsubsection{Treedepth decomposition of incomplete elimination}
-\begin{definition}
-	Incomplete elimination $w$ is a word with distinct characters upon alphabet $V(G)$.
-\end{definition}
-\begin{definition}
-	Treedepth decomposition of incomplete elimination $w$ is a rooted tree $T_w$ such that:
+In this section we shall define notions that will be crucial in further sections of this document.
+\begin{enumerate}
+	\item Incomplete elimination $w$ is a word with distinct characters upon alphabet $V(G)$.
+	\item Treedepth decomposition of incomplete elimination $w$ is a rooted tree $T_w$ such that:
 	\begin{itemize}
 		\item Treedepth decomposition of empty elimination is a single vertex represented by $G$.
 		\item Treedeph decomposition of incomplete elimination $wv$, is built from $T_w$, in the following way:
@@ -144,13 +143,15 @@ In contrary to dynamic algorithm, this time we will build treedepth decompositio
 			\item Replace node $H$ with $v$.
 		\end{enumerate}
 	\end{itemize}
-	Depth of a node $v$ in $T_w$ is defined as a length of a path between $T_w$ root and $v$.
-\end{definition}
+	\item Depth of a node $v$ in $T_w$ is defined as a length of a path between $T_w$ root and $v$ and is denoted as $depth_{T_w}\left(v\right)$.
+\end{enumerate}
+Those notions embrace the history of treedepth decomposition, i.e. how it used to be called elimination tree. The $T_w$ structure really shows how vertex elimination affects the graph while preserving information about the elimination and is capable of illustrating an elimination in progress. $T_w$ of complete elimination (when $\left|w\right|=\left|G\right|$), after removal of empty leaves, is a treedepth decomposition of $G$ (or maybe rather an elimination tree at this point).
 \subsubsection{The algorithm}
-As in every branch and bound algorithm, we shall start with some valid solution to our problem. This solution will be improved upon and be used to eliminate some unnecessary attempts. Our initial solution shall be $P_{\left|G\right|}$.\\
+As in every branch and bound algorithm, we shall start with some valid solution to our problem. This solution will be improved upon and be used to eliminate some unnecessary attempts. Our initial solution shall be $P_{\left|G\right|}$.\\\\
 Let $L$ be a language of permutations of $V\left(G\right)$. We shall traverse prefix tree built upon $L$.
-Let $w=\varepsilon$. For each $H$ such that $H$ is a leaf of $T_w$, if $td(H)+depth_{T_w}(H)$ is bigger than currently best known approximation of $td(G)$, then if $w=\varepsilon$ terminate algorithm, otherwise remove last letter from $w$ and continue tree traversal. If $|w|=|G|$, then update current best known approximation of treedepth decomposition with treedepth decomposition defined by $w$ if necessary. If $|w|<|G|$, then for each $v\notin w$, traverse subtree rooted in $wv$.\\
-Note that comparison between $td(H)+depth_{T_w}(H)$ and approximation of $td(G)$ can be performed if and only if $td(H)$ is known. If $td(H)$ is unknown, this comparison is skipped.
+Let $w=\varepsilon$. For each $H$ such that $H$ is a leaf of $T_w$, if $lbtd(H)+depth_{T_w}(H)$ is bigger than currently best known upper-bound of $td(G)$, then, if $w=\varepsilon$ terminate algorithm, otherwise remove last letter from $w$ and continue tree traversal. If $|w|=|G|$, then update current best known treedepth decomposition with treedepth decomposition defined by $w$ if necessary. If $|w|<|G|$, then, for each $v\notin w$, traverse subtree rooted in $wv$.\\\\
+Note: $lbtd(H)$ denotes lower bound of $td\left(H\right)$ and for non-empty graphs is at least 1. When $td\left(H\right)$ is known, it can be used instead of $lbtd(H)$.\\
+Note: Upon elemination, one can find the deepest leaf $H$ in $T_w$ with the most vertices. Then $\left|H\right| + depth_{T_w}(H)$ is an upper-bound of $td(G)$, possibly improving upon it.
 \subsubsection{Remarks}
 This algorithm has very high pessimistic time complexity of $O\left(\left|G\right|!\right)$, but has small (polynomial) space complexity. Knowledge about treedepth value of induced subgraphs of $G$ as well as fast discovery of low-treedepth solutions can greatly benefit performance of this algorithm.
 \subsection{Modifications}
