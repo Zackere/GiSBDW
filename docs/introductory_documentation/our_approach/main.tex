@@ -135,7 +135,7 @@ In this section we shall define notions that will be crucial in further sections
 	\item Incomplete elimination $w$ is a word with distinct characters upon alphabet $V(G)$.
 	\item Treedepth decomposition of incomplete elimination $w$ is a rooted tree $T_w$ such that:
 	\begin{itemize}
-		\item Treedepth decomposition of empty elimination is a single vertex represented by $G$.
+		\item Treedepth decomposition of empty elimination (empty word $\varepsilon$) is a single vertex represented by $G$.
 		\item Treedeph decomposition of incomplete elimination $wv$, is built from $T_w$, in the following way:
 		\begin{enumerate}
 			\item Find leaf $H$ in $T_w$ such that $v\in H$.
@@ -145,11 +145,21 @@ In this section we shall define notions that will be crucial in further sections
 	\end{itemize}
 	\item Depth of a node $v$ in $T_w$ is defined as a length of a path between $T_w$ root and $v$ and is denoted as $depth_{T_w}\left(v\right)$.
 \end{enumerate}
-Those notions embrace the history of treedepth decomposition, i.e. how it used to be called elimination tree. The $T_w$ structure really shows how vertex elimination affects the graph while preserving information about the elimination and is capable of illustrating an elimination in progress. $T_w$ of complete elimination (when $\left|w\right|=\left|G\right|$), after removal of empty leaves, is a treedepth decomposition of $G$ (or maybe rather an elimination tree at this point).
+Those notions embrace the history of treedepth decomposition, i.e. how it used to be called elimination tree. The $T_w$ structure really shows how vertex elimination affects the graph while preserving information about the elimination and is capable of illustrating an elimination in progress.
+There are some observations that can be made to familliarize oneself with incomplete elimiation $w$ and $T_w$:
+\begin{itemize}
+	\item $w$ tells us which vertices have been removed from $G$ and in which order. $T_w$ pictures state of a graph after elimination of vertices from $w$
+	\item $T_w$ is a tree with vertices being induced subgraphs of $G$
+	\item $T_\varepsilon$ is represented by $G$ alone beacuse that is how the graph looks when no vertices were removed
+	\item $T_w$ root is $G$ when $w=\varepsilon$ otherwise it's first letter of $w$
+	\item Construction of $T_{wv}$ breaks down one of the leaves into connected components of a graph. Those new leaves are one step lower than its ancestor, to show how lower bound of their treedepth has changed upon elimination of $v$
+	\item Path from leaf $H$ to root shows which vertices had to be removed in order to acquire $H$ as a connected conponent
+	\item $T_w$ of complete elimination (when $\left|w\right|=\left|G\right|$), after removal of empty leaves, is a treedepth decomposition of $G$ (or maybe rather an elimination tree at this point)
+\end{itemize}
 \subsubsection{The algorithm}
 As in every branch and bound algorithm, we shall start with some valid solution to our problem. This solution will be improved upon and be used to eliminate some unnecessary attempts. Our initial solution shall be $P_{\left|G\right|}$.\\\\
 Let $L$ be a language of permutations of $V\left(G\right)$. We shall traverse prefix tree built upon $L$.
-Let $w=\varepsilon$ (empty word). For each $H$ such that $H$ is a leaf of $T_w$, if $lbtd(H)+depth_{T_w}(H)$ is bigger than currently best known upper-bound of $td(G)$, then:
+Let $w=\varepsilon$. For each $H$ such that $H$ is a leaf of $T_w$, if $lbtd(H)+depth_{T_w}(H)$ is bigger than currently best known upper-bound of $td(G)$, then:
 \begin{enumerate}
 	\item if $w=\varepsilon$ terminate algorithm
 	\item otherwise remove last letter from $w$ and continue tree traversal
