@@ -149,11 +149,11 @@ Those notions embrace the history of treedepth decomposition, i.e. how it used t
 There are some observations that can be made to familliarize oneself with incomplete elimiation $w$ and $T_w$:
 \begin{itemize}
 	\item $w$ tells us which vertices have been removed from $G$ and in which order. $T_w$ pictures state of a graph after elimination of vertices from $w$
-	\item $T_w$ is a tree with vertices being induced subgraphs of $G$
-	\item $T_\varepsilon$ is represented by $G$ alone beacuse that is how the graph looks when no vertices were removed
-	\item $T_w$ root is $G$ when $w=\varepsilon$ otherwise it's first letter of $w$
-	\item Construction of $T_{wv}$ breaks down one of the leaves into connected components of a graph. Those new leaves are one step lower than its ancestor, to show how lower bound of their treedepth has changed upon elimination of $v$
-	\item Path from leaf $H$ to root shows which vertices had to be removed in order to acquire $H$ as a connected conponent
+	\item $T_\varepsilon$ is represented by $G$ alone beacuse that is how the graph looks when no vertices were eliminated
+	\item $T_w$ is a tree with leaves being induced subgraphs of $G$. Internal nodes are single vertices from $G$ which are also incuded subgraphs of $G$
+	\item $T_w$ root is $G$ when $w=\varepsilon$ otherwise it's the first letter of $w$
+	\item Construction of $T_{wv}$ breaks down exactly one of its leaves into connected components. Those new leaves are one step lower than its ancestor, to show how their treedepth has changed upon elimination of $v$
+	\item Path from  root to leaf $H$ shows which vertices had to be removed in order to acquire $H$ as a connected conponent
 	\item $T_w$ of complete elimination (when $\left|w\right|=\left|G\right|$), after removal of empty leaves, is a treedepth decomposition of $G$ (or maybe rather an elimination tree at this point)
 \end{itemize}
 \subsubsection{The algorithm}
