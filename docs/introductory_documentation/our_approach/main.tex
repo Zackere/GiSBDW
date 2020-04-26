@@ -163,16 +163,12 @@ There are some observations that can be made to familiarize oneself with incompl
 	\item $T_w$ root is $G$ when $w=\varepsilon$ otherwise it's the first letter of $w$
 	\item Construction of $T_{wv}$ breaks down exactly one of its leaves into connected components. Those new leaves are one step lower than its ancestor, to show how their treedepth has changed upon elimination of $v$
 	\item Path from  root to leaf $H$ shows which vertices had to be removed in order to acquire $H$ as a connected component
-	\item $T_w$ of complete elimination (when $\left|w\right|=\left|G\right|$), after removal of empty leaves, is a treedepth decomposition of $G$ (or maybe rather an elimination tree at this point)
+	\item $T_w$ of complete elimination (when $\left|w\right|=\left|G\right|$) is a treedepth decomposition of $G$ (or maybe rather an elimination tree at this point)
 \end{itemize}
 \subsubsection{The algorithm}
 As in every branch and bound algorithm, we shall start with some valid solution to our problem. This solution will be improved upon and be used to eliminate some unnecessary attempts. Our initial solution shall be $P_{\left|G\right|}$.\\\\
 Let $L$ be a language of permutations of $V\left(G\right)$. We shall traverse prefix tree built upon $L$.
-Let $w=\varepsilon$. For each $H$ such that $H$ is a leaf of $T_w$, if $lbtd(H)+depth_{T_w}(H)$ is bigger than currently best known upper bound of $td(G)$, then:
-\begin{enumerate}
-	\item if $w=\varepsilon$ terminate algorithm
-	\item otherwise remove last letter from $w$ and continue tree traversal
-\end{enumerate} If $|w|=|G|$, then update current best known treedepth decomposition with treedepth decomposition defined by $w$ if necessary. If $|w|<|G|$, then, for each $v\notin w$, traverse subtree rooted in $wv$.\\\\
+Let $w=\varepsilon$. For each $H$ such that $H$ is a leaf of $T_w$, if $lbtd(H)+depth_{T_w}(H)$ is bigger than currently best known upper bound of $td(G)$, then remove last letter from $w$ and continue tree traversal. If $|w|=|G|$, then update current best known treedepth decomposition with treedepth decomposition defined by $w$ if necessary. If $|w|<|G|$, then, for each $v\notin w$, traverse subtree rooted in $wv$.\\\\
 Note: $lbtd(H)$ denotes lower bound of $td\left(H\right)$ and for non-empty graphs is at least 1. When $td\left(H\right)$ is known, it can be used instead of $lbtd(H)$.\\
 Note: Upon elimination, one can find leaf $H$ in $T_w$ which maximizes $\left|H\right| + depth_{T_w}(H)$. Then $\left|H\right| + depth_{T_w}(H)$ is an upper-bound of $td(G)$, possibly improving upon it.
 \subsubsection{Remarks}
