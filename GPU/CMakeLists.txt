@@ -18,8 +18,18 @@ if(NOT CLANG_FORMAT_EXE)
   message(STATUS "clang-format not found. Consider isntalling it from https://llvm.org/builds/")
 else()
   message(STATUS "clang-format found: ${CLANG_FORMAT_EXE}")
-  add_custom_target("clang-format-gpu" COMMAND ${CLANG_FORMAT_EXE} -i -style=Chromium ${PROJECT_SOURCES} ${TEST_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
-  add_dependencies(${PROJECT_NAME} "clang-format-gpu")
+  add_custom_command(
+  TARGET ${PROJECT_NAME}
+  POST_BUILD
+  COMMAND ${CLANG_FORMAT_EXE} -i -style=Chromium ${PROJECT_SOURCES} ${TEST_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+  add_custom_command(
+  TARGET ${TEST_PROJECT_NAME}
+  POST_BUILD
+  COMMAND ${CLANG_FORMAT_EXE} -i -style=Chromium ${PROJECT_SOURCES} ${TEST_SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 endif()
 
 if(DEFINED ENV{OVERRIDE_CUDA_DIR})
