@@ -1,3 +1,4 @@
+// Copyright 2020 GISBDW. All rights reserved.
 #include "elimination_tree.hpp"
 
 namespace td {

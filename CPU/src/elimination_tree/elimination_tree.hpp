@@ -6,6 +6,7 @@
 #ifdef TD_CHECK_ARGS
 #include <stdexcept>
 #endif
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -47,15 +48,15 @@ class EliminationTree {
    private:
     friend class EliminationTree;
     using Iterator = std::map<ComponentIndex, Component>::const_iterator;
-    ComponentIterator(Iterator init);
+    explicit ComponentIterator(Iterator init);
     Iterator cur_;
   };
 
   template <typename OutEdgeList, typename VertexList, typename... Args>
-  EliminationTree(boost::adjacency_list<OutEdgeList,
-                                        VertexList,
-                                        boost::undirectedS,
-                                        Args...> const& g);
+  explicit EliminationTree(boost::adjacency_list<OutEdgeList,
+                                                 VertexList,
+                                                 boost::undirectedS,
+                                                 Args...> const& g);
   void Eliminate(VertexType v);
   void Merge(VertexType v);
 
