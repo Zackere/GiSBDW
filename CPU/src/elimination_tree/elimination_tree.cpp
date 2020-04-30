@@ -2,9 +2,9 @@
 #include "elimination_tree.hpp"
 
 namespace td {
-EliminationTree::Component::AdjacencyList::mapped_type const&
-EliminationTree::Component::Neighbours(VertexType v) const {
-  return neighbours_.find(v)->second;
+EliminationTree::Component::AdjacencyListType const&
+EliminationTree::Component::AdjacencyList() const {
+  return neighbours_;
 }
 
 unsigned EliminationTree::Component::Depth() const {
@@ -22,7 +22,7 @@ void EliminationTree::Eliminate(VertexType v) {
   eliminated_nodes_.emplace_back(v_component.neighbours_.extract(v));
   for (auto& p : v_component.neighbours_)
     p.second.erase(v);
-  auto new_v_node = EliminatedNode{std::list<Node>{}, v_component.Depth()};
+  auto new_v_node = EliminatedNode{std::list<Node>{}, v, v_component.Depth()};
   while (!v_component.neighbours_.empty()) {
     Node new_node;
     new_node.v = Component();

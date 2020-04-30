@@ -24,20 +24,21 @@ class EliminationTree {
  public:
   using VertexType = std::size_t;
   using ComponentIndex = std::size_t;
+  using BoostGraph =
+      boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   /**
-   * Class representing a connected component of a graph after some elimination.
+   * Class representing a connected component of a graph after some
+   * elimination.
    */
   class Component {
    public:
-    using AdjacencyList = std::map<VertexType, std::set<VertexType>>;
+    using AdjacencyListType = std::map<VertexType, std::set<VertexType>>;
     /* *
-     * Access neighbourhood of v inside a component.
+     * Access adjacency list defined by component.
      *
-     * @param v query vertex.
-     *
-     * @return Set of vertices adjacent to v.
+     * @return Adajcency list of Component.
      */
-    AdjacencyList::mapped_type const& Neighbours(VertexType v) const;
+    AdjacencyListType const& AdjacencyList() const;
     /**
      * @return Depth of component inside EliminationTree that owns it.
      */
@@ -53,7 +54,7 @@ class EliminationTree {
    private:
     friend class EliminationTree;
     friend class ParametrizedEliminationTreeFixture;
-    AdjacencyList neighbours_;
+    AdjacencyListType neighbours_;
     unsigned depth_;
   };
   /**
@@ -117,11 +118,44 @@ class EliminationTree {
    * EliminationTree.
    */
   ComponentIterator ComponentsEnd() const;
+  /**
+   * Converts EliminationTree to BoostGraph. Works only when all vertices had
+   * been eliminated.
+   *
+   * Usage: auto [g, depth, root] = et.Decompose();
+   *
+   * @return EliminationTree representation in BoostGraph along with its
+   * treedepth and root.
+   */
+  auto Decompose() const {
+    struct {
+      BoostGraph graph;
+      unsigned treedepth;
+      VertexType root;
+    } ret = {BoostGraph(nodes_.size()), 0,
+             std::get<EliminatedNode>(root_.v).vertex};
+    std::set<VertexType> insert_now, insert_next;
+    insert_now.insert(std::get<EliminatedNode>(root_.v).vertex);
+    while (!insert_now.empty()) {
+      for (auto v : insert_now) {
+        auto& v_node = std::get<EliminatedNode>(nodes_[v]->v);
+        for (auto& p : v_node.children) {
+          auto& p_node = std::get<EliminatedNode>(p.v);
+          boost::add_edge(v, p_node.vertex, ret.graph);
+          insert_next.insert(p_node.vertex);
+        }
+      }
+      insert_now = std::move(insert_next);
+      ++ret.treedepth;
+    }
+    return ret;
+  }
 
  private:
   struct Node;
   struct EliminatedNode {
     std::list<Node> children;
+    VertexType vertex;
     unsigned depth;
   };
   struct Node {
@@ -129,7 +163,7 @@ class EliminationTree {
   } root_;
   std::vector<Node*> nodes_;
   std::set<Component*> components_;
-  std::vector<Component::AdjacencyList::node_type> eliminated_nodes_;
+  std::vector<Component::AdjacencyListType::node_type> eliminated_nodes_;
 
   EliminationTree(EliminationTree const&) = delete;
   EliminationTree& operator=(EliminationTree const&) = delete;
