@@ -23,7 +23,6 @@ namespace td {
 class EliminationTree {
  public:
   using VertexType = std::size_t;
-  using ComponentIndex = std::size_t;
   using BoostGraph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   /**
@@ -127,29 +126,7 @@ class EliminationTree {
    * @return EliminationTree representation in BoostGraph along with its
    * treedepth and root.
    */
-  auto Decompose() const {
-    struct {
-      BoostGraph graph;
-      unsigned treedepth;
-      VertexType root;
-    } ret = {BoostGraph(nodes_.size()), 0,
-             std::get<EliminatedNode>(root_.v).vertex};
-    std::set<VertexType> insert_now, insert_next;
-    insert_now.insert(std::get<EliminatedNode>(root_.v).vertex);
-    while (!insert_now.empty()) {
-      for (auto v : insert_now) {
-        auto& v_node = std::get<EliminatedNode>(nodes_[v]->v);
-        for (auto& p : v_node.children) {
-          auto& p_node = std::get<EliminatedNode>(p.v);
-          boost::add_edge(v, p_node.vertex, ret.graph);
-          insert_next.insert(p_node.vertex);
-        }
-      }
-      insert_now = std::move(insert_next);
-      ++ret.treedepth;
-    }
-    return ret;
-  }
+  auto Decompose() const;
 
  private:
   struct Node;
@@ -170,10 +147,11 @@ class EliminationTree {
 };
 
 template <typename OutEdgeList, typename VertexList, typename... Args>
-EliminationTree::EliminationTree(boost::adjacency_list<OutEdgeList,
-                                                       VertexList,
-                                                       boost::undirectedS,
-                                                       Args...> const& g)
+inline EliminationTree::EliminationTree(
+    boost::adjacency_list<OutEdgeList,
+                          VertexList,
+                          boost::undirectedS,
+                          Args...> const& g)
     : nodes_(boost::num_vertices(g), &root_) {
 #ifdef TD_CHECK_ARGS
   if (boost::connected_components(
@@ -195,5 +173,29 @@ EliminationTree::EliminationTree(boost::adjacency_list<OutEdgeList,
       root.neighbours_[i].insert(target(*ei, g));
   root_.v = std::move(root);
   components_.insert(&std::get<Component>(root_.v));
+}
+
+inline auto EliminationTree::Decompose() const {
+  struct {
+    BoostGraph graph;
+    unsigned treedepth;
+    VertexType root;
+  } ret = {BoostGraph(nodes_.size()), 0,
+           std::get<EliminatedNode>(root_.v).vertex};
+  std::set<VertexType> insert_now, insert_next;
+  insert_now.insert(std::get<EliminatedNode>(root_.v).vertex);
+  while (!insert_now.empty()) {
+    for (auto v : insert_now) {
+      auto& v_node = std::get<EliminatedNode>(nodes_[v]->v);
+      for (auto& p : v_node.children) {
+        auto& p_node = std::get<EliminatedNode>(p.v);
+        boost::add_edge(v, p_node.vertex, ret.graph);
+        insert_next.insert(p_node.vertex);
+      }
+    }
+    insert_now = std::move(insert_next);
+    ++ret.treedepth;
+  }
+  return ret;
 }
 }  // namespace td
