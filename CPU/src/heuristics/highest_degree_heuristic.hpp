@@ -1,11 +1,17 @@
 // Copyright 2020 GISBDW. All rights reserved.
+#pragma once
+
+#include <memory>
+#include <utility>
+
 #include "../branch_and_bound/branch_and_bound.hpp"
 #include "../elimination_tree/elimination_tree.hpp"
 
 namespace td {
 class HighestDegreeHeuristic : BranchAndBound::Heuristic {
  public:
-  HighestDegreeHeuristic(std::unique_ptr<BranchAndBound::Heuristic> heuristic)
+  explicit HighestDegreeHeuristic(
+      std::unique_ptr<BranchAndBound::Heuristic> heuristic)
       : BranchAndBound::Heuristic(std::move(heuristic)) {}
 
   Result Get(BranchAndBound::Graph const& g) override {

@@ -23,7 +23,7 @@ class BranchAndBound {
       unsigned depth;
       unsigned root;
     };
-    Heuristic(std::unique_ptr<Heuristic> heuristic);
+    explicit Heuristic(std::unique_ptr<Heuristic> heuristic);
     virtual Result Get(Graph const& g) = 0;
 
    protected:
