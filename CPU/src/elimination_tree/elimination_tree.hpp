@@ -55,18 +55,23 @@ class EliminationTree {
                                                  boost::undirectedS,
                                                  Args...> const& g);
   void Eliminate(VertexType v);
-  void Merge(VertexType v);
+  void Merge();
 
   ComponentIterator ComponentsBegin() const;
   ComponentIterator ComponentsEnd() const;
 
  private:
+  struct Node;
+  struct EliminatedNode {
+    std::list<Node> children;
+    unsigned depth;
+  };
   struct Node {
-    std::variant<std::pair<std::list<Node>, unsigned>, Component> v;
+    std::variant<EliminatedNode, Component> v;
   } root_;
   std::vector<Node*> nodes_;
   std::set<Component*> components_;
-  std::vector<Component::AdjacencyList::node_type> eliminated_;
+  std::vector<Component::AdjacencyList::node_type> eliminated_nodes_;
 
   EliminationTree(EliminationTree const&) = delete;
   EliminationTree& operator=(EliminationTree const&) = delete;
@@ -87,7 +92,7 @@ EliminationTree::EliminationTree(boost::adjacency_list<OutEdgeList,
     if (boost::edge(i, i, g).second)
       throw std::invalid_argument("Self loops are not allowed");
 #endif
-  eliminated_.reserve(boost::num_vertices(g));
+  eliminated_nodes_.reserve(boost::num_vertices(g));
   Component root;
   root.depth_ = 0;
   typename boost::graph_traits<
