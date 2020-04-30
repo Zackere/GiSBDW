@@ -17,7 +17,10 @@ class EliminationTreeFixture : public ::testing::Test {
   void SetUp() override {
     AddC5TestCase();
     AddTwoCyclesTestCase();
+    AddPathSimpleTestCase();
+    AddPathOptimalTestCase();
   }
+
   struct TestCase {
     Graph graph;
     std::vector<td::EliminationTree::VertexType> elimination;
@@ -72,7 +75,181 @@ class EliminationTreeFixture : public ::testing::Test {
     data_.emplace_back(std::move(tc));
   }
 
-  void AddTwoCyclesTestCase() {}
+  void AddTwoCyclesTestCase() {
+    TestCase tc;
+    tc.graph = Graph(7);
+    boost::add_edge(0, 1, tc.graph);
+    boost::add_edge(1, 2, tc.graph);
+    boost::add_edge(2, 0, tc.graph);
+    boost::add_edge(2, 3, tc.graph);
+    boost::add_edge(3, 6, tc.graph);
+    boost::add_edge(6, 5, tc.graph);
+    boost::add_edge(5, 4, tc.graph);
+    boost::add_edge(4, 6, tc.graph);
+    tc.elimination = {3, 6, 4, 5, 2, 1, 0};
+    tc.components.reserve(tc.elimination.size() + 1);
+    td::EliminationTree::Component c;
+    // Eliminate nothing
+    tc.components.push_back({});
+    c.depth_ = 0;
+    c.neighbours_ = {{0, {1, 2}}, {1, {0, 2}}, {2, {1, 0, 3}}, {3, {2, 6}},
+                     {4, {5, 6}}, {5, {4, 6}}, {6, {3, 4, 5}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 3
+    tc.components.push_back({});
+    c.depth_ = 1;
+    c.neighbours_ = {{0, {1, 2}}, {1, {0, 2}}, {2, {1, 0}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 1;
+    c.neighbours_ = {{4, {5, 6}}, {5, {4, 6}}, {6, {4, 5}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 6
+    tc.components.push_back({});
+    c.depth_ = 1;
+    c.neighbours_ = {{0, {1, 2}}, {1, {0, 2}}, {2, {1, 0}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 2;
+    c.neighbours_ = {{4, {5}}, {5, {4}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 4
+    tc.components.push_back({});
+    c.depth_ = 1;
+    c.neighbours_ = {{0, {1, 2}}, {1, {0, 2}}, {2, {1, 0}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 3;
+    c.neighbours_ = {{5, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 5
+    tc.components.push_back({});
+    c.depth_ = 1;
+    c.neighbours_ = {{0, {1, 2}}, {1, {0, 2}}, {2, {1, 0}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 2
+    tc.components.push_back({});
+    c.depth_ = 2;
+    c.neighbours_ = {{0, {1}}, {1, {0}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 1
+    tc.components.push_back({});
+    c.depth_ = 3;
+    c.neighbours_ = {{0, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 0
+    tc.components.push_back({});
+
+    data_.emplace_back(std::move(tc));
+  }
+
+  void AddPathSimpleTestCase() {
+    TestCase tc;
+    tc.graph = Graph(4);
+    for (uint64_t i = 0; i < boost::num_vertices(tc.graph) - 1; ++i)
+      boost::add_edge(i, i + 1, tc.graph);
+    tc.elimination = {3, 2, 1, 0};
+    tc.components.reserve(tc.elimination.size() + 1);
+    td::EliminationTree::Component c;
+    // Eliminate nothing
+    tc.components.push_back({});
+    c.depth_ = 0;
+    c.neighbours_ = {{0, {1}}, {1, {0, 2}}, {2, {1, 3}}, {3, {2}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 3
+    tc.components.push_back({});
+    c.depth_ = 1;
+    c.neighbours_ = {{0, {1}}, {1, {0, 2}}, {2, {1}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 2
+    tc.components.push_back({});
+    c.depth_ = 2;
+    c.neighbours_ = {{0, {1}}, {1, {0}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 1
+    tc.components.push_back({});
+    c.depth_ = 3;
+    c.neighbours_ = {{0, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 0
+    tc.components.push_back({});
+
+    data_.emplace_back(std::move(tc));
+  }
+
+  void AddPathOptimalTestCase() {
+    TestCase tc;
+    tc.graph = Graph(7);
+    for (uint64_t i = 0; i < boost::num_vertices(tc.graph) - 1; ++i)
+      boost::add_edge(i, i + 1, tc.graph);
+    tc.elimination = {3, 1, 5, 0, 2, 4, 6};
+    tc.components.reserve(tc.elimination.size() + 1);
+    td::EliminationTree::Component c;
+    // Eliminate nothing
+    tc.components.push_back({});
+    c.depth_ = 0;
+    c.neighbours_ = {{0, {1}},    {1, {0, 2}}, {2, {1, 3}}, {3, {2, 4}},
+                     {4, {3, 5}}, {5, {4, 6}}, {6, {5}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 3
+    tc.components.push_back({});
+    c.depth_ = 1;
+    c.neighbours_ = {{0, {1}}, {1, {0, 2}}, {2, {1}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 1;
+    c.neighbours_ = {{4, {5}}, {5, {4, 6}}, {6, {5}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 1
+    tc.components.push_back({});
+    c.depth_ = 2;
+    c.neighbours_ = {{0, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 2;
+    c.neighbours_ = {{2, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 1;
+    c.neighbours_ = {{4, {5}}, {5, {4, 6}}, {6, {5}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 5
+    tc.components.push_back({});
+    c.depth_ = 2;
+    c.neighbours_ = {{0, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 2;
+    c.neighbours_ = {{2, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 2;
+    c.neighbours_ = {{4, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 2;
+    c.neighbours_ = {{6, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 0
+    tc.components.push_back({});
+    c.depth_ = 2;
+    c.neighbours_ = {{2, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 2;
+    c.neighbours_ = {{4, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 2;
+    c.neighbours_ = {{6, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 2
+    tc.components.push_back({});
+    c.depth_ = 2;
+    c.neighbours_ = {{4, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    c.depth_ = 2;
+    c.neighbours_ = {{6, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 4
+    tc.components.push_back({});
+    c.depth_ = 2;
+    c.neighbours_ = {{6, {}}};
+    tc.components.back().emplace_back(std::move(c));
+    // Eliminate 6
+    tc.components.push_back({});
+
+    data_.emplace_back(std::move(tc));
+  }
 };
 
 TEST_F(EliminationTreeFixture, EliminationTest) {
@@ -89,16 +266,17 @@ TEST_F(EliminationTreeFixture, EliminationTest) {
           });
       et.Eliminate(testcase.elimination[i]);
     }
-    EXPECT_EQ(et.ComponentsBegin(), et.ComponentsEnd());
+    EXPECT_EQ(testcase.components[testcase.elimination.size()].size(),
+              std::distance(et.ComponentsBegin(), et.ComponentsEnd()));
   }
 }
 
 TEST_F(EliminationTreeFixture, MergeTest) {
   for (auto& testcase : data_) {
     td::EliminationTree et(testcase.graph);
-    for (int i = 0; i < testcase.elimination.size(); ++i)
-      et.Eliminate(testcase.elimination[i]);
-    for (int i = testcase.components.size() - 1; i > 0; --i) {
+    for (auto v : testcase.elimination)
+      et.Eliminate(v);
+    for (int i = testcase.elimination.size(); i > 0; --i) {
       EXPECT_EQ(testcase.components[i].size(),
                 std::distance(et.ComponentsBegin(), et.ComponentsEnd()));
       std::for_each(
