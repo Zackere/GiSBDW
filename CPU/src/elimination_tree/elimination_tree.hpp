@@ -36,7 +36,7 @@ class EliminationTree {
   };
   class ComponentIterator {
    public:
-    using iterator_category = std::forward_iterator_tag;
+    using iterator_category = std::bidirectional_iterator_tag;
     using value_type = Component;
     using difference_type = size_t;
     using pointer = Component*;
