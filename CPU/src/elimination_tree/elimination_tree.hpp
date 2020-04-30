@@ -15,7 +15,7 @@
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/connected_components.hpp"
 
-class EliminationTreeFixture;
+class ParametrizedEliminationTreeFixture;
 namespace td {
 class EliminationTree {
  public:
@@ -30,7 +30,7 @@ class EliminationTree {
 
    private:
     friend class EliminationTree;
-    friend class EliminationTreeFixture;
+    friend class ParametrizedEliminationTreeFixture;
     AdjacencyList neighbours_;
     unsigned depth_;
   };
