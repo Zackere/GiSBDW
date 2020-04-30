@@ -3,17 +3,19 @@
 #include "../elimination_tree/elimination_tree.hpp"
 
 namespace td {
-
-class BHeuristic : BranchAndBound::Heuristic {
+class HighestDegreeHeuristic : BranchAndBound::Heuristic {
  public:
+  HighestDegreeHeuristic(std::unique_ptr<BranchAndBound::Heuristic> heuristic)
+      : BranchAndBound::Heuristic(std::move(heuristic)) {}
+
   Result Get(BranchAndBound::Graph const& g) override {
     EliminationTree tree(g);
 
     while (tree.ComponentsBegin() != tree.ComponentsEnd()) {
       auto const& g = tree.ComponentsBegin()->AdjacencyList();
       auto g_iter = g.begin();
-      int v = g_iter->first;
-      int best_degree = g_iter->second.size();
+      auto v = g_iter->first;
+      auto best_degree = g_iter->second.size();
 
       while (++g_iter != g.end()) {
         if (g_iter->second.size() > best_degree) {
@@ -21,19 +23,18 @@ class BHeuristic : BranchAndBound::Heuristic {
           best_degree = g_iter->second.size();
         }
       }
-
       tree.Eliminate(v);
     }
 
-    Result result;
     auto [decomp, depth, root] = tree.Decompose();
+    Result ret{std::move(decomp), depth, root};
 
-    result.td_decomp = std::move(decomp);
-    result.depth = depth;
-    result.root = root;
-
-    return result;
+    if (auto* h = Heuristic::Get()) {
+      auto prev_ret = h->Get(g);
+      if (prev_ret.depth < depth)
+        return prev_ret;
+    }
+    return ret;
   }
-};  // namespace td
+};
 }  // namespace td
-   // namespace td

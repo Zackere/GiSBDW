@@ -5,11 +5,11 @@
 #include <limits>
 #include <random>
 
-#include "src/heuristics/b_heuristic.hpp"
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/depth_first_search.hpp"
 #include "boost/graph/erdos_renyi_generator.hpp"
 #include "boost/graph/graphviz.hpp"
+#include "src/heuristics/highest_degree_heuristic.hpp"
 
 struct VertexVisitor : public boost::default_dfs_visitor {
   template <typename Vertex, typename Graph>
@@ -30,5 +30,6 @@ int main() {
   std::ofstream file("graph.gviz", std::ios_base::trunc);
   boost::write_graphviz(file, g);
   file.close();
+  td::HighestDegreeHeuristic b(nullptr);
   return 0;
 }

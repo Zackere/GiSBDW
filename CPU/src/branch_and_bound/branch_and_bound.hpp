@@ -17,15 +17,20 @@ class BranchAndBound {
     virtual unsigned Get(EliminationTree::Component const& g) { return 1; }
   };
   class Heuristic {
-    // dekorator lista Heurystyka(Heurystyka(...));
    public:
     struct Result {
       Graph td_decomp;
       unsigned depth;
       unsigned root;
     };
+    Heuristic(std::unique_ptr<Heuristic> heuristic);
     virtual Result Get(Graph const& g) = 0;
-    std::unique_ptr<Heuristic> heuristic;
+
+   protected:
+    Heuristic* Get();
+
+   private:
+    std::unique_ptr<Heuristic> heuristic_;
   };
   template <typename OutEdgeList, typename VertexList, typename... Args>
   Graph Run(boost::adjacency_list<OutEdgeList,
