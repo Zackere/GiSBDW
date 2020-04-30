@@ -14,7 +14,10 @@ class EliminationTreeFixture : public ::testing::Test {
  protected:
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
-  void SetUp() override { AddC5TestCase(); }
+  void SetUp() override {
+    AddC5TestCase();
+    AddTwoCyclesTestCase();
+  }
   struct TestCase {
     Graph graph;
     std::vector<td::EliminationTree::VertexType> elimination;
@@ -68,6 +71,8 @@ class EliminationTreeFixture : public ::testing::Test {
 
     data_.emplace_back(std::move(tc));
   }
+
+  void AddTwoCyclesTestCase() {}
 };
 
 TEST_F(EliminationTreeFixture, EliminationTest) {
@@ -85,5 +90,32 @@ TEST_F(EliminationTreeFixture, EliminationTest) {
       et.Eliminate(testcase.elimination[i]);
     }
     EXPECT_EQ(et.ComponentsBegin(), et.ComponentsEnd());
+  }
+}
+
+TEST_F(EliminationTreeFixture, MergeTest) {
+  for (auto& testcase : data_) {
+    td::EliminationTree et(testcase.graph);
+    for (int i = 0; i < testcase.elimination.size(); ++i)
+      et.Eliminate(testcase.elimination[i]);
+    for (int i = testcase.components.size() - 1; i > 0; --i) {
+      EXPECT_EQ(testcase.components[i].size(),
+                std::distance(et.ComponentsBegin(), et.ComponentsEnd()));
+      std::for_each(
+          et.ComponentsBegin(), et.ComponentsEnd(), [&](auto const& component) {
+            EXPECT_NE(std::find(std::begin(testcase.components[i]),
+                                std::end(testcase.components[i]), component),
+                      std::end(testcase.components[i]));
+          });
+      et.Merge();
+    }
+    EXPECT_EQ(testcase.components[0].size(),
+              std::distance(et.ComponentsBegin(), et.ComponentsEnd()));
+    std::for_each(
+        et.ComponentsBegin(), et.ComponentsEnd(), [&](auto const& component) {
+          EXPECT_NE(std::find(std::begin(testcase.components[0]),
+                              std::end(testcase.components[0]), component),
+                    std::end(testcase.components[0]));
+        });
   }
 }

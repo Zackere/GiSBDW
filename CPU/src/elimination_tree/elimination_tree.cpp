@@ -50,7 +50,27 @@ void EliminationTree::Eliminate(VertexType v) {
   v_node = std::move(new_v_node);
 }
 
-void EliminationTree::Merge() {}
+void EliminationTree::Merge() {
+  Component new_component;
+  auto to_be_merged =
+      new_component.neighbours_.insert(std::move(eliminated_nodes_.back()))
+          .position;
+  eliminated_nodes_.pop_back();
+  auto& node = nodes_[to_be_merged->first];
+  new_component.depth_ = std::get<EliminatedNode>(node->v).depth;
+  for (auto& child_component : std::get<EliminatedNode>(node->v).children) {
+    for (auto& p : std::get<Component>(child_component.v).neighbours_)
+      new_component.neighbours_[p.first] = std::move(p.second);
+    components_.erase(&std::get<Component>(child_component.v));
+  }
+  for (auto& p : to_be_merged->second)
+    new_component.neighbours_[p].insert(to_be_merged->first);
+  node->v = std::move(new_component);
+  auto& merged_component = std::get<Component>(node->v);
+  for (auto& p : merged_component.neighbours_)
+    nodes_[p.first] = node;
+  components_.insert(&merged_component);
+}
 
 EliminationTree::ComponentIterator EliminationTree::ComponentsBegin() const {
   return ComponentIterator{std::cbegin(components_)};
