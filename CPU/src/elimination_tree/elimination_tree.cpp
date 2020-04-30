@@ -1,6 +1,8 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #include "elimination_tree.hpp"
 
+#include <string>
+
 namespace td {
 EliminationTree::Component::AdjacencyListType const&
 EliminationTree::Component::AdjacencyList() const {
@@ -16,6 +18,11 @@ bool EliminationTree::Component::operator==(Component const& other) const {
 }
 
 void EliminationTree::Eliminate(VertexType v) {
+#ifdef TD_CHECK_ARGS
+  if (!std::get_if<Component>(&nodes_[v]->v))
+    throw std::invalid_argument("Vertex " + std::to_string(v) +
+                                " is eliminated");
+#endif
   auto& v_node = nodes_[v]->v;
   auto& v_component = std::get<Component>(v_node);
   // Remove v from graph and save its adjacency list for later
@@ -57,6 +64,10 @@ void EliminationTree::Eliminate(VertexType v) {
 }
 
 void EliminationTree::Merge() {
+#ifdef TD_CHECK_ARGS
+  if (eliminated_nodes_.size() == 0)
+    throw std::runtime_error("No vertex to merge");
+#endif
   Component new_component;
   // Insert last removed vertex into new_component
   auto to_be_merged =

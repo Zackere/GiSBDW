@@ -8,12 +8,15 @@
 #include <vector>
 
 #include "boost/graph/adjacency_list.hpp"
+#include "boost/graph/isomorphism.hpp"
 #include "gtest/gtest.h"
 
 struct EliminationTreeTestCase {
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   Graph graph;
+  Graph decomposition;
+  unsigned depth;
   std::vector<td::EliminationTree::VertexType> elimination;
   std::vector<std::list<td::EliminationTree::Component>> components;
 };
@@ -63,6 +66,11 @@ class ParametrizedEliminationTreeFixture
     tc.components.back().emplace_back(std::move(c));
     // Eliminate 1
     tc.components.push_back({});
+    tc.decomposition = EliminationTreeTestCase::Graph(5);
+    for (auto& p :
+         std::vector<std::pair<int, int>>{{0, 3}, {2, 3}, {1, 2}, {3, 4}})
+      boost::add_edge(p.first, p.second, tc.decomposition);
+    tc.depth = 4;
     return tc;
   }
   static EliminationTreeTestCase TwoCyclesTestCase() {
@@ -126,6 +134,11 @@ class ParametrizedEliminationTreeFixture
     tc.components.back().emplace_back(std::move(c));
     // Eliminate 0
     tc.components.push_back({});
+    tc.decomposition = EliminationTreeTestCase::Graph(7);
+    for (auto& p : std::vector<std::pair<int, int>>{
+             {2, 3}, {3, 6}, {4, 6}, {4, 5}, {1, 2}, {1, 0}})
+      boost::add_edge(p.first, p.second, tc.decomposition);
+    tc.depth = 4;
     return tc;
   }
   static EliminationTreeTestCase PathSimpleTestCase() {
@@ -158,6 +171,10 @@ class ParametrizedEliminationTreeFixture
     tc.components.back().emplace_back(std::move(c));
     // Eliminate 0
     tc.components.push_back({});
+    tc.decomposition = EliminationTreeTestCase::Graph(4);
+    for (auto& p : std::vector<std::pair<int, int>>{{0, 1}, {1, 2}, {2, 3}})
+      boost::add_edge(p.first, p.second, tc.decomposition);
+    tc.depth = 4;
     return tc;
   }
   static EliminationTreeTestCase PathOptimalTestCase() {
@@ -233,6 +250,11 @@ class ParametrizedEliminationTreeFixture
     tc.components.back().emplace_back(std::move(c));
     // Eliminate 6
     tc.components.push_back({});
+    tc.decomposition = EliminationTreeTestCase::Graph(7);
+    for (auto& p : std::vector<std::pair<int, int>>{
+             {1, 3}, {3, 5}, {0, 1}, {1, 2}, {4, 5}, {5, 6}})
+      boost::add_edge(p.first, p.second, tc.decomposition);
+    tc.depth = 3;
     return tc;
   }
 };
@@ -251,6 +273,10 @@ TEST_P(ParametrizedEliminationTreeFixture, CorrectEliminationTest) {
         });
     et.Eliminate(testcase.elimination[i]);
   }
+  auto [g, depth, root] = et.Decompose();
+  EXPECT_EQ(testcase.depth, depth);
+  EXPECT_EQ(testcase.elimination[0], root);
+  EXPECT_TRUE(boost::isomorphism(g, testcase.decomposition));
   EXPECT_EQ(testcase.components[testcase.elimination.size()].size(),
             std::distance(et.ComponentsBegin(), et.ComponentsEnd()));
 }
