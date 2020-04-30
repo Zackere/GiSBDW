@@ -23,7 +23,7 @@ void EliminationTree::Eliminate(VertexType v) {
     new_node.v = Component();
     auto& new_component = std::get<Component>(new_node.v);
     new_component.depth_ = v_component.Depth() + 1;
-    std::map<VertexType, std::set<VertexType>> to_be_added;
+    decltype(v_component.neighbours_) to_be_added;
     to_be_added.insert(
         v_component.neighbours_.extract(std::begin(v_component.neighbours_)));
     while (!to_be_added.empty()) {
@@ -79,12 +79,12 @@ EliminationTree::ComponentIterator::operator--() {
 }
 
 bool EliminationTree::ComponentIterator::operator==(
-    ComponentIterator const& other) {
+    ComponentIterator const& other) const {
   return current_ == other.current_;
 }
 
 bool EliminationTree::ComponentIterator::operator!=(
-    ComponentIterator const& other) {
+    ComponentIterator const& other) const {
   return current_ != other.current_;
 }
 

@@ -15,6 +15,7 @@
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/connected_components.hpp"
 
+class EliminationTreeFixture;
 namespace td {
 class EliminationTree {
  public:
@@ -28,19 +29,26 @@ class EliminationTree {
 
    private:
     friend class EliminationTree;
+    friend class EliminationTreeFixture;
     AdjacencyList neighbours_;
     unsigned depth_;
   };
   class ComponentIterator {
    public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = Component;
+    using difference_type = size_t;
+    using pointer = Component*;
+    using reference = Component&;
+
     Component const& operator*() const;
     Component const* operator->() const;
 
     ComponentIterator& operator++();
     ComponentIterator& operator--();
 
-    bool operator==(ComponentIterator const& other);
-    bool operator!=(ComponentIterator const& other);
+    bool operator==(ComponentIterator const& other) const;
+    bool operator!=(ComponentIterator const& other) const;
 
    private:
     friend class EliminationTree;
