@@ -26,6 +26,7 @@ class EliminationTree {
     using AdjacencyList = std::map<VertexType, std::set<VertexType>>;
     AdjacencyList::mapped_type const& Neighbours(VertexType v) const;
     unsigned Depth() const;
+    bool operator==(Component const& other) const;
 
    private:
     friend class EliminationTree;

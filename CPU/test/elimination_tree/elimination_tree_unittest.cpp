@@ -76,6 +76,12 @@ TEST_F(EliminationTreeFixture, EliminationTest) {
     for (int i = 0; i < testcase.elimination.size(); ++i) {
       EXPECT_EQ(testcase.components[i].size(),
                 std::distance(et.ComponentsBegin(), et.ComponentsEnd()));
+      std::for_each(
+          et.ComponentsBegin(), et.ComponentsEnd(), [&](auto const& component) {
+            EXPECT_NE(std::find(std::begin(testcase.components[i]),
+                                std::end(testcase.components[i]), component),
+                      std::end(testcase.components[i]));
+          });
       et.Eliminate(testcase.elimination[i]);
     }
     EXPECT_EQ(et.ComponentsBegin(), et.ComponentsEnd());

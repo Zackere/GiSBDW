@@ -11,6 +11,10 @@ unsigned EliminationTree::Component::Depth() const {
   return depth_;
 }
 
+bool EliminationTree::Component::operator==(Component const& other) const {
+  return depth_ == other.depth_ && neighbours_ == other.neighbours_;
+}
+
 void EliminationTree::Eliminate(VertexType v) {
   auto& v_node = nodes_[v]->v;
   auto& v_component = std::get<Component>(v_node);
