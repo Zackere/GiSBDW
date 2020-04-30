@@ -17,15 +17,37 @@
 
 class ParametrizedEliminationTreeFixture;
 namespace td {
+/* Class representing treedepth decomposition of incomplete elimination defined
+ * in introductory documentation.
+ */
 class EliminationTree {
  public:
   using VertexType = std::size_t;
   using ComponentIndex = std::size_t;
+  /**
+   * Class representing a connected component of a graph after some elimination.
+   */
   class Component {
    public:
     using AdjacencyList = std::map<VertexType, std::set<VertexType>>;
+    /* *
+     * Access neighbourhood of v inside a component.
+     *
+     * @param v query vertex.
+     *
+     * @return Set of vertices adjacent to v.
+     */
     AdjacencyList::mapped_type const& Neighbours(VertexType v) const;
+    /**
+     * @return Depth of component inside EliminationTree that owns it.
+     */
     unsigned Depth() const;
+
+    /**
+     * Checks if objects represent the same graph on the same depth.
+     *
+     * @return true if objects are the same. false otherwise.
+     */
     bool operator==(Component const& other) const;
 
    private:
@@ -34,6 +56,10 @@ class EliminationTree {
     AdjacencyList neighbours_;
     unsigned depth_;
   };
+  /**
+   * Class used to iterate over leaves in EliminationTree which are represented
+   * by a graph.
+   */
   class ComponentIterator {
    public:
     using iterator_category = std::bidirectional_iterator_tag;
@@ -58,15 +84,38 @@ class EliminationTree {
     Iterator current_;
   };
 
+  /**
+   * Initiates EliminationTree object to T_eps.
+   *
+   * @param g connected and without self-loops undirected graph which will
+   * become a root of T_eps
+   */
   template <typename OutEdgeList, typename VertexList, typename... Args>
   explicit EliminationTree(boost::adjacency_list<OutEdgeList,
                                                  VertexList,
                                                  boost::undirectedS,
                                                  Args...> const& g);
+  /**
+   * Performs elimination of uneliminated vertex v. This operation is analogous
+   * to transformation T_w->T_wv
+   *
+   * @param v vertex to be eliminated
+   */
   void Eliminate(VertexType v);
+  /**
+   * Reverts last recorded elimination. This operation is analogous
+   * to transformation T_wv->T_w
+   */
   void Merge();
 
+  /**
+   *  @return Iterator to the first Component of EliminationTree.
+   */
   ComponentIterator ComponentsBegin() const;
+  /**
+   * @return Iterator to the Component following the last Component of
+   * EliminationTree.
+   */
   ComponentIterator ComponentsEnd() const;
 
  private:
