@@ -176,6 +176,10 @@ inline EliminationTree::EliminationTree(
 }
 
 inline auto EliminationTree::Decompose() const {
+#ifdef TD_CHECK_ARGS
+  if (eliminated_nodes_.size() != nodes_.size())
+    throw std::runtime_error("Elimination is not complete");
+#endif
   struct {
     BoostGraph graph;
     unsigned treedepth;
