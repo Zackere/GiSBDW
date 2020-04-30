@@ -22,8 +22,10 @@ class BranchAndBound {
     struct Result {
       Graph td_decomp;
       unsigned depth;
+      unsigned root;
     };
     virtual Result Get(Graph const& g) = 0;
+    std::unique_ptr<Heuristic> heuristic;
   };
   template <typename OutEdgeList, typename VertexList, typename... Args>
   Graph Run(boost::adjacency_list<OutEdgeList,

@@ -1,10 +1,11 @@
 // Copyright 2020 GISBDW. All rights reserved.
-
+#pragma once
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <random>
 
+#include "src/heuristics/b_heuristic.hpp"
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/depth_first_search.hpp"
 #include "boost/graph/erdos_renyi_generator.hpp"
