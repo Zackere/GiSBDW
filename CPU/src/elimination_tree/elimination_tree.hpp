@@ -25,6 +25,11 @@ class EliminationTree {
   using VertexType = std::size_t;
   using BoostGraph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
+  struct Result {
+    BoostGraph td_decomp;
+    unsigned treedepth;
+    unsigned root;
+  };
   /**
    * Class representing a connected component of a graph after some
    * elimination.
@@ -106,7 +111,7 @@ class EliminationTree {
    * Reverts last recorded elimination. This operation is analogous
    * to transformation T_wv->T_w
    */
-  void Merge();
+  VertexType Merge();
 
   /**
    *  @return Iterator to the first Component of EliminationTree.
@@ -126,7 +131,7 @@ class EliminationTree {
    * @return EliminationTree representation in BoostGraph along with its
    * treedepth and root.
    */
-  auto Decompose() const;
+  Result Decompose() const;
 
  private:
   struct Node;
@@ -175,17 +180,13 @@ inline EliminationTree::EliminationTree(
   components_.insert(&std::get<Component>(root_.v));
 }
 
-inline auto EliminationTree::Decompose() const {
+inline EliminationTree::Result EliminationTree::Decompose() const {
 #ifdef TD_CHECK_ARGS
   if (eliminated_nodes_.size() != nodes_.size())
     throw std::runtime_error("Elimination is not complete");
 #endif
-  struct {
-    BoostGraph graph;
-    unsigned treedepth;
-    VertexType root;
-  } ret = {BoostGraph(nodes_.size()), 0,
-           std::get<EliminatedNode>(root_.v).vertex};
+  Result ret = {BoostGraph(nodes_.size()), 0,
+                std::get<EliminatedNode>(root_.v).vertex};
   std::set<VertexType> insert_now, insert_next;
   insert_now.insert(std::get<EliminatedNode>(root_.v).vertex);
   while (!insert_now.empty()) {
@@ -193,7 +194,7 @@ inline auto EliminationTree::Decompose() const {
       auto& v_node = std::get<EliminatedNode>(nodes_[v]->v);
       for (auto& p : v_node.children) {
         auto& p_node = std::get<EliminatedNode>(p.v);
-        boost::add_edge(v, p_node.vertex, ret.graph);
+        boost::add_edge(v, p_node.vertex, ret.td_decomp);
         insert_next.insert(p_node.vertex);
       }
     }

@@ -1,21 +1,16 @@
 // Copyright 2020 GISBDW. All rights reserved.
-
+#pragma once
 #include <fstream>
 #include <iostream>
 #include <limits>
 #include <random>
 
 #include "boost/graph/adjacency_list.hpp"
-#include "boost/graph/depth_first_search.hpp"
 #include "boost/graph/erdos_renyi_generator.hpp"
 #include "boost/graph/graphviz.hpp"
-
-struct VertexVisitor : public boost::default_dfs_visitor {
-  template <typename Vertex, typename Graph>
-  void discover_vertex(Vertex u, Graph const& g) const {
-    std::cout << u << ' ';
-  }
-};
+#include "src/branch_and_bound/branch_and_bound.hpp"
+#include "src/heuristics/highest_degree_heuristic.hpp"
+#include "src/lower_bound/basic_lower_bound.hpp"
 
 int main() {
   using Graph =
@@ -23,11 +18,16 @@ int main() {
   using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;
   constexpr int n = 15;
   std::minstd_rand rng;
-  Graph g(ERGen(rng, n, 0.2), ERGen(), n);
-  boost::depth_first_search(g, boost::visitor(VertexVisitor()));
-  std::cout << std::endl;
-  std::ofstream file("graph.gviz", std::ios_base::trunc);
-  boost::write_graphviz(file, g);
-  file.close();
+  Graph g(ERGen(rng, n, 0.5), ERGen(), n);
+  td::BranchAndBound bnb;
+  auto res = bnb(g, std::make_unique<td::BasicLowerBound>(),
+                 std::make_unique<td::HighestDegreeHeuristic>(nullptr));
+
+  std::ofstream file1("graph1.gviz", std::ios_base::trunc);
+  boost::write_graphviz(file1, g);
+  file1.close();
+  std::ofstream file2("graph2.gviz", std::ios_base::trunc);
+  boost::write_graphviz(file2, res.td_decomp);
+  file2.close();
   return 0;
 }
