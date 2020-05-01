@@ -12,7 +12,7 @@ class HighestDegreeHeuristic : public BranchAndBound::Heuristic {
  public:
   explicit HighestDegreeHeuristic(
       std::unique_ptr<BranchAndBound::Heuristic> heuristic)
-      : BranchAndBound::Heuristic(std::move(heuristic)) {}
+      : heuristic_(std::move(heuristic)) {}
   ~HighestDegreeHeuristic() override = default;
 
   EliminationTree::Result Get(BranchAndBound::Graph const& g) override {
@@ -35,12 +35,15 @@ class HighestDegreeHeuristic : public BranchAndBound::Heuristic {
 
     auto result = tree.Decompose();
 
-    if (auto* h = Heuristic::Get()) {
-      auto prev_result = h->Get(g);
+    if (heuristic_) {
+      auto prev_result = heuristic_->Get(g);
       if (prev_result.treedepth < result.treedepth)
         return prev_result;
     }
     return result;
   }
+
+ private:
+  std::unique_ptr<Heuristic> heuristic_;
 };
 }  // namespace td
