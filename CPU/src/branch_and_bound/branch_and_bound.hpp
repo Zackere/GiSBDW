@@ -21,15 +21,8 @@ class BranchAndBound {
   };
   class Heuristic {
    public:
-    explicit Heuristic(std::unique_ptr<Heuristic> heuristic);
     virtual EliminationTree::Result Get(Graph const& g) = 0;
     virtual ~Heuristic() = default;
-
-   protected:
-    Heuristic* Get();
-
-   private:
-    std::unique_ptr<Heuristic> heuristic_;
   };
   template <typename OutEdgeList, typename VertexList, typename... Args>
   EliminationTree::Result operator()(boost::adjacency_list<OutEdgeList,

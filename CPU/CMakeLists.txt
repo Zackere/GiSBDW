@@ -13,6 +13,7 @@ add_executable(${TEST_PROJECT_NAME} ${TEST_SOURCES} ${PROJECT_SOURCES})
 set_property(TARGET ${TEST_PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 target_compile_definitions(${TEST_PROJECT_NAME} PRIVATE -DTD_CHECK_ARGS)
 target_link_libraries(${TEST_PROJECT_NAME} gtest_main)
+target_link_libraries(${TEST_PROJECT_NAME} gmock_main)
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND ${TEST_PROJECT_NAME})
 
 find_program(CLANG_FORMAT_EXE NAMES "clang-format")

@@ -308,14 +308,7 @@ TEST_P(ParametrizedEliminationTreeFixture, CorrectMergeTest) {
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    EliminationTest,
-    ParametrizedEliminationTreeFixture,
-    ::testing::Values(ParametrizedEliminationTreeFixture::C5TestCase(),
-                      ParametrizedEliminationTreeFixture::PathOptimalTestCase(),
-                      ParametrizedEliminationTreeFixture::PathSimpleTestCase(),
-                      ParametrizedEliminationTreeFixture::TwoCyclesTestCase()));
-INSTANTIATE_TEST_SUITE_P(
-    MergeTest,
+    CorrectValues,
     ParametrizedEliminationTreeFixture,
     ::testing::Values(ParametrizedEliminationTreeFixture::C5TestCase(),
                       ParametrizedEliminationTreeFixture::PathOptimalTestCase(),

@@ -5,13 +5,6 @@
 #include <utility>
 
 namespace td {
-BranchAndBound::Heuristic::Heuristic(std::unique_ptr<Heuristic> heuristic)
-    : heuristic_(std::move(heuristic)) {}
-
-BranchAndBound::Heuristic* BranchAndBound::Heuristic::Get() {
-  return heuristic_.get();
-}
-
 void BranchAndBound::Algorithm() {
   for (auto it = elimination_tree_->ComponentsBegin();
        it != elimination_tree_->ComponentsEnd(); ++it)
