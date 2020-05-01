@@ -9,6 +9,9 @@ using ::testing::_;
 using ::testing::Return;
 
 namespace {
+// Include here to avoid linker issues
+#include "../utils.hpp"
+
 class MockHeuristic : public td::BranchAndBound::Heuristic {
  public:
   MOCK_METHOD1(Get,
@@ -36,16 +39,6 @@ class ParametrizedBranchAndBoundFixture
     return ret;
   }
 };
-bool CompareBoostGraphs(td::EliminationTree::BoostGraph const& g1,
-                        td::EliminationTree::BoostGraph const& g2) {
-  if (boost::num_vertices(g1) != boost::num_vertices(g2))
-    return false;
-  for (int i = 0; i < boost::num_vertices(g1); ++i)
-    for (int j = 0; j < i; ++j)
-      if (boost::edge(i, j, g1).second != boost::edge(i, j, g2).second)
-        return false;
-  return true;
-}
 MATCHER_P(BoostGraphMatcher, g, "") {
   return CompareBoostGraphs(g, arg);
 }
@@ -60,13 +53,12 @@ TEST_P(ParametrizedBranchAndBoundFixture, CorrectDecompositionTest) {
           testcase.in, testcase.out.treedepth + 1, testcase.out.root}));
   EXPECT_CALL(*mock_lower_bound, Get(_)).WillRepeatedly(Return(1));
   td::BranchAndBound bnb;
-  auto res =
+  EXPECT_TRUE(CheckIfTdDecompIsValid(
+      testcase.in,
       bnb(testcase.in,
           std::unique_ptr<td::BranchAndBound::LowerBound>(mock_lower_bound),
-          std::unique_ptr<td::BranchAndBound::Heuristic>(mock_heuristic));
-  EXPECT_EQ(res.root, testcase.out.root);
-  EXPECT_EQ(res.treedepth, testcase.out.treedepth);
-  EXPECT_TRUE(CompareBoostGraphs(res.td_decomp, testcase.out.td_decomp));
+          std::unique_ptr<td::BranchAndBound::Heuristic>(mock_heuristic)),
+      testcase.out));
 }
 
 INSTANTIATE_TEST_SUITE_P(

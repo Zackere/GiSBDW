@@ -273,10 +273,11 @@ TEST_P(ParametrizedEliminationTreeFixture, CorrectEliminationTest) {
         });
     et.Eliminate(testcase.elimination[i]);
   }
-  auto [g, depth, root] = et.Decompose();
-  EXPECT_EQ(testcase.depth, depth);
-  EXPECT_EQ(testcase.elimination[0], root);
-  EXPECT_TRUE(boost::isomorphism(g, testcase.decomposition));
+  auto decomposition = et.Decompose();
+  EXPECT_EQ(testcase.depth, decomposition.treedepth);
+  EXPECT_EQ(testcase.elimination[0], decomposition.root);
+  EXPECT_TRUE(
+      boost::isomorphism(decomposition.td_decomp, testcase.decomposition));
   EXPECT_EQ(testcase.components[testcase.elimination.size()].size(),
             std::distance(et.ComponentsBegin(), et.ComponentsEnd()));
 }
