@@ -8,13 +8,14 @@
 #include "../elimination_tree/elimination_tree.hpp"
 
 namespace td {
-class HighestDegreeHeuristic : BranchAndBound::Heuristic {
+class HighestDegreeHeuristic : public BranchAndBound::Heuristic {
  public:
   explicit HighestDegreeHeuristic(
       std::unique_ptr<BranchAndBound::Heuristic> heuristic)
       : BranchAndBound::Heuristic(std::move(heuristic)) {}
+  ~HighestDegreeHeuristic() override = default;
 
-  Result Get(BranchAndBound::Graph const& g) override {
+  EliminationTree::Result Get(BranchAndBound::Graph const& g) override {
     EliminationTree tree(g);
 
     while (tree.ComponentsBegin() != tree.ComponentsEnd()) {
@@ -32,15 +33,14 @@ class HighestDegreeHeuristic : BranchAndBound::Heuristic {
       tree.Eliminate(v);
     }
 
-    auto [decomp, depth, root] = tree.Decompose();
-    Result ret{std::move(decomp), depth, root};
+    auto result = tree.Decompose();
 
     if (auto* h = Heuristic::Get()) {
-      auto prev_ret = h->Get(g);
-      if (prev_ret.depth < depth)
-        return prev_ret;
+      auto prev_result = h->Get(g);
+      if (prev_result.treedepth < result.treedepth)
+        return prev_result;
     }
-    return ret;
+    return result;
   }
 };
 }  // namespace td

@@ -63,7 +63,7 @@ void EliminationTree::Eliminate(VertexType v) {
   v_node = std::move(new_v_node);
 }
 
-void EliminationTree::Merge() {
+EliminationTree::VertexType EliminationTree::Merge() {
 #ifdef TD_CHECK_ARGS
   if (eliminated_nodes_.size() == 0)
     throw std::runtime_error("No vertex to merge");
@@ -91,6 +91,7 @@ void EliminationTree::Merge() {
   for (auto& p : merged_component.neighbours_)
     nodes_[p.first] = node;
   components_.insert(&merged_component);
+  return to_be_merged->first;
 }
 
 EliminationTree::ComponentIterator EliminationTree::ComponentsBegin() const {
