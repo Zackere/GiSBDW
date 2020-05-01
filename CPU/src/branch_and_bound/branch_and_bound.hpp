@@ -2,7 +2,9 @@
 #pragma once
 
 #include <memory>
+#include <set>
 #include <utility>
+#include <vector>
 
 #include "../elimination_tree/elimination_tree.hpp"
 #include "boost/graph/adjacency_list.hpp"
