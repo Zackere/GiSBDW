@@ -41,7 +41,6 @@ bool CompareBoostGraphs(td::EliminationTree::BoostGraph const& g1,
         return false;
   return true;
 }
-
 MATCHER_P(BoostGraphMatcher, g, "") {
   return CompareBoostGraphs(g, arg);
 }
@@ -53,7 +52,7 @@ TEST_P(ParametrizedHeighestDegreeHeuristicFixture, CallOtherHeuristicTest) {
   td::HighestDegreeHeuristic heuristic = td::HighestDegreeHeuristic(
       std::unique_ptr<td::BranchAndBound::Heuristic>(mock_heuristic));
   EXPECT_CALL(*mock_heuristic, Get(BoostGraphMatcher(testcase.in)))
-      .WillOnce(Return(td::EliminationTree::Result{
+      .WillRepeatedly(Return(td::EliminationTree::Result{
           testcase.in, testcase.out.treedepth + 1, testcase.out.root}));
   auto res = heuristic.Get(testcase.in);
   EXPECT_EQ(res.root, testcase.out.root);
@@ -67,7 +66,7 @@ TEST_P(ParametrizedHeighestDegreeHeuristicFixture, PassBetterHeuristicTest) {
   td::HighestDegreeHeuristic heuristic = td::HighestDegreeHeuristic(
       std::unique_ptr<td::BranchAndBound::Heuristic>(mock_heuristic));
   EXPECT_CALL(*mock_heuristic, Get(BoostGraphMatcher(testcase.in)))
-      .WillOnce(Return(td::EliminationTree::Result{
+      .WillRepeatedly(Return(td::EliminationTree::Result{
           testcase.in, testcase.out.treedepth - 1, testcase.out.root}));
   auto res = heuristic.Get(testcase.in);
   EXPECT_EQ(res.root, testcase.out.root);
