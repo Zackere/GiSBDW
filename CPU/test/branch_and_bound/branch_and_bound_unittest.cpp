@@ -14,14 +14,18 @@ namespace {
 
 class MockHeuristic : public td::BranchAndBound::Heuristic {
  public:
-  MOCK_METHOD1(Get,
-               td::EliminationTree::Result(td::BranchAndBound::Graph const&));
+  MOCK_METHOD(td::EliminationTree::Result,
+              Get,
+              (td::BranchAndBound::Graph const& g),
+              (override));
 };
 class MockLowerBound : public td::BranchAndBound::LowerBound {
  public:
-  MOCK_METHOD1(Get,
-               std::variant<LowerBoundInfo, TreedepthInfo>(
-                   td::EliminationTree::Component const&));
+  using variant = std::variant<LowerBoundInfo, TreedepthInfo>;
+  MOCK_METHOD(variant,
+              Get,
+              (td::EliminationTree::Component const& component),
+              (override));
 };
 struct BranchAndBoundTestCase {
   td::BranchAndBound::Graph in;

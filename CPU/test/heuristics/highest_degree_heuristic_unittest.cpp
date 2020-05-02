@@ -13,8 +13,10 @@ namespace {
 
 class MockHeuristic : public td::BranchAndBound::Heuristic {
  public:
-  MOCK_METHOD1(Get,
-               td::EliminationTree::Result(td::BranchAndBound::Graph const&));
+  MOCK_METHOD(td::EliminationTree::Result,
+              Get,
+              (td::BranchAndBound::Graph const&),
+              (override));
 };
 struct HeuristicTestCase {
   td::BranchAndBound::Graph in;
