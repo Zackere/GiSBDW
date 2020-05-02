@@ -58,8 +58,9 @@ BranchAndBound::LowerBound::BetterResult(
   ret.lower_bound = std::max(lb_info1.lower_bound, lb_info2.lower_bound);
   if (lb_info1.attempt_order)
     ret.attempt_order = std::move(lb_info1.attempt_order);
-  if (lb_info2.attempt_order && ret.attempt_order &&
-      lb_info2.attempt_order->size() < ret.attempt_order->size())
+  if (lb_info2.attempt_order &&
+      (!ret.attempt_order ||
+       lb_info2.attempt_order->size() < ret.attempt_order->size()))
     ret.attempt_order = std::move(lb_info2.attempt_order);
   return ret;
 }
