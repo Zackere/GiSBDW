@@ -1,11 +1,9 @@
 // Copyright 2020 GISBDW. All rights reserved.
 
 #include <fstream>
-#include <iostream>
 #include <random>
 
 #include "boost/graph/adjacency_list.hpp"
-#include "boost/graph/depth_first_search.hpp"
 #include "boost/graph/erdos_renyi_generator.hpp"
 #include "boost/graph/graphviz.hpp"
 #include "boost/graph/undirected_graph.hpp"
