@@ -28,7 +28,7 @@ class EliminationTree {
   struct Result {
     BoostGraph td_decomp;
     unsigned treedepth;
-    unsigned root;
+    VertexType root;
   };
   /**
    * Class representing a connected component of a graph after some
@@ -57,7 +57,7 @@ class EliminationTree {
 
    private:
     friend class EliminationTree;
-    friend class ParametrizedEliminationTreeFixture;
+    friend class ::ParametrizedEliminationTreeFixture;
     AdjacencyListType neighbours_;
     unsigned depth_;
   };

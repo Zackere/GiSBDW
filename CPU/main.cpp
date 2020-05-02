@@ -1,5 +1,4 @@
 // Copyright 2020 GISBDW. All rights reserved.
-#pragma once
 
 #include <fstream>
 #include <random>
@@ -15,8 +14,8 @@ int main() {
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;
-  constexpr int n = 12;
-  std::minstd_rand rng(12);
+  constexpr int n = 16;
+  std::minstd_rand rng(13);
   Graph g(ERGen(rng, n, 0.3), ERGen(), n);
   td::BranchAndBound bnb;
   auto res = bnb(g, std::make_unique<td::BasicLowerBound>(),
