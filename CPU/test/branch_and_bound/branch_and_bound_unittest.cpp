@@ -19,7 +19,9 @@ class MockHeuristic : public td::BranchAndBound::Heuristic {
 };
 class MockLowerBound : public td::BranchAndBound::LowerBound {
  public:
-  MOCK_METHOD1(Get, unsigned(td::EliminationTree::Component const&));
+  MOCK_METHOD1(Get,
+               std::variant<LowerBoundInfo, TreedepthInfo>(
+                   td::EliminationTree::Component const&));
 };
 struct BranchAndBoundTestCase {
   td::BranchAndBound::Graph in;
@@ -51,7 +53,9 @@ TEST_P(ParametrizedBranchAndBoundFixture, CorrectDecompositionTest) {
   EXPECT_CALL(*mock_heuristic, Get(BoostGraphMatcher(testcase.in)))
       .WillRepeatedly(Return(td::EliminationTree::Result{
           testcase.in, testcase.out.treedepth + 1, testcase.out.root}));
-  EXPECT_CALL(*mock_lower_bound, Get(_)).WillRepeatedly(Return(1));
+  EXPECT_CALL(*mock_lower_bound, Get(_))
+      .WillRepeatedly(Return(
+          td::BranchAndBound::LowerBound::LowerBoundInfo{1, std::nullopt}));
   td::BranchAndBound bnb;
   EXPECT_TRUE(CheckIfTdDecompIsValid(
       testcase.in,
