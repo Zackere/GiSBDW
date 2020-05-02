@@ -2,8 +2,6 @@
 #pragma once
 
 #include <fstream>
-#include <iostream>
-#include <limits>
 #include <random>
 
 #include "boost/graph/adjacency_list.hpp"
@@ -17,9 +15,9 @@ int main() {
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;
-  constexpr int n = 15;
-  std::minstd_rand rng;
-  Graph g(ERGen(rng, n, 0.5), ERGen(), n);
+  constexpr int n = 12;
+  std::minstd_rand rng(12);
+  Graph g(ERGen(rng, n, 0.3), ERGen(), n);
   td::BranchAndBound bnb;
   auto res = bnb(g, std::make_unique<td::BasicLowerBound>(),
                  std::make_unique<td::HighestDegreeHeuristic>(nullptr));
@@ -30,5 +28,6 @@ int main() {
   std::ofstream file2("graph2.gviz", std::ios_base::trunc);
   boost::write_graphviz(file2, res.td_decomp);
   file2.close();
+
   return 0;
 }
