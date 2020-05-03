@@ -14,12 +14,20 @@ int main() {
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;
-  constexpr int n = 16;
-  std::minstd_rand rng(13);
-  Graph g(ERGen(rng, n, 0.3), ERGen(), n);
-  td::BranchAndBound bnb;
-  auto res = bnb(g, std::make_unique<td::BasicLowerBound>(),
-                 std::make_unique<td::HighestDegreeHeuristic>(nullptr));
+  int n = 30;
+  Graph g;
+  td::EliminationTree::Result res;
+  while (true) {
+    try {
+      std::minstd_rand rng(time(0));
+      g = Graph(ERGen(rng, n, 0.10), ERGen(), n);
+      td::BranchAndBound bnb;
+      res = bnb(g, std::make_unique<td::BasicLowerBound>(),
+                std::make_unique<td::HighestDegreeHeuristic>(nullptr));
+      break;
+    } catch (...) {
+    }
+  }
 
   std::ofstream file1("graph1.gviz", std::ios_base::trunc);
   boost::write_graphviz(file1, g);
