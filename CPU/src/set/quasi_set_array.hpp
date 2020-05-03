@@ -85,6 +85,7 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
       k++;
     }
     code += NChooseK(arr_[excludedIndex_], k);
+    return code;
   }
 
  private:
