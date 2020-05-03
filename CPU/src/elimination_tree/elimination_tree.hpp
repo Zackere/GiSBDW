@@ -174,8 +174,8 @@ inline EliminationTree::EliminationTree(
       std::remove_reference_t<decltype(g)>>::out_edge_iterator ei,
       ei_end;
   for (int i = 0; i < boost::num_vertices(g); ++i)
-    for (boost::tie(ei, ei_end) = out_edges(i, g); ei != ei_end; ++ei)
-      root.neighbours_[i].insert(target(*ei, g));
+    for (boost::tie(ei, ei_end) = boost::out_edges(i, g); ei != ei_end; ++ei)
+      root.neighbours_[i].insert(boost::target(*ei, g));
   root_.v = std::move(root);
   components_.insert(&std::get<Component>(root_.v));
 }
