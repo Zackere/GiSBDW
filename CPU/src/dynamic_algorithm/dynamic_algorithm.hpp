@@ -55,10 +55,12 @@ class DynamicAlgorithm {
 
     // iterate over k-subsets
     for (SetElement k = 2; k <= n; ++k) {
+      std::cout << k << "\n";
       auto numberOfSubsets = NChooseK(n, k);
       for (size_t code = 0; code < numberOfSubsets; ++code) {
-        std::cout << "k/code kmax/codemax -> " << k << "/" << code << " " << n
-                  << "/" << numberOfSubsets << "\n";
+        // std::cout << "k/code kmax/codemax -> " << k << "/" << code << " " <<
+        // n
+        //<< "/" << numberOfSubsets << "\n";
         SignedIntegral bestTreeDepthForThisSet =
             std::numeric_limits<SignedIntegral>::max();
         // get set from its code

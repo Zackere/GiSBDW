@@ -10,14 +10,6 @@
 
 #include "src/dynamic_algorithm/dynamic_algorithm.hpp"
 
-class VertexVisitor : public boost::default_dfs_visitor {
- public:
-  template <typename Vertex, typename Graph>
-  void discover_vertex(Vertex u, const Graph& g) const {
-    std::cout << u << " ";
-  }
-};
-
 int main() {
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
@@ -25,7 +17,6 @@ int main() {
   constexpr int n = 18;
   std::minstd_rand rng(0);
   Graph g(ERGen(rng, n, 0.49), ERGen(), n);
-  boost::depth_first_search(g, boost::visitor(VertexVisitor()));
   std::cout << std::endl;
   std::ofstream file("graph.gviz", std::ios_base::trunc);
   boost::write_graphviz(file, g);
