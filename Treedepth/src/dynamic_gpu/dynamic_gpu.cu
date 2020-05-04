@@ -61,6 +61,7 @@ __global__ void DynamicStepKernel(int8_t const* const prev,
       memcpy(my_uf, prev_uf, nvertices + 2);
     }
   }
+  __syncthreads();
   for (int i = 0; i < nvertices + 2; ++i)
     next[(thread_offset + blockIdx.x * blockDim.x) * (nvertices + 2) +
          i * blockDim.x + threadIdx.x] = mem[i * blockDim.x + threadIdx.x];

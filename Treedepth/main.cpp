@@ -15,13 +15,13 @@ int main() {
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;
-  constexpr int n = 21;
+  constexpr int n = 22;
   Graph g(n);
   std::set<int8_t> verts;
   for (int i = 0; i < boost::num_vertices(g); ++i)
     verts.insert(i);
-  for (int i = 0; i < boost::num_vertices(g) - 1; ++i)
-    boost::add_edge(i, i + 1, g);
+  std::minstd_rand rng(time(0));
+  g = Graph(ERGen(rng, n, 0.20), ERGen(), n);
 #ifdef CUDA_ENABLED
   td::DynamicGPU dgpu;
   dgpu(g);
