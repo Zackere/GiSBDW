@@ -1,32 +1,30 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 #ifdef CUDA_ENABLED
+#include <thrust/device_vector.h>
+
+#include <functional>
 #include <memory>
+#include <mutex>
+#include <set>
 #include <vector>
 
 #include "boost/graph/adjacency_list.hpp"
+#include "boost/graph/copy.hpp"
 #include "cuda_runtime.h"
-
-#define H __host__
-#define D __device__
-#define HD H D
 
 namespace td {
 class DynamicGPU {
  public:
   // Refer to nvGraph (nvgraphCSRTopology32I_t) for details
   struct Graph {
-    HD Graph(int verts, int edgs);
-    HD Graph(Graph const& other);
-    HD Graph& operator=(Graph const& other);
-    HD Graph(Graph&&) = default;
-    HD Graph& operator=(Graph&&) = default;
-    HD ~Graph();
-
-    int nvertices, nedges;
-    int* source_offsets;
-    int* destination;
+    int nvertices;
+    int nedges;
+    thrust::device_vector<int> source_offsets;
+    thrust::device_vector<int> destination;
   };
+  using BoostGraph =
+      boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
 
   template <typename OutEdgeList, typename VertexList, typename... Args>
   void operator()(boost::adjacency_list<OutEdgeList,
@@ -40,12 +38,21 @@ class DynamicGPU {
                                         Args...> const& g,
                   int k);
 
-  std::size_t GetMaxIterations(std::size_t nvertices) const;
+  std::size_t GetMaxIterations(std::size_t nvertices, int device) const;
+  std::vector<int8_t> GetElimination(std::set<int8_t> vertices,
+                                     std::size_t nverts);
 
  private:
-  void Run(Graph g, int k);
+  std::size_t SetPlaceholderSize(std::size_t nverts) const;
+  std::size_t SharedMemoryPerThread(std::size_t nverts,
+                                    std::size_t step_num) const;
+  std::size_t GlobalMemoryForStep(std::size_t nverts,
+                                  std::size_t step_num) const;
+  Graph Convert(BoostGraph const& g);
+  void Run(Graph const& g, int k);
 
   std::vector<std::vector<int8_t>> history_;
+  std::vector<std::mutex> history_mtx_;
 };
 
 template <typename OutEdgeList, typename VertexList, typename... Args>
@@ -53,7 +60,7 @@ inline void DynamicGPU::operator()(boost::adjacency_list<OutEdgeList,
                                                          VertexList,
                                                          boost::undirectedS,
                                                          Args...> const& g) {
-  return operator()(g, GetMaxIterations(boost::num_vertices(g)));
+  return operator()(g, GetMaxIterations(boost::num_vertices(g), 0));
 }
 template <typename OutEdgeList, typename VertexList, typename... Args>
 inline void DynamicGPU::operator()(boost::adjacency_list<OutEdgeList,
@@ -61,21 +68,9 @@ inline void DynamicGPU::operator()(boost::adjacency_list<OutEdgeList,
                                                          boost::undirectedS,
                                                          Args...> const& g,
                                    int k) {
-  Graph copy(boost::num_vertices(g), boost::num_edges(g));
-  int offset = 0;
-  typename boost::graph_traits<
-      std::remove_reference_t<decltype(g)>>::out_edge_iterator ei,
-      ei_end;
-  for (int i = 0; i < copy.nvertices; ++i) {
-    copy.source_offsets[i] = offset;
-    for (boost::tie(ei, ei_end) = boost::out_edges(i, g); ei != ei_end; ++ei)
-      copy.destination[offset++] = boost::target(*ei, g);
-  }
-  copy.source_offsets[copy.nvertices] = offset;
-  Run(copy, k);
+  BoostGraph copy;
+  boost::copy_graph(g, copy);
+  Run(Convert(copy), k);
 }
 }  // namespace td
-#undef HD
-#undef D
-#undef H
 #endif

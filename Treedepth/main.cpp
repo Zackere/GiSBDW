@@ -15,28 +15,27 @@ int main() {
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;
-  int n = 5;
-  Graph g;
-  td::EliminationTree::Result res;
-  while (true) {
-    try {
-      std::minstd_rand rng(time(0));
-      g = Graph(ERGen(rng, n, 0.5), ERGen(), n);
-      td::BranchAndBound bnb;
-      res = bnb(g, std::make_unique<td::BasicLowerBound>(),
-                std::make_unique<td::HighestDegreeHeuristic>(nullptr));
-      break;
-    } catch (...) {
-    }
-  }
-
+  constexpr int n = 21;
+  Graph g(n);
+  std::set<int8_t> verts;
+  for (int i = 0; i < boost::num_vertices(g); ++i)
+    verts.insert(i);
+  for (int i = 0; i < boost::num_vertices(g) - 1; ++i)
+    boost::add_edge(i, i + 1, g);
+#ifdef CUDA_ENABLED
+  td::DynamicGPU dgpu;
+  dgpu(g);
+  auto el = dgpu.GetElimination(verts, boost::num_vertices(g));
+  td::EliminationTree et(g);
+  for (auto v : el)
+    et.Eliminate(v);
+  auto res = et.Decompose();
   std::ofstream file1("graph1.gviz", std::ios_base::trunc);
   boost::write_graphviz(file1, g);
   file1.close();
   std::ofstream file2("graph2.gviz", std::ios_base::trunc);
   boost::write_graphviz(file2, res.td_decomp);
   file2.close();
-  td::DynamicGPU dgpu;
-  dgpu(Graph(1));
+#endif
   return 0;
 }
