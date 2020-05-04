@@ -43,21 +43,9 @@ class DynamicGPU {
   std::size_t GetMaxIterations(std::size_t nvertices) const;
 
  private:
-  struct HistoryEntry {
-    std::unique_ptr<int8_t[]> uf;
-    int8_t uf_size;
-    int8_t vertex_added;
-
-    HistoryEntry(int8_t size);
-    HistoryEntry(HistoryEntry const& other);
-    HistoryEntry& operator=(HistoryEntry const& other);
-    HistoryEntry(HistoryEntry&&) = default;
-    HistoryEntry& operator=(HistoryEntry&&) = default;
-    ~HistoryEntry() = default;
-  };
   void Run(Graph g, int k);
 
-  std::vector<std::vector<HistoryEntry>> history_;
+  std::vector<std::vector<int8_t>> history_;
 };
 
 template <typename OutEdgeList, typename VertexList, typename... Args>

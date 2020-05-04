@@ -1,7 +1,7 @@
 // Copyright 2020 GISBDW. All rights reserved.
-#ifdef CUDA_ENABLED
 #include "dynamic_gpu.hpp"
 // clang-format on
+#ifdef CUDA_ENABLED
 
 #include <algorithm>
 
@@ -35,8 +35,21 @@ __host__ __device__ std::size_t Encode(int8_t* sorted_set,
   int i = -1;
   while (++i < exclude)
     ret += NChooseK(sorted_set[i], i + 1);
-  while (++i < exclude)
+  while (++i < k)
     ret += NChooseK(sorted_set[i], i + 1);
+  return ret;
+}
+__host__ __device__ int8_t* Decode(std::size_t code, int n, int k) {
+  int8_t* ret = new int8_t[k];
+  int i = -1;
+  while (k > 0) {
+    auto nk = NChooseK(--n, k);
+    if (code >= nk) {
+      ret[++i] = n;
+      code -= nk;
+      --k;
+    }
+  }
   return ret;
 }
 
@@ -90,24 +103,6 @@ DynamicGPU::Graph& DynamicGPU::Graph::operator=(Graph const& other) {
 DynamicGPU::Graph::~Graph() {
   delete[] source_offsets;
   delete[] destination;
-}
-
-DynamicGPU::HistoryEntry::HistoryEntry(int8_t size)
-    : uf(new int8_t[size]), uf_size(size), vertex_added(0) {}
-
-DynamicGPU::HistoryEntry::HistoryEntry(HistoryEntry const& other)
-    : uf(new int8_t[other.uf_size]),
-      uf_size(other.uf_size),
-      vertex_added(other.vertex_added) {}
-
-DynamicGPU::HistoryEntry& DynamicGPU::HistoryEntry::operator=(
-    HistoryEntry const& other) {
-  if (this != &other) {
-    uf.reset(new int8_t[other.uf_size]);
-    uf_size = other.uf_size;
-    vertex_added = other.vertex_added;
-  }
-  return *this;
 }
 }  // namespace td
 #endif
