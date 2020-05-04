@@ -30,11 +30,11 @@ __device__ bool BinarySearch(int8_t* sorted_set, int8_t size, int8_t val) {
   return false;
 }
 
-__global__ void DynamicStepKernel(int8_t* prev,
-                                  int8_t* next,
-                                  std::size_t thread_offset,
-                                  int step_number,
-                                  int nvertices,
+__global__ void DynamicStepKernel(int8_t const* const prev,
+                                  int8_t* const next,
+                                  std::size_t const thread_offset,
+                                  int const step_number,
+                                  int const nvertices,
                                   int const* source_offsets,
                                   int const* destination) {
   extern __shared__ int8_t mem[];
@@ -61,9 +61,9 @@ __global__ void DynamicStepKernel(int8_t* prev,
       memcpy(my_uf, prev_uf, nvertices + 2);
     }
   }
-  memcpy(&next[(thread_offset + blockIdx.x * blockDim.x + threadIdx.x) *
-               (nvertices + 2)],
-         my_uf, nvertices + 2);
+  for (int i = 0; i < nvertices + 2; ++i)
+    next[(thread_offset + blockIdx.x * blockDim.x) * (nvertices + 2) +
+         i * blockDim.x + threadIdx.x] = mem[i * blockDim.x + threadIdx.x];
 }
 
 std::vector<cudaStream_t> DynamicStep(int8_t* prev,
