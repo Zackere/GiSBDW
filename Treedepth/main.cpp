@@ -21,9 +21,16 @@ int main() {
   for (int i = 0; i < boost::num_vertices(g); ++i)
     verts.insert(i);
   std::minstd_rand rng(time(0));
-  g = Graph(ERGen(rng, n, 0.20), ERGen(), n);
+  do {
+    g = Graph(ERGen(rng, n, 0.20), ERGen(), n);
+  } while (boost::connected_components(
+               g, std::vector<int>(boost::num_vertices(g)).data()) != 1);
 #ifdef CUDA_ENABLED
   td::DynamicGPU dgpu;
+  if (dgpu.GetMaxIterations(n, 0) != n + 1) {
+    std::cout << "Not enough mem\n";
+    return 0;
+  }
   dgpu(g);
   auto el = dgpu.GetElimination(verts, boost::num_vertices(g));
   td::EliminationTree et(g);
