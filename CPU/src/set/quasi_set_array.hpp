@@ -1,11 +1,11 @@
 #pragma once
-#define TD_QUASI_SET_CEHCK_OBJECT_STATE
+#define TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
 
 #include <vector>
 #include "../binomial_coefficients/binomial_coefficient.hpp"
 #include "quasi_set_base.hpp"
 
-#ifdef TD_QUASI_SET_CEHCK_OBJECT_STATE
+#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
 #include <stdexcept>
 #endif
 
@@ -20,13 +20,16 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
   QuasiSetArray(Element maxSize)
       : QuasiSetBase<UnsignedIntegral>(maxSize),
         arr_(maxSize),
-        isElementExcluded_(false),
-        excludedIndex_(0){};
+        excludedIndex_(0) {
+#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
+    isElementExcluded_ = false;
+#endif  //  TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
+  }
 
   virtual ~QuasiSetArray() override = default;
 
   virtual void ExcludeTemporarilyElementAtIndex(Element index) override {
-#ifdef TD_QUASI_SET_CEHCK_OBJECT_STATE
+#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
     if (isElementExcluded_)
       throw std::logic_error(
           "Only one element can be excluded at the same time");
@@ -41,7 +44,7 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
   }
 
   virtual void RecoverExcludedElement() override {
-#ifdef TD_QUASI_SET_CEHCK_OBJECT_STATE
+#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
     if (!isElementExcluded_)
       throw std::logic_error(
           "Cannot recover excluded element, because no element was excluded");
@@ -69,7 +72,7 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
     }
   }
   virtual size_t EncodeExcluded() override {
-#ifdef TD_QUASI_SET_CEHCK_OBJECT_STATE
+#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
     if (!isElementExcluded_)
       throw std::logic_error(
           "Call to EncodeExcluded when no element was excluded");
@@ -89,11 +92,10 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
   }
 
  private:
-#ifdef TD_QUASI_SET_CEHCK_OBJECT_STATE
-  bool isElementExcluded_;
-#endif
-
   std::vector<Element> arr_;
   Element excludedIndex_;
+#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
+  bool isElementExcluded_;
+#endif
 };
 }  // namespace td

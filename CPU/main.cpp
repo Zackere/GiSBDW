@@ -14,15 +14,14 @@ int main() {
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;
-  constexpr int n = 10;
+  constexpr int n = 16;
   std::minstd_rand rng(0);
-  Graph g(ERGen(rng, n, 0.2), ERGen(), n);
+  Graph g(ERGen(rng, n, 0.5), ERGen(), n);
   std::cout << std::endl;
   std::ofstream file("graph.gviz", std::ios_base::trunc);
   boost::write_graphviz(file, g);
   file.close();
   td::DynamicAlgorithm<int> foo;
-  foo.Test();
   std::cout << "Is undirected? -> " << boost::is_undirected(g) << "\n";
   auto td = foo.ComputeTreeDepth(g);
   std::cout << "Tree depth -> " << td << "\n";
