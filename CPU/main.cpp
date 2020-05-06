@@ -28,17 +28,31 @@ void usage(po::options_description const& description) {
 }
 
 int main(int argc, char** argv) {
-  po::options_description description("Allowed options");
-  description.add_options()("help", "produce help message")(
-      "algorithm,a", po::value<std::string>(), "set compression level")(
+  po::options_description description("Usage");
+  description.add_options()("help", "print this message")(
+      "algorithm,a", po::value<std::string>(), "Choose algorithm to run")(
       "input,i", po::value<std::string>(), "path to input graph")(
       "output,o", po::value<std::string>(), "path to output dir");
 
+  // clang-format off
   po::variables_map vm;
+  try
+  {
   po::store(po::parse_command_line(argc, argv, description), vm);
+  }
+  catch (po::invalid_command_line_syntax ex)
+  {
+      std::cout << ex.what() << "\n";
+      usage(description);
+  }
+  // clang-format on
   po::notify(vm);
 
-  if (!vm.count("help")) {
+  if (vm.count("help") == 0 ||
+      vm.count("algorithm") == 0 ||
+      vm.count("input") == 0 ||
+      vm.count("output") == 0)
+  {
     usage(description);
   }
 
