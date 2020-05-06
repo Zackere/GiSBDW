@@ -51,6 +51,7 @@ else()
 endif()
 find_package(Boost REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
+link_libraries(LINK_PUBLIC ${Boost_LIBRARIES})
 
 if(DEFINED ENV{OVERRIDE_CUDA_DIR})
     set(CUDA_TOOLKIT_ROOT_DIR $ENV{OVERRIDE_CUDA_DIR})
