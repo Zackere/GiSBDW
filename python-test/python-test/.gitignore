@@ -1,0 +1,4 @@
+.vs
+*.sln
+python-test/env
+*.pyproj
