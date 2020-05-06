@@ -1,10 +1,13 @@
 // Copyright 2020 GISBDW. All rights reserved.
+// clang-format off
 
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <random>
 #include <string>
+#include <vector>
+#include <filesystem>
 
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/depth_first_search.hpp"
@@ -13,7 +16,6 @@
 #include "boost/program_options.hpp"
 
 namespace po = boost::program_options;
-
 class VertexVisitor : public boost::default_dfs_visitor {
  public:
   template <typename Vertex, typename Graph>
@@ -27,35 +29,56 @@ void usage(po::options_description const& description) {
   std::exit(1);
 }
 
-int main(int argc, char** argv) {
-  po::options_description description("Usage");
-  description.add_options()("help", "print this message")(
-      "algorithm,a", po::value<std::string>(), "Choose algorithm to run")(
-      "input,i", po::value<std::string>(), "path to input graph")(
-      "output,o", po::value<std::string>(), "path to output dir");
+bool PathExists(std::string const& path)
+{
+    if (!std::filesystem::exists(path))
+    {
+        std::cerr << path << " does not exist.\n";
+        return false;
+    }
+    return true;
+}
 
-  // clang-format off
+int main(int argc, char** argv) {
+
+    std::string algorithmType;
+    std::string outputDir;
+    std::vector<std::string> graphsPaths;
+  po::options_description description("Usage");
+  description.add_options()
+      ("help", "print this message")(
+      "algorithm,a", po::value<std::string>(&algorithmType)->required(),
+          "Choose algorithm to run.\n"
+          "Possible args:\n"
+          "bnb - for branch and bound algorithm\n"
+          "dyn - for dynamic algorithm\n"
+          "hyb - for hybrid algorithm\n")(
+      "input,i", po::value<std::vector<std::string>>(&graphsPaths)->required(), "path to input graph")(
+      "output,o", po::value<std::string>(&outputDir)->required(), "path to output dir");
+
+  po::positional_options_description positionalArgs;
+  positionalArgs.add("input", -1);
   po::variables_map vm;
   try
   {
-  po::store(po::parse_command_line(argc, argv, description), vm);
-  }
-  catch (po::invalid_command_line_syntax ex)
-  {
-      std::cout << ex.what() << "\n";
-      usage(description);
-  }
-  // clang-format on
-  po::notify(vm);
-
-  if (vm.count("help") == 0 ||
-      vm.count("algorithm") == 0 ||
-      vm.count("input") == 0 ||
-      vm.count("output") == 0)
-  {
+    po::store(po::command_line_parser(argc, argv).
+        options(description).positional(positionalArgs).run(), vm);
+  if (vm.count("help")){
     usage(description);
   }
+    po::notify(vm);
+  }
+  catch (po::error& ex)
+  {
+      std::cerr << ex.what() << "\n";
+      usage(description);
+  }
 
+  if (!PathExists(outputDir)) usage(description);
+  for (std::string const& path : graphsPaths)
+  {
+      if (!PathExists(path)) usage(description);
+  }
   using Graph = boost::adjacency_list<>;
   using ERGen = boost::erdos_renyi_iterator<std::minstd_rand, Graph>;
   int n = 25;
@@ -67,3 +90,4 @@ int main(int argc, char** argv) {
   file.close();
   return 0;
 }
+// clang-format on
