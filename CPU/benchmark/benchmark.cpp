@@ -8,6 +8,7 @@
 #include "../src/branch_and_bound/branch_and_bound.hpp"
 #include "../src/heuristics/highest_degree_heuristic.hpp"
 #include "../src/lower_bound/basic_lower_bound.hpp"
+#include "../src/lower_bound/edge_lower_bound.hpp"
 #include "../src/union_find/array_union_find.hpp"
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/erdos_renyi_generator.hpp"
@@ -91,6 +92,12 @@ Graph ChordalCycle(int n) {
 TEST_P(BCF, BranchAndBoundBasicLoweBoundHighestDegreeHeuristic) {
   td::BranchAndBound bnb;
   bnb(GetParam(), std::make_unique<td::BasicLowerBound>(),
+      std::make_unique<td::HighestDegreeHeuristic>(nullptr));
+}
+
+TEST_P(BCF, BranchAndBoundEdgeLoweBoundHighestDegreeHeuristic) {
+  td::BranchAndBound bnb;
+  bnb(GetParam(), std::make_unique<td::EdgeLowerBound>(),
       std::make_unique<td::HighestDegreeHeuristic>(nullptr));
 }
 

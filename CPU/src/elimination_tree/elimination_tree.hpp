@@ -47,6 +47,7 @@ class EliminationTree {
      * @return Depth of component inside EliminationTree that owns it.
      */
     unsigned Depth() const;
+    unsigned NEdges() const;
 
     /**
      * Checks if objects represent the same graph on the same depth.
@@ -60,6 +61,7 @@ class EliminationTree {
     friend class ::ParametrizedEliminationTreeFixture;
     AdjacencyListType neighbours_;
     unsigned depth_;
+    unsigned nedges_;
   };
   /**
    * Class used to iterate over leaves in EliminationTree which are represented
@@ -170,6 +172,7 @@ inline EliminationTree::EliminationTree(
   eliminated_nodes_.reserve(boost::num_vertices(g));
   Component root;
   root.depth_ = 0;
+  root.nedges_ = boost::num_edges(g);
   typename boost::graph_traits<
       std::remove_reference_t<decltype(g)>>::out_edge_iterator ei,
       ei_end;

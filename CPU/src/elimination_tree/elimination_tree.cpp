@@ -13,6 +13,10 @@ unsigned EliminationTree::Component::Depth() const {
   return depth_;
 }
 
+unsigned EliminationTree::Component::NEdges() const {
+  return nedges_;
+}
+
 bool EliminationTree::Component::operator==(Component const& other) const {
   return depth_ == other.depth_ && neighbours_ == other.neighbours_;
 }
@@ -35,6 +39,8 @@ void EliminationTree::Eliminate(VertexType v) {
     new_node.v = Component();
     auto& new_component = std::get<Component>(new_node.v);
     new_component.depth_ = v_component.Depth() + 1;
+    new_component.nedges_ = 0;
+
     // Desctructive BFS (separate connected components of v_component into
     // separate Component objects)
     decltype(v_component.neighbours_) to_be_added;
@@ -46,12 +52,16 @@ void EliminationTree::Eliminate(VertexType v) {
           new_component.neighbours_
               .insert(to_be_added.extract(std::begin(to_be_added)))
               .position->second;
+
+      new_component.nedges_ += neigbourhood.size();
       // Schedule neighbourhood to be added into currently built component
       for (auto neigh : neigbourhood)
         if (auto it = v_component.neighbours_.find(neigh);
             it != std::end(v_component.neighbours_))
           to_be_added.insert(v_component.neighbours_.extract(it));
     }
+
+    new_component.nedges_ /= 2;
     new_v_node.children.push_back(std::move(new_node));
     // Update location of vertices inside new_node
     auto& back_ref = std::get<Component>(new_v_node.children.back().v);
@@ -103,12 +113,12 @@ EliminationTree::ComponentIterator EliminationTree::ComponentsEnd() const {
 }
 
 EliminationTree::Component const&
-EliminationTree::ComponentIterator::operator*() const {
+    EliminationTree::ComponentIterator::operator*() const {
   return **current_;
 }
 
 EliminationTree::Component const*
-EliminationTree::ComponentIterator::operator->() const {
+    EliminationTree::ComponentIterator::operator->() const {
   return *current_;
 }
 
