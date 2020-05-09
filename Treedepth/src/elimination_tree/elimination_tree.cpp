@@ -113,12 +113,12 @@ EliminationTree::ComponentIterator EliminationTree::ComponentsEnd() const {
 }
 
 EliminationTree::Component const&
-    EliminationTree::ComponentIterator::operator*() const {
+EliminationTree::ComponentIterator::operator*() const {
   return **current_;
 }
 
 EliminationTree::Component const*
-    EliminationTree::ComponentIterator::operator->() const {
+EliminationTree::ComponentIterator::operator->() const {
   return *current_;
 }
 

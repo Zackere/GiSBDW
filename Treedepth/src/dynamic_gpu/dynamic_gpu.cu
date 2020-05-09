@@ -37,17 +37,17 @@ __global__ void DynamicStepKernel(int8_t const* const prev,
                                   std::size_t const next_size,
                                   int const step_number,
                                   int const nvertices,
-                                  int const* source_offsets,
-                                  int const* destination) {
+                                  int const* const source_offsets,
+                                  int const* const destination) {
   extern __shared__ int8_t mem[];
   int8_t* my_uf = &mem[threadIdx.x * (nvertices + 2)];
   my_uf[nvertices + 1] = nvertices + 1;
   int8_t* my_set =
       &mem[blockDim.x * (nvertices + 2) + threadIdx.x * (step_number + 1)];
-  int8_t* prev_uf = &mem[blockDim.x * (nvertices + 2 + step_number + 1) +
-                         threadIdx.x * (nvertices + 2)];
   set_encoder::Decode(thread_offset + blockIdx.x * blockDim.x + threadIdx.x,
                       nvertices, step_number + 1, my_set);
+  int8_t* prev_uf = &mem[blockDim.x * (nvertices + 2 + step_number + 1) +
+                         threadIdx.x * (nvertices + 2)];
   for (int i = 0; i <= step_number; ++i) {
     auto code = set_encoder::Encode(my_set, step_number + 1, i);
     for (int j = 0; j < nvertices + 2; ++j)
@@ -61,7 +61,9 @@ __global__ void DynamicStepKernel(int8_t const* const prev,
             nvertices + 1);
     if (prev_uf[nvertices + 1] < my_uf[nvertices + 1]) {
       prev_uf[nvertices] = my_set[i];
-      memcpy(my_uf, prev_uf, nvertices + 2);
+      auto* tmp = my_uf;
+      my_uf = prev_uf;
+      prev_uf = tmp;
     }
   }
   __syncthreads();
@@ -69,7 +71,6 @@ __global__ void DynamicStepKernel(int8_t const* const prev,
     next[thread_offset + blockIdx.x * blockDim.x + threadIdx.x +
          i * next_size] = my_uf[i];
 }
-
 std::vector<cudaStream_t> DynamicStep(int8_t* prev,
                                       int8_t* next,
                                       std::size_t shared_mem_per_thread,
@@ -86,35 +87,33 @@ std::vector<cudaStream_t> DynamicStep(int8_t* prev,
   streams.reserve(max / kGridSize + 2);
 
   for (; threads_launched < max; threads_launched += kGridSize) {
-    cudaStream_t stream;
-    cudaStreamCreate(&stream);
+    streams.emplace_back();
+    cudaStreamCreate(&streams.back());
     DynamicStepKernel<<<kBlocks, kThreads, shared_mem_per_thread * kThreads,
-                        stream>>>(
+                        streams.back()>>>(
         prev, next, threads_launched, prev_size, next_size, step_number,
         g.nvertices, thrust::raw_pointer_cast(g.source_offsets.data()),
         thrust::raw_pointer_cast(g.destination.data()));
-    streams.emplace_back(stream);
   }
   if (excess >= kThreads) {
-    cudaStream_t stream;
-    cudaStreamCreate(&stream);
+    streams.emplace_back();
+    cudaStreamCreate(&streams.back());
     DynamicStepKernel<<<excess / kThreads, kThreads,
-                        shared_mem_per_thread * kThreads, stream>>>(
+                        shared_mem_per_thread * kThreads, streams.back()>>>(
         prev, next, threads_launched, prev_size, next_size, step_number,
         g.nvertices, thrust::raw_pointer_cast(g.source_offsets.data()),
         thrust::raw_pointer_cast(g.destination.data()));
-    streams.emplace_back(stream);
   }
   threads_launched += (excess / kThreads) * kThreads;
   excess %= kThreads;
   if (excess > 0) {
-    cudaStream_t stream;
-    cudaStreamCreate(&stream);
-    DynamicStepKernel<<<1, excess, shared_mem_per_thread * excess, stream>>>(
+    streams.emplace_back();
+    cudaStreamCreate(&streams.back());
+    DynamicStepKernel<<<1, excess, shared_mem_per_thread * excess,
+                        streams.back()>>>(
         prev, next, threads_launched, prev_size, next_size, step_number,
         g.nvertices, thrust::raw_pointer_cast(g.source_offsets.data()),
         thrust::raw_pointer_cast(g.destination.data()));
-    streams.emplace_back(stream);
   }
   return streams;
 }
@@ -152,7 +151,7 @@ std::vector<int8_t> DynamicGPU::GetElimination(std::set<int8_t> vertices,
   if (vertices.size() > history_.size())
     return {};
   std::vector<int8_t> ret(vertices.size());
-  { std::unique_lock<std::mutex> lk(history_mtx_[vertices.size()]); }
+  std::unique_lock<std::mutex>{history_mtx_[vertices.size()]};
   for (int i = 0; i < ret.size(); ++i) {
     auto code = set_encoder::Encode(vertices);
     ret[i] = history_[vertices.size()][code];
@@ -162,7 +161,7 @@ std::vector<int8_t> DynamicGPU::GetElimination(std::set<int8_t> vertices,
 }
 
 std::size_t DynamicGPU::SetPlaceholderSize(std::size_t nverts) const {
-  return nverts + 2;
+  return (nverts + 2) * sizeof(int8_t);
 }
 
 std::size_t DynamicGPU::SharedMemoryPerThread(std::size_t nverts,
@@ -203,10 +202,11 @@ void DynamicGPU::Run(Graph const& g, int k) {
   history_mtx_ = std::vector<std::mutex>(k);
   for (auto& mtx : history_mtx_)
     mtx.lock();
+  history_.clear();
   history_.resize(k);
 
-  for (int i = 0; i < history_.size() - 1; ++i) {
-    d_next.resize(0);
+  for (int i = 0; i < history_.size(); ++i) {
+    d_next.clear();
     d_next.resize(set_encoder::NChooseK(g.nvertices, i + 1) *
                   SetPlaceholderSize(g.nvertices));
     SyncStreams(DynamicStep(thrust::raw_pointer_cast(d_prev.data()),
@@ -223,13 +223,6 @@ void DynamicGPU::Run(Graph const& g, int k) {
     history_mtx_[i].unlock();
     d_prev = std::move(d_next);
   }
-
-  history_.back().resize(2 * d_prev.size() / SetPlaceholderSize(g.nvertices));
-  thrust::copy(
-      std::begin(d_prev) + history_.back().size() * g.nvertices / 2,
-      std::begin(d_prev) + history_.back().size() * (g.nvertices + 2) / 2,
-      std::begin(history_.back()));
-  history_mtx_.back().unlock();
 }
 }  // namespace td
 #endif
