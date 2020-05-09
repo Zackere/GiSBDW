@@ -79,7 +79,7 @@ std::vector<cudaStream_t> DynamicStep(int8_t* prev,
                                       std::size_t next_size,
                                       DynamicGPU::Graph const& g) {
   // Adjust those values according to gpu specs
-  constexpr int kThreads = 32, kBlocks = 4, kGridSize = kThreads * kBlocks;
+  constexpr int kThreads = 256, kBlocks = 64, kGridSize = kThreads * kBlocks;
   int excess = next_size % kGridSize;
   int max = next_size - excess;
   int threads_launched = 0;

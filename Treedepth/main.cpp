@@ -22,7 +22,7 @@ int main() {
     verts.insert(i);
   std::minstd_rand rng(time(0));
   do {
-    g = Graph(ERGen(rng, n, 0.20), ERGen(), n);
+    g = Graph(ERGen(rng, n, 0.80), ERGen(), n);
   } while (boost::connected_components(
                g, std::vector<int>(boost::num_vertices(g)).data()) != 1);
 #ifdef CUDA_ENABLED
