@@ -207,6 +207,7 @@ void DynamicGPU::Run(Graph const& g, int k) {
 
   for (int i = 0; i < history_.size(); ++i) {
     d_next.clear();
+    d_next.shrink_to_fit();
     d_next.resize(set_encoder::NChooseK(g.nvertices, i + 1) *
                   SetPlaceholderSize(g.nvertices));
     SyncStreams(DynamicStep(thrust::raw_pointer_cast(d_prev.data()),

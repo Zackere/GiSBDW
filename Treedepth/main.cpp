@@ -15,14 +15,14 @@ int main() {
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;
-  constexpr int n = 22;
+  constexpr int n = 25;
   Graph g(n);
   std::set<int8_t> verts;
   for (int i = 0; i < boost::num_vertices(g); ++i)
     verts.insert(i);
   std::minstd_rand rng(time(0));
   do {
-    g = Graph(ERGen(rng, n, 0.80), ERGen(), n);
+    g = Graph(ERGen(rng, n, 0.10), ERGen(), n);
   } while (boost::connected_components(
                g, std::vector<int>(boost::num_vertices(g)).data()) != 1);
 #ifdef CUDA_ENABLED
