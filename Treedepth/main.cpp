@@ -17,12 +17,9 @@ int main() {
   using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;
   constexpr int n = 25;
   Graph g(n);
-  std::set<int8_t> verts;
-  for (int i = 0; i < boost::num_vertices(g); ++i)
-    verts.insert(i);
   std::minstd_rand rng(time(0));
   do {
-    g = Graph(ERGen(rng, n, 0.10), ERGen(), n);
+    g = Graph(ERGen(rng, n, 0.20), ERGen(), n);
   } while (boost::connected_components(
                g, std::vector<int>(boost::num_vertices(g)).data()) != 1);
 #ifdef CUDA_ENABLED
@@ -32,7 +29,8 @@ int main() {
     return 0;
   }
   dgpu(g);
-  auto el = dgpu.GetElimination(verts, boost::num_vertices(g));
+  auto el =
+      dgpu.GetElimination(boost::num_vertices(g), boost::num_vertices(g), 0);
   td::EliminationTree et(g);
   for (auto v : el)
     et.Eliminate(v);

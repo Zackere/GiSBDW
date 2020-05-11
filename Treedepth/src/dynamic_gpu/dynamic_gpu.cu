@@ -79,7 +79,7 @@ std::vector<cudaStream_t> DynamicStep(int8_t* prev,
                                       std::size_t next_size,
                                       DynamicGPU::Graph const& g) {
   // Adjust those values according to gpu specs
-  constexpr int kThreads = 256, kBlocks = 64, kGridSize = kThreads * kBlocks;
+  constexpr int kThreads = 64, kBlocks = 4096, kGridSize = kThreads * kBlocks;
   int excess = next_size % kGridSize;
   int max = next_size - excess;
   int threads_launched = 0;
@@ -146,12 +146,14 @@ std::size_t DynamicGPU::GetMaxIterations(std::size_t nvertices,
   return step;
 }
 
-std::vector<int8_t> DynamicGPU::GetElimination(std::set<int8_t> vertices,
-                                               std::size_t nverts) {
-  if (vertices.size() > history_.size())
+std::vector<int8_t> DynamicGPU::GetElimination(std::size_t nverts,
+                                               std::size_t subset_size,
+                                               std::size_t subset_code) {
+  if (subset_size > history_.size())
     return {};
-  std::vector<int8_t> ret(vertices.size());
-  std::unique_lock<std::mutex>{history_mtx_[vertices.size()]};
+  std::vector<int8_t> ret(subset_size);
+  std::unique_lock<std::mutex>{history_mtx_[subset_size]};
+  auto vertices = set_encoder::Decode<int8_t>(nverts, subset_size, subset_code);
   for (int i = 0; i < ret.size(); ++i) {
     auto code = set_encoder::Encode(vertices);
     ret[i] = history_[vertices.size()][code];

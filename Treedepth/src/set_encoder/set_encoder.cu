@@ -16,14 +16,6 @@ std::size_t NChooseK(int n, int k) {
   return ret;
 }
 
-std::size_t Encode(std::set<int8_t> const& s) {
-  std::size_t ret = 0;
-  int i = 0;
-  for (auto v : s)
-    ret += NChooseK(v, ++i);
-  return ret;
-}
-
 std::size_t Encode(int8_t* sorted_set, int k) {
   std::size_t ret = 0;
   for (int i = 0; i < k; ++i)
