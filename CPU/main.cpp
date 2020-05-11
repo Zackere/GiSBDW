@@ -119,11 +119,28 @@ int main(int argc, char** argv) {
       //graphFile.close();
 
       td::AlgorithmResult algorithmResult; // = execute algorithm(g);
+
+      if (algorithmType == "bnb")
+      {
+
+      }
+      else if (algorithmType == "dyn")
+      {
+
+      }
+      else if (algorithmType == "hyb")
+      {
+
+      }
+      else
+      {
+          std::cerr << "Wrong algorithm option specified.\n";
+          usage(description);
+      }
       //algorithmResult.WriteToFile(std::filesystem::path::append()
       fs::path outputFilePath = ((outputPath / path.filename()) += ".out");
       std::cout << "outputFilePath -> " << outputFilePath << "\n";
       //algorithmResult.WriteToFile(outputFilePath);
-
   }
 
 
