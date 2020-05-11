@@ -42,13 +42,13 @@ HD std::size_t Encode(VertexType* sorted_set, std::size_t set_size) {
 
 template <typename VertexType>
 HD std::size_t Encode(VertexType* sorted_set,
-                      std::size_t k,
+                      std::size_t set_size,
                       std::size_t exclude) {
   std::size_t ret = 0;
   int i = -1;
   while (++i < exclude)
     ret += NChooseK(sorted_set[i], i + 1);
-  while (++i < k)
+  while (++i < set_size)
     ret += NChooseK(sorted_set[i], i);
   return ret;
 }
