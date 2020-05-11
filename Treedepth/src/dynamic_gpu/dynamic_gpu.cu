@@ -44,8 +44,9 @@ __global__ void DynamicStepKernel(int8_t const* const prev,
   my_uf[nvertices + 1] = nvertices + 1;
   int8_t* my_set =
       &mem[blockDim.x * (nvertices + 2) + threadIdx.x * (step_number + 1)];
-  set_encoder::Decode(thread_offset + blockIdx.x * blockDim.x + threadIdx.x,
-                      nvertices, step_number + 1, my_set);
+  set_encoder::Decode(nvertices, step_number + 1,
+                      thread_offset + blockIdx.x * blockDim.x + threadIdx.x,
+                      my_set);
   int8_t* prev_uf = &mem[blockDim.x * (nvertices + 2 + step_number + 1) +
                          threadIdx.x * (nvertices + 2)];
   for (int i = 0; i <= step_number; ++i) {
@@ -153,7 +154,8 @@ std::vector<int8_t> DynamicGPU::GetElimination(std::size_t nverts,
     return {};
   std::vector<int8_t> ret(subset_size);
   std::unique_lock<std::mutex>{history_mtx_[subset_size]};
-  auto vertices = set_encoder::Decode<int8_t>(nverts, subset_size, subset_code);
+  auto vertices =
+      set_encoder::Decode<std::set<int8_t>>(nverts, subset_size, subset_code);
   for (int i = 0; i < ret.size(); ++i) {
     auto code = set_encoder::Encode(vertices);
     ret[i] = history_[vertices.size()][code];

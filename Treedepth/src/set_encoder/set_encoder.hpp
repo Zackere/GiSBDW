@@ -8,10 +8,11 @@
 
 #include <map>
 #include <set>
+#include <vector>
 
 namespace td {
 namespace set_encoder {
-HD std::size_t NChooseK(int n, int k);
+HD std::size_t NChooseK(std::size_t n, std::size_t k);
 
 template <typename Key, typename Allocator>
 std::size_t Encode(std::set<Key, std::less<Key>, Allocator> const& s) {
@@ -31,27 +32,89 @@ std::size_t Encode(std::map<Key, T, std::less<Key>, Allocator> const& map) {
   return ret;
 }
 
-HD std::size_t Encode(int8_t* sorted_set, int k);
+template <typename VertexType>
+HD std::size_t Encode(VertexType* sorted_set, std::size_t set_size) {
+  std::size_t ret = 0;
+  for (int i = 0; i < set_size; ++i)
+    ret += NChooseK(sorted_set[i], i + 1);
+  return ret;
+}
 
-HD std::size_t Encode(int8_t* sorted_set, int k, int exclude);
+template <typename VertexType>
+HD std::size_t Encode(VertexType* sorted_set,
+                      std::size_t k,
+                      std::size_t exclude) {
+  std::size_t ret = 0;
+  int i = -1;
+  while (++i < exclude)
+    ret += NChooseK(sorted_set[i], i + 1);
+  while (++i < k)
+    ret += NChooseK(sorted_set[i], i);
+  return ret;
+}
 
-HD void Decode(std::size_t code, int8_t n, int8_t k, int8_t* ret);
-
-template <typename... Args>
-std::set<Args...> Decode(std::size_t nverts,
-                         std::size_t subset_size,
-                         std::size_t subset_code) {
-  std::set<Args...> ret;
+template <typename VertexType>
+HD void Decode(std::size_t nverts,
+               std::size_t subset_size,
+               std::size_t subset_code,
+               VertexType* ret) {
   while (subset_size > 0) {
     auto nk = NChooseK(--nverts, subset_size);
     if (subset_code >= nk) {
-      ret.insert(nverts);
+      ret[--subset_size] = nverts;
       subset_code -= nk;
-      --subset_size;
     }
   }
-  return ret;
 }
+
+template <typename Container>
+struct DecodeImpl {
+  static Container Decode(std::size_t nverts,
+                          std::size_t subset_size,
+                          std::size_t subset_code);
+};
+
+template <typename Container>
+Container Decode(std::size_t nverts,
+                 std::size_t subset_size,
+                 std::size_t subset_code) {
+  return DecodeImpl<Container>::Decode(nverts, subset_size, subset_code);
+}
+
+template <typename VertexType>
+struct DecodeImpl<std::set<VertexType>> {
+  static std::set<VertexType> Decode(std::size_t nverts,
+                                     std::size_t subset_size,
+                                     std::size_t subset_code) {
+    std::set<VertexType> ret;
+    while (subset_size > 0) {
+      auto nk = NChooseK(--nverts, subset_size);
+      if (subset_code >= nk) {
+        ret.insert(nverts);
+        subset_code -= nk;
+        --subset_size;
+      }
+    }
+    return ret;
+  }
+};
+
+template <typename VertexType>
+struct DecodeImpl<std::vector<VertexType>> {
+  static std::vector<VertexType> Decode(std::size_t nverts,
+                                        std::size_t subset_size,
+                                        std::size_t subset_code) {
+    std::vector<VertexType> ret(subset_size);
+    while (subset_size > 0) {
+      auto nk = NChooseK(--nverts, subset_size);
+      if (subset_code >= nk) {
+        ret[--subset_size] = nverts;
+        subset_code -= nk;
+      }
+    }
+    return ret;
+  }
+};
 }  // namespace set_encoder
 }  // namespace td
 #undef HD
