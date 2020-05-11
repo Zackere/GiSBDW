@@ -13,8 +13,8 @@ namespace td {
 namespace set_encoder {
 HD std::size_t NChooseK(int n, int k);
 
-template <typename... Args>
-std::size_t Encode(std::set<Args...> const& s) {
+template <typename Key, typename Allocator>
+std::size_t Encode(std::set<Key, std::less<Key>, Allocator> const& s) {
   std::size_t ret = 0;
   int i = 0;
   for (auto v : s)
@@ -22,8 +22,8 @@ std::size_t Encode(std::set<Args...> const& s) {
   return ret;
 }
 
-template <typename... Args>
-std::size_t Encode(std::map<Args...> const& map) {
+template <typename Key, typename T, typename Allocator>
+std::size_t Encode(std::map<Key, T, std::less<Key>, Allocator> const& map) {
   std::size_t ret = 0;
   int i = 0;
   for (auto v : map)
