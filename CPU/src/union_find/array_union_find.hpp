@@ -26,6 +26,7 @@ class ArrayUnionFind {
   explicit ArrayUnionFind(SignedIntegral nelems);
   ArrayUnionFind(ArrayUnionFind const& other);
   ArrayUnionFind(ArrayUnionFind&&) = default;
+  ArrayUnionFind& operator=(ArrayUnionFind&&) = default;
 
   /**
    * Sums two given sets. As a result of this operation:

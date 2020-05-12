@@ -4,21 +4,23 @@
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#define STRINGIFY(Variable) (#Variable)
 namespace td {
-struct AlgorithmResult {
+class AlgorithmResult {
  public:
-  double timeElapsed = -1;
-  int treedepth = -1;
+  AlgorithmResult() = default;
+  AlgorithmResult(int treedepth) : treedepth(treedepth) {}
 
   void WriteToFile(std::filesystem::path const& path) {
     std::ofstream file(path);
     boost::property_tree::ptree root;
-    root.put(STRINGIFY(timeElapsed), timeElapsed);
-    root.put(STRINGIFY(treedepth), treedepth);
+    root.put("timeElapsed", timeElapsed);
+    root.put("treedepth", treedepth);
     boost::property_tree::write_json(file, root);
     file.close();
   }
+
+  int treedepth = -1;
+  double timeElapsed = -1;
 };
 
 }  // namespace td
