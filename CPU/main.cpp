@@ -128,26 +128,34 @@ int main(int argc, char** argv) {
 
         ////////
         std::ifstream graphFile(path);
+        try
+        {
         bool result = read_graphviz(graphFile, graph, dp, "node_id");
+        }
+        catch (boost::bad_graphviz_syntax & ex)
+        {
+            std::cerr << path << " is not a proper graphviz file. Skipping.\n";
+            continue;
+        }
         graphFile.close();
 
         td::AlgorithmResult algorithmResult; // = execute algorithm(g);
 
 
         auto t1 = std::chrono::high_resolution_clock::now();
-        if (algorithmType == "bnb")
-        {
-
-        }
-        else if (algorithmType == "dyn")
+        if (algorithmType == "dyn")
         {
             td::DynamicAlgorithm<int> dynamicAlgorithm;
             algorithmResult = dynamicAlgorithm.Run(graph);
         }
-        else if (algorithmType == "hyb")
+        /*else if (algorithmType == "bnb")
         {
 
-        }
+        }*/
+        //else if (algorithmType == "hyb")
+        //{
+
+        //}
         else
         {
             std::cerr << "Wrong algorithm option specified.\n";
@@ -155,14 +163,15 @@ int main(int argc, char** argv) {
         }
         auto t2 = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() / 1000.0;
+        algorithmResult.timeElapsed = duration;
         std::cout << "Elapsed -> " << duration << "s\n";
         std::cout << "Is undirected? -> " << boost::is_undirected(g) << "\n";
         std::cout << "Tree depth -> " << algorithmResult.treedepth << "\n";
         fs::path outputFilePath = ((outputPath / path.filename()) += ".out");
         std::cout << "outputFilePath -> " << outputFilePath << "\n";
         algorithmResult.WriteToFile(outputFilePath);
-        return 0;
     }
+    return 0;
 }
 
   //using ERGen = boost::erdos_renyi_iterator<std::minstd_rand, Graph>;
