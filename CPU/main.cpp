@@ -27,6 +27,7 @@ namespace fs = std::filesystem;
 
 void usage(po::options_description const& description) {
   std::cout << description;
+  std::cout << "Example usage: ./app.exe -a bnb -o /path/to/output/dir /path/to/graph1 /path/to/graph2\n";
   std::exit(1);
 }
 
@@ -65,10 +66,8 @@ int main(int argc, char** argv) {
     typedef property < vertex_name_t, std::string,
         property < vertex_color_t, float > > vertex_p;
     using Graph =  adjacency_list < mapS, vecS, undirectedS, vertex_p>;
-    using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;
-    constexpr int n = 16;
-    std::minstd_rand rng(0);
-    Graph g(ERGen(rng, n, 0.5), ERGen(), n);
+
+    td::AlgorithmResult foo;
 
     std::string algorithmType;
     std::string outputDirString;
@@ -117,8 +116,6 @@ int main(int argc, char** argv) {
 
     for (fs::path const& path : graphPaths)
     {
-        ////////
-        // Construct an empty graph and prepare the dynamic_property_maps.
         Graph graph(0);
         dynamic_properties dp;
 
@@ -126,7 +123,6 @@ int main(int argc, char** argv) {
             get(vertex_name, graph);
         dp.property("node_id", name);
 
-        ////////
         std::ifstream graphFile(path);
         try
         {
@@ -139,23 +135,24 @@ int main(int argc, char** argv) {
         }
         graphFile.close();
 
-        td::AlgorithmResult algorithmResult; // = execute algorithm(g);
+        td::AlgorithmResult algorithmResult;
         std::cout << "Processing graph " << path.filename() << std::endl;
         std::cout << "Vertices: " << graph.m_vertices.size() << std::endl;
         std::cout << "Edges: " << graph.m_edges.size() << std::endl;
         auto t1 = std::chrono::high_resolution_clock::now();
+
         if (algorithmType == "dyn")
         {
             td::DynamicAlgorithm<int> dynamicAlgorithm;
-            algorithmResult = dynamicAlgorithm.Run(graph);
+            algorithmResult.treedepth = dynamicAlgorithm.Run(graph);
         }
         /*else if (algorithmType == "bnb")
         {
-
+        //DO UZUPELNIENIA PO DODANIU ALGORYTMU BNB
         }*/
         //else if (algorithmType == "hyb")
         //{
-
+        //DO UZUPELNIENIA PO DODANIU ALGORYTMU HYBRYDOWEGO
         //}
         else
         {

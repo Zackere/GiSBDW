@@ -8,7 +8,6 @@ namespace td {
 class AlgorithmResult {
  public:
   AlgorithmResult() = default;
-  AlgorithmResult(int treedepth) : treedepth(treedepth) {}
 
   void WriteToFile(std::filesystem::path const& path) {
     std::ofstream file(path);

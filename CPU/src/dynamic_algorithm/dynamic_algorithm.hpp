@@ -5,7 +5,6 @@
 #include <set>
 #include <type_traits>
 #include <vector>
-#include "../algorithm_result/algorithm_result.hpp"
 #include "../binomial_coefficients/binomial_coefficient.hpp"
 #include "../set/quasi_set_array.hpp"
 #include "../union_find/array_union_find.hpp"
@@ -27,7 +26,7 @@ class DynamicAlgorithm {
   DynamicAlgorithm() = default;
   ~DynamicAlgorithm() = default;
 
-  AlgorithmResult Run(Graph const& graph) {
+  SignedIntegral Run(Graph const& graph) {
     if (graph.m_vertices.size() > std::numeric_limits<SetElement>::max()) {
       throw std::out_of_range(
           "Graph has " + std::to_string(graph.m_vertices.size()) +
@@ -100,7 +99,7 @@ class DynamicAlgorithm {
       std::swap(prevVec, currVec);
     }
     SignedIntegral resultTreeDepth = prevVec[0].GetMaxValue();
-    return AlgorithmResult(resultTreeDepth);
+    return resultTreeDepth;
   }
 };
 }  // namespace td
