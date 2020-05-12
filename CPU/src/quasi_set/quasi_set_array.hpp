@@ -1,3 +1,4 @@
+// Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 #define TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
 
@@ -5,7 +6,7 @@
 #include "../binomial_coefficients/binomial_coefficient.hpp"
 #include "quasi_set_base.hpp"
 
-#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
+#ifdef TD_CHECK_ARGS
 #include <stdexcept>
 #endif
 
@@ -17,19 +18,19 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
   using Element = UnsignedIntegral;
 
   QuasiSetArray() = delete;
-  QuasiSetArray(Element maxSize)
+  explicit QuasiSetArray(Element maxSize)
       : QuasiSetBase<UnsignedIntegral>(maxSize),
         arr_(maxSize),
         excludedIndex_(0) {
-#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
+#ifdef TD_CHECK_ARGS
     isElementExcluded_ = false;
-#endif  //  TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
+#endif
   }
 
-  virtual ~QuasiSetArray() override = default;
+   ~QuasiSetArray() override = default;
 
-  virtual void ExcludeTemporarilyElementAtIndex(Element index) override {
-#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
+   void ExcludeTemporarilyElementAtIndex(Element index) override {
+#ifdef TD_CHECK_ARGS
     if (isElementExcluded_)
       throw std::logic_error(
           "Only one element can be excluded at the same time");
@@ -43,8 +44,8 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
     std::swap(arr_[index], arr_[this->numberOfElements_]);
   }
 
-  virtual void RecoverExcludedElement() override {
-#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
+   void RecoverExcludedElement() override {
+#ifdef TD_CHECK_ARGS
     if (!isElementExcluded_)
       throw std::logic_error(
           "Cannot recover excluded element, because no element was excluded");
@@ -54,11 +55,11 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
     this->numberOfElements_++;
   }
 
-  virtual Element GetElementAtIndex(Element index) override {
+   Element GetElementAtIndex(Element index) override {
     return arr_[index];
   }
 
-  virtual void Decode(size_t code, Element k) override {
+   void Decode(size_t code, Element k) override {
     numberOfElements_ = k;
     auto n = GetMaximumSize();
     while (k > 0) {
@@ -71,8 +72,8 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
       }
     }
   }
-  virtual size_t EncodeExcluded() override {
-#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
+  size_t EncodeExcluded() override {
+#ifdef TD_CHECK_ARGS
     if (!isElementExcluded_)
       throw std::logic_error(
           "Call to EncodeExcluded when no element was excluded");
@@ -94,7 +95,7 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
  private:
   std::vector<Element> arr_;
   Element excludedIndex_;
-#ifdef TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
+#ifdef TD_CHECK_ARGS
   bool isElementExcluded_;
 #endif
 };

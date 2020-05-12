@@ -1,15 +1,16 @@
+// Copyright 2020 GISBDW. All rights reserved.
 #pragma once
-#include <boost/graph/adjacency_list.hpp>
 #include <limits>
 #include <memory>
 #include <set>
 #include <type_traits>
+#include <utility>
 #include <vector>
 #include "../binomial_coefficients/binomial_coefficient.hpp"
-#include "../set/quasi_set_array.hpp"
+#include "../quasi_set/quasi_set_array.hpp"
 #include "../union_find/array_union_find.hpp"
+#include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/undirected_graph.hpp"
-using namespace boost;
 namespace td {
 
 template <class SignedIntegral>
@@ -17,9 +18,12 @@ class DynamicAlgorithm {
  public:
   // using Graph =
   //    boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
-  typedef property<vertex_name_t, std::string, property<vertex_color_t, float> >
+  typedef boost::property<boost::vertex_name_t,
+                          std::string,
+                          boost::property<boost::vertex_color_t, float> >
       vertex_p;
-  using Graph = adjacency_list<mapS, vecS, undirectedS, vertex_p>;
+  using Graph = boost::
+      adjacency_list<boost::mapS, boost::vecS, boost::undirectedS, vertex_p>;
   using SetElement = std::make_unsigned_t<SignedIntegral>;
   using UnionFind = ArrayUnionFind<SignedIntegral>;
 
@@ -81,7 +85,7 @@ class DynamicAlgorithm {
                   boost::edge(excludedElement, elementToCheck, graph).second;
               if (areNeighbours) {
                 // if they are neighbours - union sets that represent them
-                // TUTAJ DO ULEPSZENIA, M¥DRZE TO MOZNA UNIONOWAC, NIEPOTRZEBNE
+                // TUTAJ DO ULEPSZENIA, MADRZE TO MOZNA UNIONOWAC, NIEPOTRZEBNE
                 // FINDY, DWA RAZY FIND, DO POPRAWY JUZ JAK BEDZIE BENCHMARK
                 auto representative = ufNew.Find(elementToCheck);
                 if (representative != excludedElement) {
