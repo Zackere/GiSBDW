@@ -140,8 +140,9 @@ int main(int argc, char** argv) {
         graphFile.close();
 
         td::AlgorithmResult algorithmResult; // = execute algorithm(g);
-
-
+        std::cout << "Processing graph " << path.filename() << std::endl;
+        std::cout << "Vertices: " << graph.m_vertices.size() << std::endl;
+        std::cout << "Edges: " << graph.m_edges.size() << std::endl;
         auto t1 = std::chrono::high_resolution_clock::now();
         if (algorithmType == "dyn")
         {
@@ -164,22 +165,12 @@ int main(int argc, char** argv) {
         auto t2 = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() / 1000.0;
         algorithmResult.timeElapsed = duration;
-        std::cout << "Elapsed -> " << duration << "s\n";
-        std::cout << "Is undirected? -> " << boost::is_undirected(g) << "\n";
-        std::cout << "Tree depth -> " << algorithmResult.treedepth << "\n";
+        std::cout << "Elapsed time: " << duration << " seconds\n";
+        std::cout << "Treedepth: " << algorithmResult.treedepth << "\n";
         fs::path outputFilePath = ((outputPath / path.filename()) += ".out");
-        std::cout << "outputFilePath -> " << outputFilePath << "\n";
+        std::cout << "Output written to: " << outputFilePath << "\n\n";
         algorithmResult.WriteToFile(outputFilePath);
     }
     return 0;
 }
-
-  //using ERGen = boost::erdos_renyi_iterator<std::minstd_rand, Graph>;
-  //int n = 25;
-  //std::minstd_rand rng;
-  //Graph g(ERGen(rng, n, 0.05), ERGen(), n);
-  //boost::depth_first_search(g, boost::visitor(VertexVisitor()));
-  //std::ofstream file("graph.gviz", std::ios_base::trunc);
-  //boost::write_graphviz(file, g);
-  //file.close();
 // clang-format on
