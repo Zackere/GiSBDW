@@ -38,7 +38,9 @@ class DynamicGPU {
                                         Args...> const& g,
                   int k);
 
-  std::size_t GetMaxIterations(std::size_t nvertices, int device) const;
+  std::size_t GetMaxIterations(std::size_t nvertices,
+                               std::size_t nedges,
+                               int device) const;
   std::size_t GetIterationsPerformed() const;
 
   std::vector<int8_t> GetElimination(std::size_t nverts,
@@ -53,6 +55,7 @@ class DynamicGPU {
   std::size_t SharedMemoryPerThread(std::size_t nverts,
                                     std::size_t step_num) const;
   std::size_t GlobalMemoryForStep(std::size_t nverts,
+                                  std::size_t nedges,
                                   std::size_t step_num) const;
   Graph Convert(BoostGraph const& g);
   void Run(Graph const& g, int k);
@@ -66,7 +69,8 @@ inline void DynamicGPU::operator()(boost::adjacency_list<OutEdgeList,
                                                          VertexList,
                                                          boost::undirectedS,
                                                          Args...> const& g) {
-  return operator()(g, GetMaxIterations(boost::num_vertices(g), 0));
+  return operator()(
+      g, GetMaxIterations(boost::num_vertices(g), boost::num_edges(g), 0));
 }
 template <typename OutEdgeList, typename VertexList, typename... Args>
 inline void DynamicGPU::operator()(boost::adjacency_list<OutEdgeList,

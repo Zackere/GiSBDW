@@ -24,7 +24,8 @@ int main() {
                g, std::vector<int>(boost::num_vertices(g)).data()) != 1);
 #ifdef CUDA_ENABLED
   td::DynamicGPU dgpu;
-  if (dgpu.GetMaxIterations(n, 0) != n + 1) {
+  if (dgpu.GetMaxIterations(boost::num_vertices(g), boost::num_edges(g), 0) !=
+      boost::num_vertices(g) + 1) {
     std::cout << "Not enough mem\n";
     return 0;
   }

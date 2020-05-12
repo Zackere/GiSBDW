@@ -128,6 +128,7 @@ void SyncStreams(std::vector<cudaStream_t> const& streams) {
 }  // namespace
 
 std::size_t DynamicGPU::GetMaxIterations(std::size_t nvertices,
+                                         std::size_t nedges,
                                          int device) const {
   cudaSetDevice(device);
   cudaDeviceProp deviceProp;
@@ -140,7 +141,7 @@ std::size_t DynamicGPU::GetMaxIterations(std::size_t nvertices,
       break;
     if (shared_mem < SharedMemoryPerThread(nvertices, step))
       break;
-    if (global_mem < GlobalMemoryForStep(nvertices, step))
+    if (global_mem < GlobalMemoryForStep(nvertices, nedges, step))
       break;
     ++step;
   }
@@ -187,10 +188,12 @@ std::size_t DynamicGPU::SharedMemoryPerThread(std::size_t nverts,
 }
 
 std::size_t DynamicGPU::GlobalMemoryForStep(std::size_t nverts,
+                                            std::size_t nedges,
                                             std::size_t step_num) const {
   return (td::set_encoder::NChooseK(nverts, step_num) +
           td::set_encoder::NChooseK(nverts, step_num + 1)) *
-         SetPlaceholderSize(nverts);
+             SetPlaceholderSize(nverts) +
+         (nverts + 1 + nedges) * sizeof(int);
 }
 
 DynamicGPU::Graph DynamicGPU::Convert(BoostGraph const& g) {
