@@ -39,9 +39,14 @@ class DynamicGPU {
                   int k);
 
   std::size_t GetMaxIterations(std::size_t nvertices, int device) const;
+  std::size_t GetIterationsPerformed() const;
+
   std::vector<int8_t> GetElimination(std::size_t nverts,
                                      std::size_t subset_size,
                                      std::size_t subset_code);
+  unsigned GetTreedepth(std::size_t nverts,
+                        std::size_t subset_size,
+                        std::size_t subset_code);
 
  private:
   std::size_t SetPlaceholderSize(std::size_t nverts) const;

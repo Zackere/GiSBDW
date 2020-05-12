@@ -24,10 +24,10 @@ std::size_t Encode(std::set<Key, std::less<Key>, Allocator> const& s) {
 }
 
 template <typename Key, typename T, typename Allocator>
-std::size_t Encode(std::map<Key, T, std::less<Key>, Allocator> const& map) {
+std::size_t Encode(std::map<Key, T, std::less<Key>, Allocator> const& m) {
   std::size_t ret = 0;
   int i = 0;
-  for (auto v : map)
+  for (auto v : m)
     ret += NChooseK(v.first, ++i);
   return ret;
 }

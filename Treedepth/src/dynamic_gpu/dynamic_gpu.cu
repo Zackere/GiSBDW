@@ -147,6 +147,10 @@ std::size_t DynamicGPU::GetMaxIterations(std::size_t nvertices,
   return step;
 }
 
+std::size_t DynamicGPU::GetIterationsPerformed() const {
+  return history_.size();
+}
+
 std::vector<int8_t> DynamicGPU::GetElimination(std::size_t nverts,
                                                std::size_t subset_size,
                                                std::size_t subset_code) {
@@ -162,6 +166,15 @@ std::vector<int8_t> DynamicGPU::GetElimination(std::size_t nverts,
     vertices.erase(history_[vertices.size()][code]);
   }
   return ret;
+}
+
+unsigned DynamicGPU::GetTreedepth(std::size_t nverts,
+                                  std::size_t subset_size,
+                                  std::size_t subset_code) {
+  if (subset_size > history_.size())
+    return 0;
+  std::unique_lock<std::mutex>{history_mtx_[subset_size]};
+  return history_[subset_size][subset_code + history_[subset_size].size() / 2];
 }
 
 std::size_t DynamicGPU::SetPlaceholderSize(std::size_t nverts) const {
