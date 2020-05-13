@@ -87,10 +87,11 @@ __global__ void DynamicStepKernel(VertexType const* const prev,
     prev_uf[nvertices] = my_set[i];
     if (prev_uf[nvertices + 1] <
         next[thread_offset + blockIdx.x * blockDim.x + threadIdx.x +
-             (nvertices + 1) * next_size])
+             (nvertices + 1) * next_size]) {
       for (std::size_t i = 0; i < nvertices + 2; ++i)
         next[thread_offset + blockIdx.x * blockDim.x + threadIdx.x +
              i * next_size] = prev_uf[i];
+    }
   }
 }
 
