@@ -27,9 +27,9 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
 #endif
   }
 
-   ~QuasiSetArray() override = default;
+  ~QuasiSetArray() override = default;
 
-   void ExcludeTemporarilyElementAtIndex(Element index) override {
+  void ExcludeTemporarilyElementAtIndex(Element index) override {
 #ifdef TD_CHECK_ARGS
     if (isElementExcluded_)
       throw std::logic_error(
@@ -44,7 +44,7 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
     std::swap(arr_[index], arr_[this->numberOfElements_]);
   }
 
-   void RecoverExcludedElement() override {
+  void RecoverExcludedElement() override {
 #ifdef TD_CHECK_ARGS
     if (!isElementExcluded_)
       throw std::logic_error(
@@ -55,11 +55,9 @@ class QuasiSetArray : public QuasiSetBase<UnsignedIntegral> {
     this->numberOfElements_++;
   }
 
-   Element GetElementAtIndex(Element index) override {
-    return arr_[index];
-  }
+  Element GetElementAtIndex(Element index) override { return arr_[index]; }
 
-   void Decode(size_t code, Element k) override {
+  void Decode(size_t code, Element k) override {
     numberOfElements_ = k;
     auto n = GetMaximumSize();
     while (k > 0) {

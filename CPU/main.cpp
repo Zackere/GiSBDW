@@ -19,8 +19,6 @@
 
 #include "boost/property_map/property_map.hpp"
 
-//Do podmiany (bledy z linkowaniem byly)
-//#include <libs\graph\src\read_graphviz_new.cpp>
 using namespace boost;
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
