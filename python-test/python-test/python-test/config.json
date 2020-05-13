@@ -1,7 +1,8 @@
 {
   "paths": {
-  "bin": "../../../out/build/x64-Debug/Treedepth/TreeDepth.exe",
-  "benchmarkGraphs": "./benchmarkGraphs"
+    "bin": "../../../out/build/x64-Debug/Treedepth/TreeDepth.exe",
+    "benchmarkGraphs": "./benchmarkGraphs",
+    "randomGraphs": "./randomGraphs"
   },
 
   "outputExtension": ".out"

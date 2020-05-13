@@ -4,9 +4,12 @@ import subprocess
 from os import listdir, chdir
 from os.path import isfile, join, abspath, basename
 import argparse
+import seaborn as sns
 
 import matplotlib.pyplot as plt
+import pandas as pd
 
+import GraphGenerator
 
 def GetOutput(outputPath, inputFilename):
     path = f"{outputPath}/{basename(inputFilename)}{config['outputExtension']}"
@@ -31,16 +34,22 @@ def RunBenchmarkPlot(path):
     binPath = config["paths"]["bin"]
     outputPath = config["paths"]["benchmarkGraphs"] + "Out"
     filenames = GetAbsoluteFilePaths(path)
-    results = [ExecuteAlgorithm(binPath, 'dyn', filename, outputPath) for filename in filenames]
-    times = [float(result['timeElapsed']) for result in results]
-    fig = plt.figure()
-    ax = fig.add_axes([0,0,1,1])
-    #langs = ['C', 'C++', 'Java', 'Python', 'PHP']
-    #students = [23,17,35,29,12]
-    ax.bar(filenames,times)
+    columns = ["algorithm","filename","timeElapsed"]
+    data = {}
+    for column in columns:
+        data[column] = []
+    for filename in filenames:
+        for algorithmType in args["algorithm"]:
+            result = ExecuteAlgorithm(binPath, algorithmType, filename, outputPath)
+            data["timeElapsed"].append(float(result["timeElapsed"]))
+            data["filename"].append(basename(filename))
+            data["algorithm"].append(algorithmType)
+    df = pd.DataFrame(data)
+    print(df)
+    ax = sns.barplot(x="filename", y="timeElapsed", hue="algorithm", data=df)
+
+    ax.plot()
     plt.show()
-
-
 
 def CreateParser():
     parser = argparse.ArgumentParser(description='Run benchmarks for treedepth algorithms')
@@ -56,11 +65,12 @@ def LoadConfig(path):
         config["paths"][key] = abspath(value)
 
 config = {}
-
+args = {}
 
 if __name__ == "__main__":
-
     LoadConfig("config.json")
+    gg = GraphGenerator.GraphGenerator(config["paths"]["randomGraphs"])
+    gg.GenerateRandomGraphs(10,0.5,15)
     parser = CreateParser()
-    args = parser.parse_args();
-    RunBenchmarkPlot(config["paths"]["benchmarkGraphs"])
+    args = vars(parser.parse_args());
+    RunBenchmarkPlot(config["paths"]["randomGraphs"])
