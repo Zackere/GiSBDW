@@ -2,3 +2,5 @@
 *.sln
 python-test/env
 *.pyproj
+__pycache__
+randomGraphs
