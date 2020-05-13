@@ -1,15 +1,14 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 
+#include <boost/graph/adjacency_list.hpp>
 #include <memory>
 #include <optional>
-#include <set>
 #include <utility>
 #include <variant>
 #include <vector>
 
 #include "../elimination_tree/elimination_tree.hpp"
-#include "boost/graph/adjacency_list.hpp"
 
 namespace td {
 class BranchAndBound {

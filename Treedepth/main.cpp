@@ -20,8 +20,10 @@ int main() {
   std::minstd_rand rng(time(0));
   do {
     g = Graph(ERGen(rng, n, 0.20), ERGen(), n);
-  } while (boost::connected_components(
-               g, std::vector<int>(boost::num_vertices(g)).data()) != 1);
+  } while (
+      boost::connected_components(
+          g, std::vector<decltype(g)::vertex_descriptor>(boost::num_vertices(g))
+                 .data()) != 1);
 #ifdef CUDA_ENABLED
   td::DynamicGPU dgpu;
   if (dgpu.GetMaxIterations(boost::num_vertices(g), boost::num_edges(g), 0) !=
@@ -30,10 +32,9 @@ int main() {
     return 0;
   }
   dgpu(g);
-  auto el =
-      dgpu.GetElimination(boost::num_vertices(g), boost::num_vertices(g), 0);
   td::EliminationTree et(g);
-  for (auto v : el)
+  for (auto v : dgpu.GetElimination<int>(boost::num_vertices(g),
+                                         boost::num_vertices(g), 0))
     et.Eliminate(v);
   auto res = et.Decompose();
   std::ofstream file1("graph1.gviz", std::ios_base::trunc);
