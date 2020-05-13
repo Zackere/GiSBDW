@@ -1,8 +1,8 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
-#define TD_QUASI_SET_ARRAY_CHECK_OBJECT_STATE
 
 #include <vector>
+#include <utility>
 #include "../binomial_coefficients/binomial_coefficient.hpp"
 #include "quasi_set_base.hpp"
 

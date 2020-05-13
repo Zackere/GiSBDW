@@ -1,3 +1,4 @@
+// Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 #include <boost/math/special_functions/binomial.hpp>
 
