@@ -17,27 +17,26 @@
 #include "src/algorithm_result/algorithm_result.hpp"
 #include "src/dynamic_algorithm/dynamic_algorithm.hpp"
 
-
 #include "boost/property_map/property_map.hpp"
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
 namespace bo = boost;
-void usage(po::options_description const &description) {
+void usage(po::options_description const& description) {
   std::cout << description;
   std::cout << "Example usage: ./app.exe -a bnb -o /path/to/output/dir "
                "/path/to/graph1 /path/to/graph2\n";
   std::exit(1);
 }
 
-bool PathExists(fs::path const &path) {
+bool PathExists(fs::path const& path) {
   if (!fs::exists(path)) {
     std::cerr << path << " does not exist.\n";
     return false;
   }
   return true;
 }
-bool IsDirectory(fs::path const &path) {
+bool IsDirectory(fs::path const& path) {
   if (!fs::is_directory(path)) {
     std::cerr << path << " is not a directory.\n";
     return false;
@@ -45,7 +44,7 @@ bool IsDirectory(fs::path const &path) {
   return true;
 }
 
-bool IsFile(fs::path const &path) {
+bool IsFile(fs::path const& path) {
   if (!fs::is_regular_file(path)) {
     std::cerr << path << " is not a regular file.\n";
     return false;
@@ -53,7 +52,7 @@ bool IsFile(fs::path const &path) {
   return true;
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // using Graph =
   // boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   typedef bo::property<bo::vertex_name_t, std::string,
@@ -97,22 +96,22 @@ int main(int argc, char **argv) {
       usage(description);
     }
     po::notify(vm);
-  } catch (po::error &ex) {
+  } catch (po::error& ex) {
     std::cerr << ex.what() << "\n";
     usage(description);
   }
   outputPath = fs::path(outputDirString);
-  for (auto const &pathString : graphsPathsStrings) {
+  for (auto const& pathString : graphsPathsStrings) {
     graphPaths.push_back(fs::path(pathString));
   }
   if (!PathExists(outputPath) || !IsDirectory(outputPath))
     usage(description);
-  for (fs::path const &path : graphPaths) {
+  for (fs::path const& path : graphPaths) {
     if (!PathExists(path) || !IsFile(path))
       usage(description);
   }
 
-  for (fs::path const &path : graphPaths) {
+  for (fs::path const& path : graphPaths) {
     Graph graph(0);
     bo::dynamic_properties dp;
 
@@ -123,7 +122,7 @@ int main(int argc, char **argv) {
     std::ifstream graphFile(path);
     try {
       bool result = read_graphviz(graphFile, graph, dp, "node_id");
-    } catch (boost::bad_graphviz_syntax &ex) {
+    } catch (boost::bad_graphviz_syntax& ex) {
       std::cerr << path << " is not a proper graphviz file. Skipping.\n";
       continue;
     }

@@ -1,8 +1,8 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 
-#include <vector>
 #include <utility>
+#include <vector>
 #include "../binomial_coefficients/binomial_coefficient.hpp"
 #include "quasi_set_base.hpp"
 
