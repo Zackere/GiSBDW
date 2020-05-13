@@ -11,10 +11,12 @@
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/erdos_renyi_generator.hpp"
 #include "boost/graph/graphviz.hpp"
+
 #include "boost/graph/properties.hpp"
 #include "boost/program_options.hpp"
 #include "src/algorithm_result/algorithm_result.hpp"
 #include "src/dynamic_algorithm/dynamic_algorithm.hpp"
+
 
 #include "boost/property_map/property_map.hpp"
 
@@ -58,6 +60,7 @@ int main(int argc, char **argv) {
                        bo::property<bo::vertex_color_t, float>>
       vertex_p;
   using Graph =
+
       bo::adjacency_list<bo::mapS, bo::vecS, bo::undirectedS, vertex_p>;
 
   td::AlgorithmResult foo;
@@ -150,5 +153,6 @@ int main(int argc, char **argv) {
     std::cout << "Output written to: " << outputFilePath << "\n\n";
     algorithmResult.WriteToFile(outputFilePath);
   }
+
   return 0;
 }

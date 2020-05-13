@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 
-project("TreeDepth")
+project("Treedepth")
 
 # Download and unpack googletest at configure time
 configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
@@ -25,8 +25,7 @@ add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
                  ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
                  EXCLUDE_FROM_ALL)
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/GPU")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/CPU")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/Treedepth")
 
 # Install git hooks
 file(GLOB HOOKS ${CMAKE_CURRENT_SOURCE_DIR}/hooks/*)
