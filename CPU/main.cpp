@@ -1,5 +1,4 @@
 // Copyright 2020 GISBDW. All rights reserved.
-// clang-format off
 
 #include <cstdlib>
 #include <fstream>
@@ -150,4 +149,3 @@ int main(int argc, char** argv) {
 	}
 	return 0;
 }
-// clang-format on
