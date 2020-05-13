@@ -44,6 +44,9 @@ class EliminationTree {
      * @return Depth of component inside EliminationTree that owns it.
      */
     unsigned Depth() const;
+    /**
+     * @return Number of edges inside a component.
+     */
     unsigned NEdges() const;
 
     /**
