@@ -199,18 +199,21 @@ std::size_t DynamicGPU::SharedMemoryPerThread(std::size_t nverts,
 std::size_t DynamicGPU::GlobalMemoryForStep(std::size_t nverts,
                                             std::size_t nedges,
                                             std::size_t step_num) const {
-  return (td::set_encoder::NChooseK(nverts, step_num) +
-          td::set_encoder::NChooseK(nverts, step_num + 1)) *
+  return 2 * td::set_encoder::NChooseK(nverts, nverts / 2) *
              SetPlaceholderSize(nverts) * sizeof(VertexType) +
          (nverts + 1) * sizeof(OffsetType) + 2 * nedges * sizeof(VertexType);
 }
 
 void DynamicGPU::Run(BoostGraph const& in, std::size_t k) {
   Graph<VertexType, OffsetType> g(in);
-  thrust::device_vector<VertexType> d_prev(
+  thrust::device_vector<VertexType> d_prev, d_next;
+  d_next.reserve(set_encoder::NChooseK(g.nvertices, g.nvertices / 2) *
+                 SetPlaceholderSize(g.nvertices));
+  d_prev.reserve(set_encoder::NChooseK(g.nvertices, g.nvertices / 2) *
+                 SetPlaceholderSize(g.nvertices));
+  d_prev.resize(
       set_encoder::NChooseK(g.nvertices, 0) * SetPlaceholderSize(g.nvertices),
       -1);
-  thrust::device_vector<VertexType> d_next;
   d_prev[g.nvertices + 1] = 1;
   history_mtx_ = std::vector<std::mutex>(k);
   for (auto& mtx : history_mtx_)
@@ -219,8 +222,6 @@ void DynamicGPU::Run(BoostGraph const& in, std::size_t k) {
   history_.resize(k);
 
   for (std::size_t i = 0; i < history_.size(); ++i) {
-    d_next.clear();
-    d_next.shrink_to_fit();
     d_next.resize(set_encoder::NChooseK(g.nvertices, i + 1) *
                   SetPlaceholderSize(g.nvertices));
     SyncStreams(DynamicStep(thrust::raw_pointer_cast(d_prev.data()),
@@ -235,7 +236,7 @@ void DynamicGPU::Run(BoostGraph const& in, std::size_t k) {
         std::begin(d_prev) + history_[i].size() * (g.nvertices + 2) / 2,
         std::begin(history_[i]));
     history_mtx_[i].unlock();
-    d_prev = std::move(d_next);
+    d_prev.swap(d_next);
   }
 }
 }  // namespace td
