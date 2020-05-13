@@ -7,4 +7,4 @@ jobs:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v1
     - run: pip install cpplint
-    - run: cpplint --recursive --extensions=hpp,cpp,cu .
+    - run: cpplint --recursive --extensions=hpp,cpp,cu --filter=-build/include_order,-build/c++11 .
