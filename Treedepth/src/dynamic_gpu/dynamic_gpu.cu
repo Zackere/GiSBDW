@@ -5,6 +5,7 @@
 
 #include <thrust/device_vector.h>
 
+#include <algorithm>
 #include <utility>
 
 #include "../union_find/ext_array_union_find.hpp"
@@ -199,7 +200,7 @@ std::size_t DynamicGPU::SharedMemoryPerThread(std::size_t nverts,
 std::size_t DynamicGPU::GlobalMemoryForStep(std::size_t nverts,
                                             std::size_t nedges,
                                             std::size_t step_num) const {
-  return 2 * td::set_encoder::NChooseK(nverts, nverts / 2) *
+  return 2 * td::set_encoder::NChooseK(nverts, std::min(step_num, nverts / 2)) *
              SetPlaceholderSize(nverts) * sizeof(VertexType) +
          (nverts + 1) * sizeof(OffsetType) + 2 * nedges * sizeof(VertexType);
 }
@@ -207,10 +208,10 @@ std::size_t DynamicGPU::GlobalMemoryForStep(std::size_t nverts,
 void DynamicGPU::Run(BoostGraph const& in, std::size_t k) {
   Graph<VertexType, OffsetType> g(in);
   thrust::device_vector<VertexType> d_prev, d_next;
-  d_next.reserve(set_encoder::NChooseK(g.nvertices, g.nvertices / 2) *
-                 SetPlaceholderSize(g.nvertices));
-  d_prev.reserve(set_encoder::NChooseK(g.nvertices, g.nvertices / 2) *
-                 SetPlaceholderSize(g.nvertices));
+  d_next.reserve(
+      set_encoder::NChooseK(g.nvertices, std::min(k, g.nvertices / 2)) *
+      SetPlaceholderSize(g.nvertices));
+  d_prev.reserve(d_next.capacity() * SetPlaceholderSize(g.nvertices));
   d_prev.resize(
       set_encoder::NChooseK(g.nvertices, 0) * SetPlaceholderSize(g.nvertices),
       -1);
