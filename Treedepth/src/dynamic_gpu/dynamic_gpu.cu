@@ -65,15 +65,14 @@ __global__ void DynamicStepKernel(VertexType const* const prev,
                                   OffsetType const* const source_offsets,
                                   VertexType const* const destination) {
   extern __shared__ VertexType mem[];
-  auto* my_uf = &mem[threadIdx.x * (nvertices + 2)];
-  my_uf[nvertices + 1] = nvertices + 1;
-  auto* my_set =
-      &mem[blockDim.x * (nvertices + 2) + threadIdx.x * (step_number + 1)];
+  auto* my_set = &mem[threadIdx.x * (step_number + 1)];
   set_encoder::Decode(nvertices, step_number + 1,
                       thread_offset + blockIdx.x * blockDim.x + threadIdx.x,
                       my_set);
-  auto* prev_uf = &mem[blockDim.x * (nvertices + 2 + step_number + 1) +
-                       threadIdx.x * (nvertices + 2)];
+  auto* prev_uf =
+      &mem[blockDim.x * (step_number + 1) + threadIdx.x * (nvertices + 2)];
+  next[thread_offset + blockIdx.x * blockDim.x + threadIdx.x +
+       (nvertices + 1) * next_size] = nvertices + 1;
   for (std::size_t i = 0; i <= step_number; ++i) {
     auto code = set_encoder::Encode(my_set, step_number + 1, i);
     for (std::size_t j = 0; j < nvertices + 2; ++j)
@@ -85,17 +84,14 @@ __global__ void DynamicStepKernel(VertexType const* const prev,
             prev_uf, my_set[i],
             ext_array_union_find::Find(prev_uf, destination[off]),
             nvertices + 1);
-    if (prev_uf[nvertices + 1] < my_uf[nvertices + 1]) {
-      prev_uf[nvertices] = my_set[i];
-      auto* tmp = my_uf;
-      my_uf = prev_uf;
-      prev_uf = tmp;
-    }
+    prev_uf[nvertices] = my_set[i];
+    if (prev_uf[nvertices + 1] <
+        next[thread_offset + blockIdx.x * blockDim.x + threadIdx.x +
+             (nvertices + 1) * next_size])
+      for (std::size_t i = 0; i < nvertices + 2; ++i)
+        next[thread_offset + blockIdx.x * blockDim.x + threadIdx.x +
+             i * next_size] = prev_uf[i];
   }
-  __syncthreads();
-  for (std::size_t i = 0; i < nvertices + 2; ++i)
-    next[thread_offset + blockIdx.x * blockDim.x + threadIdx.x +
-         i * next_size] = my_uf[i];
 }
 
 template <typename VertexType, typename OffsetType>
@@ -107,7 +103,7 @@ std::vector<cudaStream_t> DynamicStep(VertexType const* prev,
                                       std::size_t next_size,
                                       Graph<VertexType, OffsetType> const& g) {
   // Adjust those values according to gpu specs
-  constexpr std::size_t kThreads = 64, kBlocks = 4096,
+  constexpr std::size_t kThreads = 128, kBlocks = 4096,
                         kGridSize = kThreads * kBlocks;
   std::size_t excess = next_size % kGridSize;
   std::size_t max = next_size - excess;
@@ -196,7 +192,7 @@ std::size_t DynamicGPU::SetPlaceholderSize(std::size_t nverts) const {
 
 std::size_t DynamicGPU::SharedMemoryPerThread(std::size_t nverts,
                                               std::size_t step_num) const {
-  return (2 * SetPlaceholderSize(nverts) + step_num + 1) * sizeof(VertexType);
+  return (SetPlaceholderSize(nverts) + step_num + 1) * sizeof(VertexType);
 }
 
 std::size_t DynamicGPU::GlobalMemoryForStep(std::size_t nverts,
