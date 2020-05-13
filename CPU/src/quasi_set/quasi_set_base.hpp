@@ -7,7 +7,8 @@ class QuasiSetBase {
  public:
   using Element = UnsignedIntegral;
   QuasiSetBase() = delete;
-  QuasiSetBase(Element maxSize) : maxSize_(maxSize), numberOfElements_(0) {}
+  explicit QuasiSetBase(Element maxSize)
+      : maxSize_(maxSize), numberOfElements_(0) {}
   virtual ~QuasiSetBase() = default;
 
   virtual void ExcludeTemporarilyElementAtIndex(Element index) = 0;
