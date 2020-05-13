@@ -1,30 +1,24 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 #ifdef CUDA_ENABLED
+#include <cuda_runtime.h>
 #include <thrust/device_vector.h>
 
-#include <functional>
-#include <memory>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/copy.hpp>
 #include <mutex>
 #include <set>
 #include <vector>
 
-#include "boost/graph/adjacency_list.hpp"
-#include "boost/graph/copy.hpp"
-#include "cuda_runtime.h"
+#include "../set_encoder/set_encoder.hpp"
 
 namespace td {
 class DynamicGPU {
  public:
-  // Refer to nvGraph (nvgraphCSRTopology32I_t) for details
-  struct Graph {
-    int nvertices;
-    int nedges;
-    thrust::device_vector<int> source_offsets;
-    thrust::device_vector<int> destination;
-  };
   using BoostGraph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
+  using VertexType = int8_t;
+  using OffsetType = uint16_t;
 
   template <typename OutEdgeList, typename VertexList, typename... Args>
   void operator()(boost::adjacency_list<OutEdgeList,
@@ -36,16 +30,17 @@ class DynamicGPU {
                                         VertexList,
                                         boost::undirectedS,
                                         Args...> const& g,
-                  int k);
+                  std::size_t k);
 
   std::size_t GetMaxIterations(std::size_t nvertices,
                                std::size_t nedges,
                                int device) const;
   std::size_t GetIterationsPerformed() const;
 
-  std::vector<int8_t> GetElimination(std::size_t nverts,
-                                     std::size_t subset_size,
-                                     std::size_t subset_code);
+  template <typename VertexType>
+  std::vector<VertexType> GetElimination(std::size_t nverts,
+                                         std::size_t subset_size,
+                                         std::size_t subset_code);
   unsigned GetTreedepth(std::size_t nverts,
                         std::size_t subset_size,
                         std::size_t subset_code);
@@ -57,10 +52,9 @@ class DynamicGPU {
   std::size_t GlobalMemoryForStep(std::size_t nverts,
                                   std::size_t nedges,
                                   std::size_t step_num) const;
-  Graph Convert(BoostGraph const& g);
-  void Run(Graph const& g, int k);
+  void Run(BoostGraph const& in, std::size_t k);
 
-  std::vector<std::vector<int8_t>> history_;
+  std::vector<std::vector<VertexType>> history_;
   std::vector<std::mutex> history_mtx_;
 };
 
@@ -72,15 +66,35 @@ inline void DynamicGPU::operator()(boost::adjacency_list<OutEdgeList,
   return operator()(
       g, GetMaxIterations(boost::num_vertices(g), boost::num_edges(g), 0));
 }
+
 template <typename OutEdgeList, typename VertexList, typename... Args>
 inline void DynamicGPU::operator()(boost::adjacency_list<OutEdgeList,
                                                          VertexList,
                                                          boost::undirectedS,
                                                          Args...> const& g,
-                                   int k) {
+                                   std::size_t k) {
   BoostGraph copy;
   boost::copy_graph(g, copy);
-  Run(Convert(copy), k);
+  Run(copy, k);
+}
+
+template <typename VertexType>
+inline std::vector<VertexType> DynamicGPU::GetElimination(
+    std::size_t nverts,
+    std::size_t subset_size,
+    std::size_t subset_code) {
+  if (subset_size > history_.size())
+    return {};
+  std::vector<VertexType> ret(subset_size);
+  std::unique_lock<std::mutex>{history_mtx_[subset_size]};
+  auto vertices = set_encoder::Decode<std::set<VertexType>>(nverts, subset_size,
+                                                            subset_code);
+  for (std::size_t i = 0; i < ret.size(); ++i) {
+    auto code = set_encoder::Encode(vertices);
+    ret[i] = history_[vertices.size()][code];
+    vertices.erase(history_[vertices.size()][code]);
+  }
+  return ret;
 }
 }  // namespace td
 #endif

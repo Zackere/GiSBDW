@@ -3,9 +3,7 @@
 
 #include <algorithm>
 #include <memory>
-#ifdef TD_CHECK_ARGS
 #include <stdexcept>
-#endif
 #include <type_traits>
 #include <utility>
 

@@ -2,10 +2,11 @@
 #pragma once
 #define HD
 #ifdef CUDA_ENABLED
-#include "cuda_runtime.h"
+#include <cuda_runtime.h>
 #define HD __host__ __device__
 #endif
 
+#include <functional>
 #include <map>
 #include <set>
 #include <vector>
