@@ -59,99 +59,36 @@ int main(int argc, char** argv) {
                        bo::property<bo::vertex_color_t, float>>
       vertex_p;
   using Graph =
-
-      bo::adjacency_list<bo::mapS, bo::vecS, bo::undirectedS, vertex_p>;
-
-  td::AlgorithmResult foo;
-
-  std::string algorithmType;
-  std::string outputDirString;
-  std::vector<std::string> graphsPathsStrings;
-  std::vector<fs::path> graphPaths;
-  fs::path outputPath;
-  po::options_description description("Usage");
-  description.add_options()("help", "print this message")(
-      "algorithm,a", po::value<std::string>(&algorithmType)->required(),
-      "Select algorithm to run.\n"
-      "Possible args:\n"
-      "bnb - for branch and bound algorithm\n"
-      "dyn - for dynamic algorithm\n"
-      "hyb - for hybrid algorithm\n")(
-      "input,i",
-      po::value<std::vector<std::string>>(&graphsPathsStrings)->required(),
-      "path to input graph")(
-      "output,o", po::value<std::string>(&outputDirString)->required(),
-      "path to output dir");
-
-  po::positional_options_description positionalArgs;
-  positionalArgs.add("input", -1);
-  po::variables_map vm;
-  try {
-    po::store(po::command_line_parser(argc, argv)
-                  .options(description)
-                  .positional(positionalArgs)
-                  .run(),
-              vm);
-    if (vm.count("help")) {
-      usage(description);
-    }
-    po::notify(vm);
-  } catch (po::error& ex) {
-    std::cerr << ex.what() << "\n";
-    usage(description);
+      boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
+  using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;
+  constexpr int n = 25;
+  Graph g(n);
+  std::minstd_rand rng(time(0));
+  do {
+    g = Graph(ERGen(rng, n, 0.20), ERGen(), n);
+  } while (
+      boost::connected_components(
+          g, std::vector<decltype(g)::vertex_descriptor>(boost::num_vertices(g))
+                 .data()) != 1);
+#ifdef CUDA_ENABLED
+  td::DynamicGPU dgpu;
+  if (dgpu.GetMaxIterations(boost::num_vertices(g), boost::num_edges(g), 0) !=
+      boost::num_vertices(g) + 1) {
+    std::cout << "Not enough mem\n";
+    return 0;
   }
-  outputPath = fs::path(outputDirString);
-  for (auto const& pathString : graphsPathsStrings) {
-    graphPaths.push_back(fs::path(pathString));
-  }
-  if (!PathExists(outputPath) || !IsDirectory(outputPath))
-    usage(description);
-  for (fs::path const& path : graphPaths) {
-    if (!PathExists(path) || !IsFile(path))
-      usage(description);
-  }
-
-  for (fs::path const& path : graphPaths) {
-    Graph graph(0);
-    bo::dynamic_properties dp;
-
-    bo::property_map<Graph, bo::vertex_name_t>::type name =
-        get(bo::vertex_name, graph);
-    dp.property("node_id", name);
-
-    std::ifstream graphFile(path);
-    try {
-      bool result = read_graphviz(graphFile, graph, dp, "node_id");
-    } catch (boost::bad_graphviz_syntax& ex) {
-      std::cerr << path << " is not a proper graphviz file. Skipping.\n";
-      continue;
-    }
-    graphFile.close();
-
-    td::AlgorithmResult algorithmResult;
-    std::cout << "Processing graph " << path.filename() << std::endl;
-    std::cout << "Vertices: " << graph.m_vertices.size() << std::endl;
-    std::cout << "Edges: " << graph.m_edges.size() << std::endl;
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    if (algorithmType == "dyn") {
-      td::DynamicAlgorithm<int> dynamicAlgorithm;
-      algorithmResult.treedepth = dynamicAlgorithm.Run(graph);
-    } else {
-      std::cerr << "Wrong algorithm option specified.\n";
-      usage(description);
-    }
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto duration =
-        std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() /
-        1000.0;
-    algorithmResult.timeElapsed = duration;
-    std::cout << "Elapsed time: " << duration << " seconds\n";
-    std::cout << "Treedepth: " << algorithmResult.treedepth << "\n";
-    fs::path outputFilePath = ((outputPath / path.filename()) += ".out");
-    std::cout << "Output written to: " << outputFilePath << "\n\n";
-    algorithmResult.WriteToFile(outputFilePath);
-  }
-
+  dgpu(g);
+  td::EliminationTree et(g);
+  for (auto v : dgpu.GetElimination<int>(boost::num_vertices(g),
+                                         boost::num_vertices(g), 0))
+    et.Eliminate(v);
+  auto res = et.Decompose();
+  std::ofstream file1("graph1.gviz", std::ios_base::trunc);
+  boost::write_graphviz(file1, g);
+  file1.close();
+  std::ofstream file2("graph2.gviz", std::ios_base::trunc);
+  boost::write_graphviz(file2, res.td_decomp);
+  file2.close();
+#endif
   return 0;
 }
