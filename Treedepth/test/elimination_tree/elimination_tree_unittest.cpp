@@ -11,16 +11,18 @@
 #include "boost/graph/isomorphism.hpp"
 #include "gtest/gtest.h"
 
+namespace {
 struct EliminationTreeTestCase {
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
   Graph graph;
   Graph decomposition;
   unsigned depth;
+  unsigned nedges;
   std::vector<td::EliminationTree::VertexType> elimination;
   std::vector<std::list<td::EliminationTree::Component>> components;
 };
-
+}  // namespace
 class ParametrizedEliminationTreeFixture
     : public ::testing::TestWithParam<EliminationTreeTestCase> {
  public:
@@ -71,6 +73,9 @@ class ParametrizedEliminationTreeFixture
          std::vector<std::pair<int, int>>{{0, 3}, {2, 3}, {1, 2}, {3, 4}})
       boost::add_edge(p.first, p.second, tc.decomposition);
     tc.depth = 4;
+    for (auto& l : tc.components)
+      for (auto& c : l)
+        FillNEdges(&c);
     return tc;
   }
   static EliminationTreeTestCase TwoCyclesTestCase() {
@@ -139,6 +144,9 @@ class ParametrizedEliminationTreeFixture
              {2, 3}, {3, 6}, {4, 6}, {4, 5}, {1, 2}, {1, 0}})
       boost::add_edge(p.first, p.second, tc.decomposition);
     tc.depth = 4;
+    for (auto& l : tc.components)
+      for (auto& c : l)
+        FillNEdges(&c);
     return tc;
   }
   static EliminationTreeTestCase PathSimpleTestCase() {
@@ -255,7 +263,18 @@ class ParametrizedEliminationTreeFixture
              {1, 3}, {3, 5}, {0, 1}, {1, 2}, {4, 5}, {5, 6}})
       boost::add_edge(p.first, p.second, tc.decomposition);
     tc.depth = 3;
+    for (auto& l : tc.components)
+      for (auto& c : l)
+        FillNEdges(&c);
     return tc;
+  }
+
+ private:
+  static void FillNEdges(td::EliminationTree::Component* c) {
+    c->nedges_ = 0;
+    for (auto& p : c->AdjacencyList())
+      c->nedges_ += p.second.size();
+    c->nedges_ /= 2;
   }
 };
 

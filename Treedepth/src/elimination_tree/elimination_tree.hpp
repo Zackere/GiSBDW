@@ -1,19 +1,16 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/connected_components.hpp>
 #include <list>
 #include <map>
 #include <set>
+#include <stdexcept>
 #include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
-#ifdef TD_CHECK_ARGS
-#include <stdexcept>
-#endif
-
-#include "boost/graph/adjacency_list.hpp"
-#include "boost/graph/connected_components.hpp"
 
 class ParametrizedEliminationTreeFixture;
 namespace td {
@@ -47,6 +44,9 @@ class EliminationTree {
      * @return Depth of component inside EliminationTree that owns it.
      */
     unsigned Depth() const;
+    /**
+     * @return Number of edges inside a component.
+     */
     unsigned NEdges() const;
 
     /**

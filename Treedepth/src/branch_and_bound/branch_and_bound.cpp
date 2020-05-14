@@ -2,7 +2,6 @@
 #include "branch_and_bound.hpp"
 
 #include <algorithm>
-#include <utility>
 
 namespace td {
 namespace {
