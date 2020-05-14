@@ -32,7 +32,7 @@ def GetAbsoluteFilePaths(path):
 
 def RunBenchmarkPlot(path):
     binPath = config["paths"]["bin"]
-    outputPath = config["paths"]["benchmarkGraphs"] + "Out"
+    outputPath = path + "Out"
     filenames = GetAbsoluteFilePaths(path)
     columns = ["algorithm","filename","timeElapsed"]
     data = {}
