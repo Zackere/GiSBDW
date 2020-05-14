@@ -200,7 +200,8 @@ std::size_t DynamicGPU::SharedMemoryPerThread(std::size_t nverts,
 std::size_t DynamicGPU::GlobalMemoryForStep(std::size_t nverts,
                                             std::size_t nedges,
                                             std::size_t step_num) const {
-  return 2 * td::set_encoder::NChooseK(nverts, std::min(step_num, nverts / 2)) *
+  return (td::set_encoder::NChooseK(nverts, step_num) +
+          td::set_encoder::NChooseK(nverts, step_num + 1)) *
              SetPlaceholderSize(nverts) * sizeof(VertexType) +
          (nverts + 1) * sizeof(OffsetType) + 2 * nedges * sizeof(VertexType);
 }
@@ -208,10 +209,19 @@ std::size_t DynamicGPU::GlobalMemoryForStep(std::size_t nverts,
 void DynamicGPU::Run(BoostGraph const& in, std::size_t k) {
   Graph<VertexType, OffsetType> g(in);
   thrust::device_vector<VertexType> d_prev, d_next;
-  d_next.reserve(
-      set_encoder::NChooseK(g.nvertices, std::min(k, g.nvertices / 2)) *
-      SetPlaceholderSize(g.nvertices));
-  d_prev.reserve(d_next.capacity() * SetPlaceholderSize(g.nvertices));
+  if (k > g.nvertices / 2 && g.nvertices % 2) {
+    d_next.reserve(set_encoder::NChooseK(g.nvertices, g.nvertices / 2) *
+                   SetPlaceholderSize(g.nvertices));
+    d_prev.reserve(d_next.capacity());
+  } else {
+    auto ktmp = std::min(k, g.nvertices / 2);
+    d_next.reserve(set_encoder::NChooseK(g.nvertices, ktmp - 1) *
+                   SetPlaceholderSize(g.nvertices));
+    d_prev.reserve(set_encoder::NChooseK(g.nvertices, ktmp) *
+                   SetPlaceholderSize(g.nvertices));
+    if (ktmp % 2)
+      d_next.swap(d_prev);
+  }
   d_prev.resize(
       set_encoder::NChooseK(g.nvertices, 0) * SetPlaceholderSize(g.nvertices),
       -1);
