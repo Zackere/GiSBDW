@@ -232,7 +232,7 @@ void DynamicGPU::Run(BoostGraph const& in, std::size_t k) {
   history_.clear();
   history_.resize(k);
 
-  for (std::size_t i = 0; i < history_.size(); ++i) {
+  for (std::size_t i = 0; i < history_.size() - 1; ++i) {
     d_next.resize(set_encoder::NChooseK(g.nvertices, i + 1) *
                   SetPlaceholderSize(g.nvertices));
     SyncStreams(DynamicStep(thrust::raw_pointer_cast(d_prev.data()),
@@ -249,6 +249,12 @@ void DynamicGPU::Run(BoostGraph const& in, std::size_t k) {
     history_mtx_[i].unlock();
     d_prev.swap(d_next);
   }
+  history_.back().resize(2 * d_prev.size() / SetPlaceholderSize(g.nvertices));
+  thrust::copy(
+      std::begin(d_prev) + history_.back().size() * g.nvertices / 2,
+      std::begin(d_prev) + history_.back().size() * (g.nvertices + 2) / 2,
+      std::begin(history_.back()));
+  history_mtx_.back().unlock();
 }
 }  // namespace td
 #endif
