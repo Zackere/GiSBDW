@@ -1,30 +1,34 @@
 // Copyright 2020 GISBDW. All rights reserved.
 
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/erdos_renyi_generator.hpp>
+#include <boost/graph/graphviz.hpp>
+#include <boost/graph/properties.hpp>
+#include <boost/program_options.hpp>
+#include <boost/property_map/property_map.hpp>
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <random>
+#include <regex>
 #include <string>
 #include <vector>
 
-#include "boost/graph/adjacency_list.hpp"
-#include "boost/graph/erdos_renyi_generator.hpp"
-#include "boost/graph/graphviz.hpp"
-
-#include "boost/graph/properties.hpp"
-#include "boost/program_options.hpp"
 #include "src/algorithm_result/algorithm_result.hpp"
+#include "src/branch_and_bound/branch_and_bound.hpp"
 #include "src/dynamic_algorithm/dynamic_algorithm.hpp"
-
-#include "boost/property_map/property_map.hpp"
+#include "src/dynamic_gpu/dynamic_gpu.hpp"
+#include "src/elimination_tree/elimination_tree.hpp"
+#include "src/heuristics/highest_degree_heuristic.hpp"
+#include "src/lower_bound/edge_lower_bound.hpp"
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
 namespace bo = boost;
-void usage(po::options_description const& description) {
+void Usage(po::options_description const& description) {
   std::cout << description;
-  std::cout << "Example usage: ./app.exe -a bnb -o /path/to/output/dir "
+  std::cout << "Example usage: ./app.exe -a bnbCPU -o /path/to/output/dir "
                "/path/to/graph1 /path/to/graph2\n";
   std::exit(1);
 }
@@ -53,14 +57,13 @@ bool IsFile(fs::path const& path) {
 }
 
 int main(int argc, char** argv) {
-  // using Graph =
-  // boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
-  typedef bo::property<bo::vertex_name_t, std::string,
-                       bo::property<bo::vertex_color_t, float>>
-      vertex_p;
   using Graph =
-
-      bo::adjacency_list<bo::mapS, bo::vecS, bo::undirectedS, vertex_p>;
+      boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
+  // typedef bo::property<bo::vertex_name_t, std::string,
+  //                   bo::property<bo::vertex_color_t, float>>
+  // vertex_p;
+  // using Graph =
+  //   //  bo::adjacency_list<bo::mapS, bo::vecS, bo::undirectedS, vertex_p>;
 
   td::AlgorithmResult foo;
 
@@ -74,8 +77,9 @@ int main(int argc, char** argv) {
       "algorithm,a", po::value<std::string>(&algorithmType)->required(),
       "Select algorithm to run.\n"
       "Possible args:\n"
-      "bnb - for branch and bound algorithm\n"
-      "dyn - for dynamic algorithm\n"
+      "bnbCPU - for branch and bound algorithm ran on CPU\n"
+      "dynCPU - for dynamic algorithm ran on CPU\n"
+      "dynGPU - for dynamic algorithm ran on GPU\n"
       "hyb - for hybrid algorithm\n")(
       "input,i",
       po::value<std::vector<std::string>>(&graphsPathsStrings)->required(),
@@ -93,40 +97,38 @@ int main(int argc, char** argv) {
                   .run(),
               vm);
     if (vm.count("help")) {
-      usage(description);
+      Usage(description);
     }
     po::notify(vm);
   } catch (po::error& ex) {
     std::cerr << ex.what() << "\n";
-    usage(description);
+    Usage(description);
   }
   outputPath = fs::path(outputDirString);
   for (auto const& pathString : graphsPathsStrings) {
     graphPaths.push_back(fs::path(pathString));
   }
   if (!PathExists(outputPath) || !IsDirectory(outputPath))
-    usage(description);
+    Usage(description);
   for (fs::path const& path : graphPaths) {
     if (!PathExists(path) || !IsFile(path))
-      usage(description);
+      Usage(description);
   }
 
   for (fs::path const& path : graphPaths) {
-    Graph graph(0);
-    bo::dynamic_properties dp;
-
-    bo::property_map<Graph, bo::vertex_name_t>::type name =
-        get(bo::vertex_name, graph);
-    dp.property("node_id", name);
-
-    std::ifstream graphFile(path);
-    try {
-      bool result = read_graphviz(graphFile, graph, dp, "node_id");
-    } catch (boost::bad_graphviz_syntax& ex) {
-      std::cerr << path << " is not a proper graphviz file. Skipping.\n";
-      continue;
-    }
-    graphFile.close();
+    std::ifstream file3("graph1.gviz");
+    std::string data{std::istreambuf_iterator<char>(file3),
+                     std::istreambuf_iterator<char>()};
+    file3.close();
+    std::regex vertex_matcher("^\\d+\\s*;$");
+    auto vertices =
+        std::sregex_iterator(std::begin(data), std::end(data), vertex_matcher);
+    Graph graph(std::distance(vertices, std::sregex_iterator()));
+    std::regex edge_matcher("(\\d+)--(\\d+)");
+    for (auto edges = std::sregex_iterator(std::begin(data), std::end(data),
+                                           edge_matcher);
+         edges != std::sregex_iterator(); ++edges)
+      boost::add_edge(std::stoi((*edges)[1]), std::stoi((*edges)[2]), graph);
 
     td::AlgorithmResult algorithmResult;
     std::cout << "Processing graph " << path.filename() << std::endl;
@@ -134,12 +136,28 @@ int main(int argc, char** argv) {
     std::cout << "Edges: " << graph.m_edges.size() << std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
 
-    if (algorithmType == "dyn") {
+    if (algorithmType == "dynCPU") {
       td::DynamicAlgorithm<int> dynamicAlgorithm;
       algorithmResult.treedepth = dynamicAlgorithm.Run(graph);
+    } else if (algorithmType == "dynGPU") {
+      td::DynamicGPU dgpu;
+      dgpu(graph);
+      if (dgpu.GetIterationsPerformed() == boost::num_vertices(graph) + 1) {
+        td::EliminationTree et(graph);
+        for (auto v : dgpu.GetElimination<td::EliminationTree::VertexType>(
+                 boost::num_vertices(graph), boost::num_vertices(graph), 0))
+          et.Eliminate(v);
+        auto res = et.Decompose();
+        algorithmResult.treedepth = res.treedepth;
+      }
+    } else if (algorithmType == "bnbCPU") {
+      td::BranchAndBound bnb;
+      auto res = bnb(graph, std::make_unique<td::EdgeLowerBound>(),
+                     std::make_unique<td::HighestDegreeHeuristic>(nullptr));
+      algorithmResult.treedepth = res.treedepth;
     } else {
       std::cerr << "Wrong algorithm option specified.\n";
-      usage(description);
+      Usage(description);
     }
     auto t2 = std::chrono::high_resolution_clock::now();
     auto duration =
