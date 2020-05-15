@@ -51,7 +51,7 @@ def RunBenchmarkPlot(path):
     plt.show()
 
 def CreateParser():
-    algorithms = ['bnb', 'dyn', 'hyb']
+    algorithms = ['bnbCPU', 'dynCPU', 'hyb', 'dynGPU']
     tests = ['timeElapsed']
 
     parser = argparse.ArgumentParser(
