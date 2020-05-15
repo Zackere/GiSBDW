@@ -17,13 +17,13 @@ namespace td {
 template <class SignedIntegral>
 class DynamicAlgorithm {
  public:
-   using Graph =
+  using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
-  //typedef boost::property<boost::vertex_name_t,
+  // typedef boost::property<boost::vertex_name_t,
   //                        std::string,
   //                        boost::property<boost::vertex_color_t, float> >
   //    vertex_p;
-  //using Graph = boost::
+  // using Graph = boost::
   //    adjacency_list<boost::mapS, boost::vecS, boost::undirectedS, vertex_p>;
   using SetElement = std::make_unsigned_t<SignedIntegral>;
   using UnionFind = ArrayUnionFind<SignedIntegral>;
@@ -48,11 +48,8 @@ class DynamicAlgorithm {
 
     // prepare data structures for algorithm
     auto widestPart = NChooseK(n, n / 2);
-    std::vector<UnionFind> vec1(widestPart, UnionFind(n));
-    std::vector<UnionFind> vec2(widestPart, UnionFind(n));
-
-    std::vector<UnionFind>& prevVec = vec1;
-    std::vector<UnionFind>& currVec = vec2;
+    std::vector<UnionFind> prevVec(widestPart, UnionFind(n));
+    std::vector<UnionFind> currVec(widestPart, UnionFind(n));
 
     QuasiSetArray<SetElement> quasiSet(n);
     QuasiSetBase<SetElement>* set = &quasiSet;
@@ -75,29 +72,29 @@ class DynamicAlgorithm {
           size_t indexToPrevArray = set->EncodeExcluded();
           // for convenience bind previous UnionFind structure to variable
           UnionFind& ufPrev = prevVec[indexToPrevArray];
-          if (ufPrev.GetMaxValue() < bestTreeDepthForThisSet) {
-            UnionFind ufNew(ufPrev);
-            // for each element in set with excluded element check
-            // check if this element and excluded element are neighbours in G
-            for (SetElement index = 0; index < set->GetNumberOfElements();
-                 ++index) {
-              auto elementToCheck = set->GetElementAtIndex(index);
-              bool areNeighbours =
-                  boost::edge(excludedElement, elementToCheck, graph).second;
-              if (areNeighbours) {
-                // if they are neighbours - union sets that represent them
-                // TUTAJ DO ULEPSZENIA, MADRZE TO MOZNA UNIONOWAC, NIEPOTRZEBNE
-                // FINDY, DWA RAZY FIND, DO POPRAWY JUZ JAK BEDZIE BENCHMARK
-                auto representative = ufNew.Find(elementToCheck);
-                if (representative != excludedElement) {
-                  ufNew.Union(ufNew.Find(excludedElement),
-                              ufNew.Find(representative));
-                }
+          // if (ufPrev.GetMaxValue() < bestTreeDepthForThisSet) {
+          UnionFind ufNew(ufPrev);
+          // for each element in set with excluded element check
+          // check if this element and excluded element are neighbours in G
+          auto excludedRepresentative = ufNew.Find(excludedElement);
+          for (SetElement index = 0; index < set->GetNumberOfElements();
+               ++index) {
+            auto elementToCheck = set->GetElementAtIndex(index);
+            bool areNeighbours =
+                boost::edge(excludedElement, elementToCheck, graph).second;
+            if (areNeighbours) {
+              // if they are neighbours - union sets that represent them
+              // TUTAJ DO ULEPSZENIA, MADRZE TO MOZNA UNIONOWAC, NIEPOTRZEBNE
+              // FINDY, DWA RAZY FIND, DO POPRAWY JUZ JAK BEDZIE BENCHMARK
+              auto representative = ufNew.Find(elementToCheck);
+              if (representative != excludedRepresentative) {
+                ufNew.Union(excludedRepresentative, representative);
               }
             }
-            bestTreeDepthForThisSet = ufNew.GetMaxValue();
-            currVec[code] = std::move(ufNew);
           }
+          bestTreeDepthForThisSet = ufNew.GetMaxValue();
+          currVec[code] = std::move(ufNew);
+          //}
           set->RecoverExcludedElement();
         }
       }
