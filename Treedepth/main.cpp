@@ -116,7 +116,7 @@ int main(int argc, char** argv) {
   }
 
   for (fs::path const& path : graphPaths) {
-    std::ifstream file3("graph1.gviz");
+    std::ifstream file3(path);
     std::string data{std::istreambuf_iterator<char>(file3),
                      std::istreambuf_iterator<char>()};
     file3.close();
@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
     auto vertices =
         std::sregex_iterator(std::begin(data), std::end(data), vertex_matcher);
     Graph graph(std::distance(vertices, std::sregex_iterator()));
-    std::regex edge_matcher("(\\d+)--(\\d+)");
+    std::regex edge_matcher("(\\d+)\\s*--\\s*(\\d+)");
     for (auto edges = std::sregex_iterator(std::begin(data), std::end(data),
                                            edge_matcher);
          edges != std::sregex_iterator(); ++edges)
@@ -148,7 +148,9 @@ int main(int argc, char** argv) {
                  boost::num_vertices(graph), boost::num_vertices(graph), 0))
           et.Eliminate(v);
         auto res = et.Decompose();
-        algorithmResult.treedepth = res.treedepth;
+        res.treedepth;
+        algorithmResult.treedepth = dgpu.GetTreedepth(
+            boost::num_vertices(graph), boost::num_vertices(graph), 0);
       }
     } else if (algorithmType == "bnbCPU") {
       td::BranchAndBound bnb;
