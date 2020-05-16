@@ -8,10 +8,11 @@
 #include "../../src/dynamic_gpu/dynamic_gpu.hpp"
 #include "../../src/heuristics/highest_degree_heuristic.hpp"
 #include "../../src/lower_bound/edge_lower_bound.hpp"
-#include "../graph_gen.hpp"
+#include "../utils/graph_gen.hpp"
 
 namespace {
 class CTF : public ::testing::TestWithParam<Graph> {};
+// time_t seed = time(0);
 time_t seed = 1589591285;
 }  // namespace
 
@@ -37,16 +38,19 @@ TEST_P(CTF, CorrectnessTest) {
   EXPECT_EQ(res_dyngpu.treedepth, td);
   EXPECT_EQ(
       dgpu.GetTreedepth(boost::num_vertices(g), boost::num_vertices(g), 0), td);
-  std::ofstream file;
-  file = std::ofstream("bnb.gviz", std::ios_base::trunc);
-  boost::write_graphviz(file, res_bnb.td_decomp);
-  file.close();
-  file = std::ofstream("dyn.gviz", std::ios_base::trunc);
-  boost::write_graphviz(file, res_dyngpu.td_decomp);
-  file.close();
-  file = std::ofstream("graph.gviz", std::ios_base::trunc);
-  boost::write_graphviz(file, g);
-  file.close();
+  if (td != res_bnb.treedepth || td != res_dyngpu.treedepth ||
+      res_dyngpu.treedepth != td) {
+    std::ofstream file;
+    file = std::ofstream("bnb.gviz", std::ios_base::trunc);
+    boost::write_graphviz(file, res_bnb.td_decomp);
+    file.close();
+    file = std::ofstream("dyn.gviz", std::ios_base::trunc);
+    boost::write_graphviz(file, res_dyngpu.td_decomp);
+    file.close();
+    file = std::ofstream("graph.gviz", std::ios_base::trunc);
+    boost::write_graphviz(file, g);
+    file.close();
+  }
 }
 
 // INSTANTIATE_TEST_SUITE_P(Paths,
@@ -87,5 +91,11 @@ TEST_P(CTF, CorrectnessTest) {
 
 INSTANTIATE_TEST_SUITE_P(SparseGraphs,
                          CTF,
-                         ::testing::Values(RandomSparseConnectedGraph(15,
+                         ::testing::Values(RandomSparseConnectedGraph(15, seed),
+                                           RandomSparseConnectedGraph(16, seed),
+                                           RandomSparseConnectedGraph(17, seed),
+                                           RandomSparseConnectedGraph(18, seed),
+                                           RandomSparseConnectedGraph(10, seed),
+                                           RandomSparseConnectedGraph(9, seed),
+                                           RandomSparseConnectedGraph(8,
                                                                       seed)));

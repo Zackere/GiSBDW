@@ -10,7 +10,7 @@ using ::testing::Return;
 
 namespace {
 // Include here to avoid linker issues
-#include "../utils.hpp"
+#include "../utils/utils.hpp"
 
 class MockHeuristic : public td::BranchAndBound::Heuristic {
  public:

@@ -128,6 +128,28 @@ TEST(ArrayUnionFindTest, GetValueTest6) {
   }
 }
 
+TEST(ArrayUnionFindTest, GetValueTest7) {
+  td::ArrayUnionFind<int> uf(15);
+  uf.Union(4, 9);
+  uf.Union(7, 2);
+  uf.Union(7, 5);
+  uf.Union(11, 1);
+  uf.Union(11, 13);
+  EXPECT_EQ(uf.GetMaxValue(), 2);
+  uf.Union(3, 4);
+  uf.Union(3, 7);
+  uf.Union(3, 10);
+  uf.Union(8, 6);
+  uf.Union(8, 11);
+  EXPECT_EQ(uf.GetMaxValue(), 3);
+  uf.Union(12, 3);
+  uf.Union(12, 8);
+  EXPECT_EQ(uf.GetMaxValue(), 4);
+  uf.Union(0, 12);
+  uf.Union(0, 14);
+  EXPECT_EQ(uf.GetMaxValue(), 5);
+}
+
 TEST(ArrayUnionFindTest, CopyConstructorTest) {
   td::ArrayUnionFind<int> uf(10);
   uf.Union(uf.Find(5), uf.Find(7));

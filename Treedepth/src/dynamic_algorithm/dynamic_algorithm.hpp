@@ -7,6 +7,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
+
 #include "../binomial_coefficients/binomial_coefficient.hpp"
 #include "../set_encoder/set_encoder.hpp"
 //#include "../quasi_set/quasi_set_array.hpp"
@@ -49,16 +50,21 @@ class DynamicAlgorithm {
 
     // prepare data structures for algorithm
     auto widestPart = NChooseK(n, n / 2);
-    std::vector<UnionFind> prevVec(widestPart, UnionFind(n));
-    std::vector<UnionFind> currVec(widestPart, UnionFind(n));
+    std::vector<UnionFind> prevVec;
+    std::vector<UnionFind> currVec;
+    prevVec.reserve(widestPart);
+    currVec.reserve(widestPart);
+    prevVec.emplace_back(n);
 
     // QuasiSetArray<SetElement> quasiSet(n);
     // QuasiSetBase<SetElement>* set = &quasiSet;
 
     // iterate over k-subsets
-    for (SetElement k = 2; k <= n; ++k) {
+    for (SetElement k = 1; k <= n; ++k) {
       auto numberOfSubsets = NChooseK(n, k);
+      currVec.clear();
       for (size_t code = 0; code < numberOfSubsets; ++code) {
+        currVec.emplace_back(n);
         SetElement bestTreeDepthForThisSet =
             std::numeric_limits<SignedIntegral>::max();
         // get set from its code
@@ -77,25 +83,19 @@ class DynamicAlgorithm {
           UnionFind& ufPrev = prevVec[indexToPrevArray];
           if (ufPrev.GetMaxValue() < bestTreeDepthForThisSet) {
             UnionFind ufNew(ufPrev);
-            // for each element in set with excluded element check
-            // check if this element and excluded element are neighbours in G
-            auto excludedRepresentative = ufNew.Find(set[elementIndex]);
             for (SetElement index = 0; index < set.size(); ++index) {
               auto elementToCheck = set[index];
               bool areNeighbours =
                   boost::edge(set[elementIndex], elementToCheck, graph).second;
               if (areNeighbours) {
                 // if they are neighbours - union sets that represent them
-                // TUTAJ DO ULEPSZENIA, MADRZE TO MOZNA UNIONOWAC, NIEPOTRZEBNE
-                // FINDY, DWA RAZY FIND, DO POPRAWY JUZ JAK BEDZIE BENCHMARK
-                auto representative = ufNew.Find(elementToCheck);
-                if (representative != excludedRepresentative) {
-                  ufNew.Union(excludedRepresentative, representative);
-                }
+                ufNew.Union(set[elementIndex], ufNew.Find(elementToCheck));
               }
             }
-            bestTreeDepthForThisSet = ufNew.GetMaxValue();
-            currVec[code] = std::move(ufNew);
+            if (bestTreeDepthForThisSet > ufNew.GetMaxValue()) {
+              bestTreeDepthForThisSet = ufNew.GetMaxValue();
+              currVec[code] = std::move(ufNew);
+            }
           }
           // set->RecoverExcludedElement();
         }

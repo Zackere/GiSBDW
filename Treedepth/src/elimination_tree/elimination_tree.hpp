@@ -62,9 +62,9 @@ class EliminationTree {
    private:
     friend class EliminationTree;
     friend class ::ParametrizedEliminationTreeFixture;
-    AdjacencyListType neighbours_;
-    unsigned depth_;
-    unsigned nedges_;
+    AdjacencyListType neighbours_ = {};
+    unsigned depth_ = 0;
+    unsigned nedges_ = 0;
   };
   struct ComponentCmp {
     bool operator()(Component const& c1, Component const& c2) const {
@@ -145,13 +145,13 @@ class EliminationTree {
  private:
   struct Node;
   struct EliminatedNode {
-    std::list<Node> children;
-    VertexType vertex;
-    unsigned depth;
+    std::list<Node> children = {};
+    VertexType vertex = 0;
+    unsigned depth = 0;
   };
   struct Node {
     std::variant<EliminatedNode, std::reference_wrapper<Component const>> v =
-        {};
+        EliminatedNode{};
   } root_;
   std::vector<std::reference_wrapper<Node>> nodes_;
   std::set<Component, ComponentCmp> components_;

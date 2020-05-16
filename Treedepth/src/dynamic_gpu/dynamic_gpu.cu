@@ -16,15 +16,13 @@ namespace {
 template <typename VertexType, typename OffsetType>
 struct Graph {
   std::size_t nvertices;
-  std::size_t nedges;
   thrust::device_vector<OffsetType> source_offsets;
   thrust::device_vector<VertexType> destination;
 
   explicit Graph(DynamicGPU::BoostGraph const& g)
       : nvertices(boost::num_vertices(g)),
-        nedges(2 * boost::num_edges(g)),
         source_offsets(nvertices + 1),
-        destination(nedges) {
+        destination(2 * boost::num_edges(g)) {
     OffsetType offset = 0;
     typename boost::graph_traits<
         std::remove_reference_t<decltype(g)>>::out_edge_iterator ei,
@@ -39,7 +37,7 @@ struct Graph {
 };
 
 template <typename VertexType, typename OffsetType>
-__device__ bool BinarySearch(VertexType* sorted_set,
+__device__ bool BinarySearch(VertexType const* sorted_set,
                              OffsetType size,
                              VertexType val) {
   OffsetType low = 0;
@@ -55,6 +53,7 @@ __device__ bool BinarySearch(VertexType* sorted_set,
   }
   return false;
 }
+
 template <typename VertexType, typename OffsetType>
 __global__ void DynamicStepKernel(VertexType const* const prev,
                                   VertexType* const next,
@@ -66,25 +65,25 @@ __global__ void DynamicStepKernel(VertexType const* const prev,
                                   OffsetType const* const source_offsets,
                                   VertexType const* const destination) {
   extern __shared__ VertexType mem[];
-  auto* my_set = &mem[threadIdx.x * (step_number + 1)];
-  set_encoder::Decode(nvertices, step_number + 1,
+  set_encoder::Decode(nvertices, step_number,
                       thread_offset + blockDim.x * blockIdx.x + threadIdx.x,
-                      my_set);
-  auto* prev_uf =
-      &mem[blockDim.x * (step_number + 1) + threadIdx.x * (nvertices + 2)];
-  auto current_best_td = nvertices + 1;
-  for (std::size_t i = 0; i <= step_number; ++i) {
-    auto code = set_encoder::Encode(my_set, step_number + 1, i);
+                      &mem[threadIdx.x * step_number]);
+  auto const* const my_set = &mem[threadIdx.x * step_number];
+  auto* const prev_uf =
+      &mem[blockDim.x * step_number + threadIdx.x * (nvertices + 2)];
+  VertexType current_best_td = step_number + 1;
+  for (std::size_t i = 0; i < step_number; ++i) {
+    auto code = set_encoder::Encode(my_set, step_number, i);
     for (std::size_t j = 0; j < nvertices + 2; ++j)
       prev_uf[j] = prev[code + j * prev_size];
+    prev_uf[nvertices] = my_set[i];
     for (OffsetType off = source_offsets[my_set[i]];
          off < source_offsets[my_set[i] + 1]; ++off)
-      if (BinarySearch(my_set, step_number + 1, destination[off]))
-        ext_array_union_find::Union<VertexType>(
+      if (BinarySearch(my_set, step_number, destination[off]))
+        ext_array_union_find::Union(
             prev_uf, my_set[i],
             ext_array_union_find::Find(prev_uf, destination[off]),
             nvertices + 1);
-    prev_uf[nvertices] = my_set[i];
     if (prev_uf[nvertices + 1] < current_best_td) {
       current_best_td = prev_uf[nvertices + 1];
       for (std::size_t j = 0; j < nvertices + 2; ++j)
@@ -111,7 +110,8 @@ std::vector<cudaStream_t> DynamicStep(VertexType const* const prev,
   std::vector<cudaStream_t> streams;
   streams.reserve(max / kGridSize + 2);
 
-  for (; threads_launched < max; threads_launched += kGridSize) {
+  for (threads_launched = 0; threads_launched < max;
+       threads_launched += kGridSize) {
     streams.emplace_back();
     cudaStreamCreate(&streams.back());
     DynamicStepKernel<<<kBlocks, kThreads, shared_mem_per_thread * kThreads,
@@ -192,7 +192,7 @@ std::size_t DynamicGPU::SetPlaceholderSize(std::size_t nverts) const {
 
 std::size_t DynamicGPU::SharedMemoryPerThread(std::size_t nverts,
                                               std::size_t step_num) const {
-  return (SetPlaceholderSize(nverts) + step_num + 1) * sizeof(VertexType);
+  return (SetPlaceholderSize(nverts) + step_num) * sizeof(VertexType);
 }
 
 std::size_t DynamicGPU::GlobalMemoryForStep(std::size_t nverts,
@@ -222,36 +222,35 @@ void DynamicGPU::Run(BoostGraph const& in, std::size_t k) {
   }
   d_prev.resize(SetPlaceholderSize(g.nvertices), -1);
   d_prev[g.nvertices + 1] = 1;
+
   history_mtx_ = std::vector<std::mutex>(k);
   for (auto& mtx : history_mtx_)
     mtx.lock();
-  history_.clear();
+  history_ = decltype(history_)();
   history_.resize(k);
 
-  for (std::size_t i = 0; i < history_.size() - 1; ++i) {
-    d_next.resize(set_encoder::NChooseK(g.nvertices, i + 1) *
-                      SetPlaceholderSize(g.nvertices),
-                  -1);
+  history_[0].resize(2);
+  history_[0][0] = -1;
+  history_[0][1] = 0;
+  history_mtx_[0].unlock();
+
+  for (std::size_t i = 1; i < history_.size(); ++i) {
+    d_next.resize(set_encoder::NChooseK(g.nvertices, i) *
+                  SetPlaceholderSize(g.nvertices));
     SyncStreams(DynamicStep(thrust::raw_pointer_cast(d_prev.data()),
                             thrust::raw_pointer_cast(d_next.data()),
                             SharedMemoryPerThread(g.nvertices, i), i,
                             d_prev.size() / SetPlaceholderSize(g.nvertices),
                             d_next.size() / SetPlaceholderSize(g.nvertices),
                             g));
-    history_[i].resize(2 * d_prev.size() / SetPlaceholderSize(g.nvertices));
+    history_[i].resize(2 * (d_next.size() / SetPlaceholderSize(g.nvertices)));
     thrust::copy(
-        std::begin(d_prev) + history_[i].size() / 2 * g.nvertices,
-        std::begin(d_prev) + history_[i].size() / 2 * (g.nvertices + 2),
+        std::begin(d_next) + (history_[i].size() / 2) * g.nvertices,
+        std::begin(d_next) + (history_[i].size() / 2) * (g.nvertices + 2),
         std::begin(history_[i]));
     history_mtx_[i].unlock();
     d_next.swap(d_prev);
   }
-  history_.back().resize(2 * d_prev.size() / SetPlaceholderSize(g.nvertices));
-  thrust::copy(
-      std::begin(d_prev) + history_.back().size() * g.nvertices / 2,
-      std::begin(d_prev) + history_.back().size() * (g.nvertices + 2) / 2,
-      std::begin(history_.back()));
-  history_mtx_.back().unlock();
 }
 }  // namespace td
 #endif

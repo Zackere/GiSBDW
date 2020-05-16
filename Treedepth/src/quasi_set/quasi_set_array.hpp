@@ -3,6 +3,7 @@
 
 #include <utility>
 #include <vector>
+
 #include "../binomial_coefficients/binomial_coefficient.hpp"
 #include "quasi_set_base.hpp"
 

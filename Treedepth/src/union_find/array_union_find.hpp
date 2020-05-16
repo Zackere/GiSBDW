@@ -96,10 +96,11 @@ inline typename ArrayUnionFind<T>::SetIdType ArrayUnionFind<T>::Union(
     SetIdType s2) {
   if (s1 == s2)
     return s1;
-  ValueType set1_val = GetValue(s1);
-  ValueType set2_val = GetValue(s2);
+  ValueType v = GetValue(s1);
+  if (ValueType vv = GetValue(s2); vv >= v)
+    v = vv + 1;
+  SetValue(s1, v);
   parents_[s2] = s1;
-  SetValue(s1, set1_val > set2_val ? set1_val : (set2_val + 1));
   return s1;
 }
 
@@ -149,6 +150,12 @@ inline typename ArrayUnionFind<T>::ValueType ArrayUnionFind<T>::GetMaxValue()
 
 template <typename T>
 inline void ArrayUnionFind<T>::SetValue(SetIdType set_id, ValueType value) {
+#ifdef TD_CHECK_ARGS
+  if (parents_[set_id] >= 0)
+    throw std::logic_error("SetValue called to non set element");
+  if (-parents_[set_id] > value)
+    throw std::logic_error("SetValue called with lower value than held");
+#endif
   if (value > max_value_)
     max_value_ = static_cast<UnsignedIntegral>(value);
   parents_[set_id] = -static_cast<SignedIntegral>(value);

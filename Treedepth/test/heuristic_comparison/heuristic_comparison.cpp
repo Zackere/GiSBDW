@@ -7,7 +7,7 @@
 #include "../../src/heuristics/variance_heuristic.hpp"
 #include "../../src/lower_bound/dynamic_gpu_lower_bound.hpp"
 #include "../../src/lower_bound/edge_lower_bound.hpp"
-#include "../graph_gen.hpp"
+#include "../utils/graph_gen.hpp"
 
 namespace {
 class BCF : public ::testing::TestWithParam<Graph> {};

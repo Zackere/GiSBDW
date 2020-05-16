@@ -1,8 +1,10 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 
-#include "../src/elimination_tree/elimination_tree.hpp"
-#include "boost/graph/adjacency_list.hpp"
+#include <boost/graph/adjacency_list.hpp>
+
+#include "../../src/branch_and_bound/branch_and_bound.hpp"
+#include "../../src/elimination_tree/elimination_tree.hpp"
 
 template <typename... Args>
 bool CompareBoostGraphs(boost::adjacency_list<Args...> const& g1,

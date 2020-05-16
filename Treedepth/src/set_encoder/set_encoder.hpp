@@ -1,9 +1,12 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
-#define HD
 #ifdef CUDA_ENABLED
 #include <cuda_runtime.h>
+#ifndef HD
 #define HD __host__ __device__
+#endif
+#elif
+#define HD
 #endif
 
 #include <functional>
@@ -34,7 +37,7 @@ std::size_t Encode(std::map<Key, T, std::less<Key>, Allocator> const& m) {
 }
 
 template <typename VertexType>
-HD std::size_t Encode(VertexType* sorted_set, std::size_t set_size) {
+HD std::size_t Encode(VertexType const* sorted_set, std::size_t set_size) {
   std::size_t ret = 0;
   for (std::size_t i = 0; i < set_size; ++i)
     ret += NChooseK(sorted_set[i], i + 1);
@@ -42,7 +45,7 @@ HD std::size_t Encode(VertexType* sorted_set, std::size_t set_size) {
 }
 
 template <typename VertexType>
-HD std::size_t Encode(VertexType* sorted_set,
+HD std::size_t Encode(VertexType const* sorted_set,
                       std::size_t set_size,
                       std::size_t exclude) {
   std::size_t ret = 0;

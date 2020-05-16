@@ -1,10 +1,9 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
-#include <filesystem>
-#include <string>
-
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <filesystem>
+#include <string>
 namespace td {
 class AlgorithmResult {
  public:

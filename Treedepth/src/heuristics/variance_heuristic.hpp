@@ -25,7 +25,7 @@ class VarianceHeuristic : public BranchAndBound::Heuristic {
 
     // as long as tree is not ready
     while (tree.ComponentsBegin() != tree.ComponentsEnd()) {
-      auto const& g =
+      auto const g =
           tree.ComponentsBegin()->AdjacencyList();  // take first component
 
       double best_vertex_coef = -1;
@@ -37,7 +37,6 @@ class VarianceHeuristic : public BranchAndBound::Heuristic {
       for (auto const& p : g) {
         auto new_components = tree.Eliminate(p.first);
         current_vertex_deg = p.second.size();
-        int components_count = 0;
         double avg_size =
             std::accumulate(
                 std::begin(new_components), std::end(new_components), 0.0,

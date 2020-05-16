@@ -6,7 +6,7 @@
 #include "../../src/heuristics/highest_degree_heuristic.hpp"
 #include "../../src/lower_bound/basic_lower_bound.hpp"
 #include "../../src/lower_bound/edge_lower_bound.hpp"
-#include "../../test/graph_gen.hpp"
+#include "../../test/utils/graph_gen.hpp"
 
 namespace {
 class BCF : public ::testing::TestWithParam<Graph> {};

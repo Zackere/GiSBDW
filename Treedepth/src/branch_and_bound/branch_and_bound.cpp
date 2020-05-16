@@ -31,9 +31,9 @@ BranchAndBound::LowerBound::BetterResult(
   auto& v1 = *v1_p;
   auto& v2 = *v2_p;
 
-  if (auto* td_info1 = std::get_if<TreedepthInfo>(&v1))
+  if (std::get_if<TreedepthInfo>(&v1))
     return v1;
-  if (auto* td_info2 = std::get_if<TreedepthInfo>(&v2))
+  if (std::get_if<TreedepthInfo>(&v2))
     return v2;
   auto& lb_info1 = std::get<LowerBoundInfo>(v1);
   auto& lb_info2 = std::get<LowerBoundInfo>(v2);
@@ -91,8 +91,10 @@ void BranchAndBound::Algorithm() {
       Algorithm();
       elimination_tree_->Merge();
     }
-    for (auto v : to_be_eliminated)
+    for (auto v : to_be_eliminated) {
+      (void)v;
       elimination_tree_->Merge();
+    }
     return;
   } else if (auto* tdinfo =
                  std::get_if<LowerBound::TreedepthInfo>(&first_component_lb)) {
@@ -103,8 +105,10 @@ void BranchAndBound::Algorithm() {
     for (auto v : to_be_eliminated)
       elimination_tree_->Eliminate(v);
     Algorithm();
-    for (auto v : to_be_eliminated)
+    for (auto v : to_be_eliminated) {
+      (void)v;
       elimination_tree_->Merge();
+    }
     return;
   }
 }

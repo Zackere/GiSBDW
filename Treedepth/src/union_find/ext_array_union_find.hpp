@@ -1,6 +1,5 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
-#define HD
 #ifdef CUDA_ENABLED
 #include <cuda_runtime.h>
 #define HD __host__ __device__
@@ -21,12 +20,12 @@ HD T Find(T* uf, T elem) {
   return root;
 }
 
-template <typename T>
-HD void Union(T* uf, T s1, T s2, T val_ix) {
+template <typename T, typename Offset>
+HD void Union(T* uf, T s1, T s2, Offset val_ix) {
   if (s1 == s2)
     return;
   auto new_val = -uf[s1];
-  if (new_val < -uf[s2] + 1)
+  if (new_val <= -uf[s2])
     new_val = -uf[s2] + 1;
   if (uf[val_ix] < new_val)
     uf[val_ix] = new_val;
@@ -35,3 +34,6 @@ HD void Union(T* uf, T s1, T s2, T val_ix) {
 }
 }  // namespace ext_array_union_find
 }  // namespace td
+#ifdef CUDA_ENABLED
+#undef HD
+#endif
