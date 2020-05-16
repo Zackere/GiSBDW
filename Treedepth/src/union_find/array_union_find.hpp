@@ -94,6 +94,8 @@ template <typename T>
 inline typename ArrayUnionFind<T>::SetIdType ArrayUnionFind<T>::Union(
     SetIdType s1,
     SetIdType s2) {
+  if (s1 == s2)
+    return s1;
   ValueType set1_val = GetValue(s1);
   ValueType set2_val = GetValue(s2);
   parents_[s2] = s1;

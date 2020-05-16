@@ -58,6 +58,7 @@ void BranchAndBound::Algorithm() {
   }
   auto component_iterator = elimination_tree_->ComponentsBegin();
   auto first_component_lb = lower_bound_->Get(*component_iterator);
+  auto first_component_depth = elimination_tree_->ComponentsBegin()->Depth();
   std::list<EliminationTree::VertexType> to_be_eliminated;
   while (++component_iterator != elimination_tree_->ComponentsEnd()) {
     auto lb = lower_bound_->Get(*component_iterator);
@@ -75,8 +76,7 @@ void BranchAndBound::Algorithm() {
   }
   if (auto* lbinfo =
           std::get_if<LowerBound::LowerBoundInfo>(&first_component_lb)) {
-    if (elimination_tree_->ComponentsBegin()->Depth() + lbinfo->lower_bound >=
-        best_tree_.treedepth)
+    if (first_component_depth + lbinfo->lower_bound >= best_tree_.treedepth)
       return;
     std::vector<EliminationTree::VertexType> attempt_order;
     if (lbinfo->attempt_order)
@@ -96,8 +96,7 @@ void BranchAndBound::Algorithm() {
     return;
   } else if (auto* tdinfo =
                  std::get_if<LowerBound::TreedepthInfo>(&first_component_lb)) {
-    if (elimination_tree_->ComponentsBegin()->Depth() + tdinfo->treedepth >=
-        best_tree_.treedepth)
+    if (first_component_depth + tdinfo->treedepth >= best_tree_.treedepth)
       return;
     to_be_eliminated.splice(std::end(to_be_eliminated),
                             tdinfo->elimination_order);

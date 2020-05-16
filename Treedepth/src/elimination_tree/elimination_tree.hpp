@@ -187,8 +187,7 @@ inline EliminationTree::EliminationTree(
   for (int i = 0; i < boost::num_vertices(g); ++i)
     for (boost::tie(ei, ei_end) = boost::out_edges(i, g); ei != ei_end; ++ei)
       root.neighbours_[i].insert(boost::target(*ei, g));
-  components_.insert(std::move(root));
-  root_.v = std::ref(*components_.begin());
+  root_.v = *components_.insert(std::move(root)).first;
 }
 
 inline EliminationTree::Result EliminationTree::Decompose() const {
@@ -201,10 +200,10 @@ inline EliminationTree::Result EliminationTree::Decompose() const {
   std::set<VertexType> insert_now, insert_next;
   insert_now.insert(std::get<EliminatedNode>(root_.v).vertex);
   while (!insert_now.empty()) {
-    for (auto v : insert_now) {
-      auto& v_node = std::get<EliminatedNode>(nodes_[v].get().v);
-      for (auto& p : v_node.children) {
-        auto& p_node = std::get<EliminatedNode>(p.v);
+    for (auto const v : insert_now) {
+      auto const& v_node = std::get<EliminatedNode>(nodes_[v].get().v);
+      for (auto const& p : v_node.children) {
+        auto const& p_node = std::get<EliminatedNode>(p.v);
         boost::add_edge(v, p_node.vertex, ret.td_decomp);
         insert_next.insert(p_node.vertex);
       }

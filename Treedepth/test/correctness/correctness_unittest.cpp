@@ -32,7 +32,21 @@ TEST_P(CTF, CorrectnessTest) {
   EXPECT_EQ(res_bnb.treedepth, res_dyngpu.treedepth);
 
   td::DynamicAlgorithm<int8_t> dalg;
-  EXPECT_EQ(res_bnb.treedepth, dalg.Run(g));
+  int td = dalg.Run(g);
+  EXPECT_EQ(res_bnb.treedepth, td);
+  EXPECT_EQ(res_dyngpu.treedepth, td);
+  EXPECT_EQ(
+      dgpu.GetTreedepth(boost::num_vertices(g), boost::num_vertices(g), 0), td);
+  std::ofstream file;
+  file = std::ofstream("bnb.gviz", std::ios_base::trunc);
+  boost::write_graphviz(file, res_bnb.td_decomp);
+  file.close();
+  file = std::ofstream("dyn.gviz", std::ios_base::trunc);
+  boost::write_graphviz(file, res_dyngpu.td_decomp);
+  file.close();
+  file = std::ofstream("graph.gviz", std::ios_base::trunc);
+  boost::write_graphviz(file, g);
+  file.close();
 }
 
 // INSTANTIATE_TEST_SUITE_P(Paths,
