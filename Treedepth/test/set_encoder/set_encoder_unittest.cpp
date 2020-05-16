@@ -30,6 +30,8 @@ TEST_P(SECF, STDSetEncodeDecode) {
     std::list<std::set<unsigned>> sets;
     for (std::size_t j = 0; j < td::set_encoder::NChooseK(n, i); ++j) {
       auto set = td::set_encoder::Decode<std::set<unsigned>>(n, i, j);
+      for (auto v : set)
+        EXPECT_TRUE(0 <= v && v < n);
       EXPECT_EQ(set.size(), i);
       EXPECT_EQ(td::set_encoder::Encode(set), j);
       EXPECT_EQ(std::find(std::begin(sets), std::end(sets), set),
@@ -45,6 +47,8 @@ TEST_P(SECF, STDVectorEncodeDecode) {
     std::list<std::vector<unsigned>> sets;
     for (std::size_t j = 0; j < td::set_encoder::NChooseK(n, i); ++j) {
       auto vec = td::set_encoder::Decode<std::vector<unsigned>>(n, i, j);
+      for (auto v : vec)
+        EXPECT_TRUE(0 <= v && v < n);
       EXPECT_EQ(vec.size(), i);
       EXPECT_EQ(td::set_encoder::Encode(vec.data(), vec.size()), j);
       EXPECT_EQ(std::find(std::begin(sets), std::end(sets), vec),
@@ -64,6 +68,8 @@ TEST_P(SECF, PointerEncodeDecode) {
       EXPECT_EQ(vec1.size(), i);
       EXPECT_EQ(vec2.size(), i);
       EXPECT_EQ(vec1, vec2);
+      for (auto v : vec1)
+        EXPECT_TRUE(0 <= v && v < n);
     }
   }
 }
@@ -76,7 +82,10 @@ TEST_P(SECF, EncodeExluded) {
       auto vec = td::set_encoder::Decode<std::vector<unsigned>>(n, i, j);
       EXPECT_EQ(set.size(), i);
       EXPECT_EQ(vec.size(), i);
-      EXPECT_TRUE(std::equal(std::begin(set), std::end(set), std::begin(vec)));
+      EXPECT_TRUE(std::equal(std::begin(set), std::end(set), std::begin(vec),
+                             std::end(vec)));
+      for (auto v : vec)
+        EXPECT_TRUE(0 <= v && v < n);
       for (std::size_t i = 0; i < vec.size(); ++i) {
         set.erase(vec[i]);
         EXPECT_EQ(td::set_encoder::Encode(vec.data(), vec.size(), i),
