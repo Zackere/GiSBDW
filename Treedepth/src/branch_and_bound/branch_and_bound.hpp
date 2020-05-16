@@ -2,6 +2,7 @@
 #pragma once
 
 #include <boost/graph/adjacency_list.hpp>
+#include <list>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -23,7 +24,7 @@ class BranchAndBound {
     };
     struct TreedepthInfo {
       unsigned treedepth;
-      std::vector<EliminationTree::VertexType> elimination_order;
+      std::list<EliminationTree::VertexType> elimination_order;
     };
     virtual std::variant<LowerBoundInfo, TreedepthInfo> Get(
         EliminationTree::Component const& g) = 0;

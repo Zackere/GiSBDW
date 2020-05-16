@@ -18,7 +18,7 @@ HD std::size_t NChooseK(std::size_t n, std::size_t k);
 template <typename Key, typename Allocator>
 std::size_t Encode(std::set<Key, std::less<Key>, Allocator> const& s) {
   std::size_t ret = 0;
-  int i = 0;
+  std::size_t i = 0;
   for (auto v : s)
     ret += NChooseK(v, ++i);
   return ret;
@@ -27,7 +27,7 @@ std::size_t Encode(std::set<Key, std::less<Key>, Allocator> const& s) {
 template <typename Key, typename T, typename Allocator>
 std::size_t Encode(std::map<Key, T, std::less<Key>, Allocator> const& m) {
   std::size_t ret = 0;
-  int i = 0;
+  std::size_t i = 0;
   for (auto v : m)
     ret += NChooseK(v.first, ++i);
   return ret;
@@ -36,7 +36,7 @@ std::size_t Encode(std::map<Key, T, std::less<Key>, Allocator> const& m) {
 template <typename VertexType>
 HD std::size_t Encode(VertexType* sorted_set, std::size_t set_size) {
   std::size_t ret = 0;
-  for (int i = 0; i < set_size; ++i)
+  for (std::size_t i = 0; i < set_size; ++i)
     ret += NChooseK(sorted_set[i], i + 1);
   return ret;
 }
@@ -46,7 +46,7 @@ HD std::size_t Encode(VertexType* sorted_set,
                       std::size_t set_size,
                       std::size_t exclude) {
   std::size_t ret = 0;
-  int i = -1;
+  std::size_t i = static_cast<std::size_t>(-1);
   while (++i < exclude)
     ret += NChooseK(sorted_set[i], i + 1);
   while (++i < set_size)

@@ -9,7 +9,7 @@
 namespace td {
 namespace ext_array_union_find {
 template <typename T>
-HD int8_t Find(T* uf, T elem) {
+HD T Find(T* uf, T elem) {
   auto root = elem;
   while (uf[root] >= 0)
     root = uf[root];

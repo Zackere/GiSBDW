@@ -6,6 +6,7 @@
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/copy.hpp>
+#include <list>
 #include <mutex>
 #include <set>
 #include <vector>
@@ -38,9 +39,9 @@ class DynamicGPU {
   std::size_t GetIterationsPerformed() const;
 
   template <typename VertexType>
-  std::vector<VertexType> GetElimination(std::size_t nverts,
-                                         std::size_t subset_size,
-                                         std::size_t subset_code);
+  std::list<VertexType> GetElimination(std::size_t nverts,
+                                       std::size_t subset_size,
+                                       std::size_t subset_code);
   unsigned GetTreedepth(std::size_t nverts,
                         std::size_t subset_size,
                         std::size_t subset_code);
@@ -79,19 +80,19 @@ inline void DynamicGPU::operator()(boost::adjacency_list<OutEdgeList,
 }
 
 template <typename VertexType>
-inline std::vector<VertexType> DynamicGPU::GetElimination(
+inline std::list<VertexType> DynamicGPU::GetElimination(
     std::size_t nverts,
     std::size_t subset_size,
     std::size_t subset_code) {
   if (subset_size > history_.size())
     return {};
-  std::vector<VertexType> ret(subset_size);
+  std::list<VertexType> ret;
   std::unique_lock<std::mutex>{history_mtx_[subset_size]};
   auto vertices = set_encoder::Decode<std::set<VertexType>>(nverts, subset_size,
                                                             subset_code);
-  for (std::size_t i = 0; i < ret.size(); ++i) {
+  for (std::size_t i = 0; i < subset_size; ++i) {
     auto code = set_encoder::Encode(vertices);
-    ret[i] = history_[vertices.size()][code];
+    ret.push_back(history_[vertices.size()][code]);
     vertices.erase(history_[vertices.size()][code]);
   }
   return ret;

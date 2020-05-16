@@ -17,13 +17,13 @@ namespace td {
 template <class SignedIntegral>
 class DynamicAlgorithm {
  public:
-   using Graph =
+  using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
-  //typedef boost::property<boost::vertex_name_t,
+  // typedef boost::property<boost::vertex_name_t,
   //                        std::string,
   //                        boost::property<boost::vertex_color_t, float> >
   //    vertex_p;
-  //using Graph = boost::
+  // using Graph = boost::
   //    adjacency_list<boost::mapS, boost::vecS, boost::undirectedS, vertex_p>;
   using SetElement = std::make_unsigned_t<SignedIntegral>;
   using UnionFind = ArrayUnionFind<SignedIntegral>;
