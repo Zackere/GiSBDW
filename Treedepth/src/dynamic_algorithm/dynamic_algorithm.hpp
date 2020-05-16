@@ -8,7 +8,8 @@
 #include <utility>
 #include <vector>
 #include "../binomial_coefficients/binomial_coefficient.hpp"
-#include "../quasi_set/quasi_set_array.hpp"
+#include "../set_encoder/set_encoder.hpp"
+//#include "../quasi_set/quasi_set_array.hpp"
 #include "../union_find/array_union_find.hpp"
 #include "boost/graph/adjacency_list.hpp"
 #include "boost/graph/undirected_graph.hpp"
@@ -48,14 +49,11 @@ class DynamicAlgorithm {
 
     // prepare data structures for algorithm
     auto widestPart = NChooseK(n, n / 2);
-    std::vector<UnionFind> vec1(widestPart, UnionFind(n));
-    std::vector<UnionFind> vec2(widestPart, UnionFind(n));
+    std::vector<UnionFind> prevVec(widestPart, UnionFind(n));
+    std::vector<UnionFind> currVec(widestPart, UnionFind(n));
 
-    std::vector<UnionFind>& prevVec = vec1;
-    std::vector<UnionFind>& currVec = vec2;
-
-    QuasiSetArray<SetElement> quasiSet(n);
-    QuasiSetBase<SetElement>* set = &quasiSet;
+    // QuasiSetArray<SetElement> quasiSet(n);
+    // QuasiSetBase<SetElement>* set = &quasiSet;
 
     // iterate over k-subsets
     for (SetElement k = 2; k <= n; ++k) {
@@ -64,41 +62,42 @@ class DynamicAlgorithm {
         SetElement bestTreeDepthForThisSet =
             std::numeric_limits<SignedIntegral>::max();
         // get set from its code
-        set->Decode(code, k);
-        for (SetElement elementIndex = 0;
-             elementIndex < set->GetNumberOfElements(); ++elementIndex) {
+        auto set = set_encoder::Decode<std::vector<SetElement>>(n, k, code);
+        // set->Decode(code, k);
+        for (SetElement elementIndex = 0; elementIndex < set.size();
+             ++elementIndex) {
           // exclude one element from set
-          SetElement excludedElement = set->GetElementAtIndex(elementIndex);
-          set->ExcludeTemporarilyElementAtIndex(elementIndex);
+          // SetElement excludedElement = set->GetElementAtIndex(elementIndex);
+          // set->ExcludeTemporarilyElementAtIndex(elementIndex);
           // get a code for a set without this element (it is an index to array
           // containing results from level -1)
-          size_t indexToPrevArray = set->EncodeExcluded();
+          size_t indexToPrevArray =
+              set_encoder::Encode(set.data(), set.size(), elementIndex);
           // for convenience bind previous UnionFind structure to variable
           UnionFind& ufPrev = prevVec[indexToPrevArray];
           if (ufPrev.GetMaxValue() < bestTreeDepthForThisSet) {
             UnionFind ufNew(ufPrev);
             // for each element in set with excluded element check
             // check if this element and excluded element are neighbours in G
-            for (SetElement index = 0; index < set->GetNumberOfElements();
-                 ++index) {
-              auto elementToCheck = set->GetElementAtIndex(index);
+            auto excludedRepresentative = ufNew.Find(set[elementIndex]);
+            for (SetElement index = 0; index < set.size(); ++index) {
+              auto elementToCheck = set[index];
               bool areNeighbours =
-                  boost::edge(excludedElement, elementToCheck, graph).second;
+                  boost::edge(set[elementIndex], elementToCheck, graph).second;
               if (areNeighbours) {
                 // if they are neighbours - union sets that represent them
                 // TUTAJ DO ULEPSZENIA, MADRZE TO MOZNA UNIONOWAC, NIEPOTRZEBNE
                 // FINDY, DWA RAZY FIND, DO POPRAWY JUZ JAK BEDZIE BENCHMARK
                 auto representative = ufNew.Find(elementToCheck);
-                if (representative != excludedElement) {
-                  ufNew.Union(ufNew.Find(excludedElement),
-                              ufNew.Find(representative));
+                if (representative != excludedRepresentative) {
+                  ufNew.Union(excludedRepresentative, representative);
                 }
               }
             }
             bestTreeDepthForThisSet = ufNew.GetMaxValue();
             currVec[code] = std::move(ufNew);
           }
-          set->RecoverExcludedElement();
+          // set->RecoverExcludedElement();
         }
       }
       std::swap(prevVec, currVec);
