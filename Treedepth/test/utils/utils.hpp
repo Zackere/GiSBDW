@@ -6,6 +6,7 @@
 #include "../../src/branch_and_bound/branch_and_bound.hpp"
 #include "../../src/elimination_tree/elimination_tree.hpp"
 
+namespace {
 template <typename... Args>
 bool CompareBoostGraphs(boost::adjacency_list<Args...> const& g1,
                         boost::adjacency_list<Args...> const& g2) {
@@ -25,3 +26,4 @@ bool CheckIfTdDecompIsValid(td::BranchAndBound::Graph const& graph,
   return CompareBoostGraphs(actual.td_decomp, expected.td_decomp) &&
          actual.root == expected.root && actual.treedepth == expected.treedepth;
 }
+}  // namespace

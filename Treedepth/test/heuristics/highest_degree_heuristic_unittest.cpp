@@ -2,15 +2,13 @@
 
 #include "../../src/heuristics/highest_degree_heuristic.hpp"
 
+#include "../utils/utils.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 using ::testing::Return;
 
 namespace {
-// Include here to avoid linker issues
-#include "../utils/utils.hpp"
-
 class MockHeuristic : public td::BranchAndBound::Heuristic {
  public:
   MOCK_METHOD(td::EliminationTree::Result,

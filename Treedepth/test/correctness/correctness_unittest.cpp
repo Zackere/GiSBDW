@@ -9,6 +9,7 @@
 #include "../../src/heuristics/highest_degree_heuristic.hpp"
 #include "../../src/lower_bound/edge_lower_bound.hpp"
 #include "../utils/graph_gen.hpp"
+#include "../utils/utils.hpp"
 
 namespace {
 class CTF : public ::testing::TestWithParam<Graph> {};
