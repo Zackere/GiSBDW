@@ -4,6 +4,7 @@
 #include <fstream>
 
 #include "../../src/branch_and_bound/branch_and_bound.hpp"
+#include "../../src/dynamic_algorithm/dynamic_algorithm.hpp"
 #include "../../src/dynamic_gpu/dynamic_gpu.hpp"
 #include "../../src/heuristics/highest_degree_heuristic.hpp"
 #include "../../src/lower_bound/edge_lower_bound.hpp"
@@ -29,6 +30,9 @@ TEST_P(CTF, CorrectnessTest) {
     et.Eliminate(v);
   auto res_dyngpu = et.Decompose();
   EXPECT_EQ(res_bnb.treedepth, res_dyngpu.treedepth);
+
+  td::DynamicAlgorithm<int8_t> dalg;
+  EXPECT_EQ(res_bnb.treedepth, dalg.Run(g));
 }
 
 // INSTANTIATE_TEST_SUITE_P(Paths,
