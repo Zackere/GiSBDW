@@ -3,8 +3,6 @@
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/connected_components.hpp>
-#include <functional>
-#include <iostream>
 #include <list>
 #include <map>
 #include <set>
@@ -117,12 +115,15 @@ class EliminationTree {
    *
    * @param v vertex to be eliminated
    */
-  std::list<std::reference_wrapper<Component const>> Eliminate(VertexType v);
+  std::list<std::set<EliminationTree::Component,
+                     EliminationTree::ComponentCmp>::const_iterator>
+  Eliminate(VertexType v);
   /**
    * Reverts last recorded elimination. This operation is analogous
    * to transformation T_wv->T_w
    */
-  std::pair<ComponentIterator, Component::AdjacencyListType::iterator> Merge();
+  std::pair<ComponentIterator, Component::AdjacencyListType::const_iterator>
+  Merge();
 
   /**
    *  @return Iterator to the first Component of EliminationTree.
@@ -150,8 +151,9 @@ class EliminationTree {
     unsigned depth = 0;
   };
   struct Node {
-    std::variant<EliminatedNode, std::reference_wrapper<Component const>> v =
-        EliminatedNode{};
+    std::variant<EliminatedNode,
+                 std::set<Component, ComponentCmp>::const_iterator>
+        v = EliminatedNode{};
   } root_;
   std::vector<std::reference_wrapper<Node>> nodes_;
   std::set<Component, ComponentCmp> components_;
@@ -187,7 +189,7 @@ inline EliminationTree::EliminationTree(
   for (int i = 0; i < boost::num_vertices(g); ++i)
     for (boost::tie(ei, ei_end) = boost::out_edges(i, g); ei != ei_end; ++ei)
       root.neighbours_[i].insert(boost::target(*ei, g));
-  root_.v = *components_.insert(std::move(root)).first;
+  root_.v = components_.insert(std::move(root)).first;
 }
 
 inline EliminationTree::Result EliminationTree::Decompose() const {

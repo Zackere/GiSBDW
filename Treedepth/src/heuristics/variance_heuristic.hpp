@@ -34,26 +34,29 @@ class VarianceHeuristic : public BranchAndBound::Heuristic {
       auto g = tree.ComponentsBegin();  // take first component
       for (auto p = std::begin(g->AdjacencyList());
            p != std::end(g->AdjacencyList()); ++p) {
-        auto new_components = tree.Eliminate(p->first);
         current_vertex_deg = p->second.size();
+        auto new_components = tree.Eliminate(p->first);
         double avg_size =
-            std::accumulate(
-                std::begin(new_components), std::end(new_components), 0.0,
-                [](double acc, auto component) {
-                  return acc + component.get().AdjacencyList().size();
-                }) /
+            std::accumulate(std::begin(new_components),
+                            std::end(new_components), 0.0,
+                            [](double acc, auto component) {
+                              return acc + component->AdjacencyList().size();
+                            }) /
             new_components.size();
 
         double gamma = std::accumulate(
             std::begin(new_components), std::end(new_components), 0.0,
             [avg_size](double acc, auto component) {
-              return acc +
-                     (component.get().AdjacencyList().size() - avg_size) *
-                         (component.get().AdjacencyList().size() - avg_size);
+              return acc + (component->AdjacencyList().size() - avg_size) *
+                               (component->AdjacencyList().size() - avg_size);
             });
 
         current_vertex_coef =
             D_ / (std::sqrt(gamma + A_)) + E_ * new_components.size();
+
+        auto merge_ret = tree.Merge();
+        g = merge_ret.first;
+        p = merge_ret.second;
 
         if (current_vertex_coef > best_vertex_coef ||
             (current_vertex_coef == best_vertex_coef &&
@@ -62,10 +65,6 @@ class VarianceHeuristic : public BranchAndBound::Heuristic {
           best_vertex_deg = current_vertex_deg;
           best_vertex = p->first;
         }
-
-        auto merge_ret = tree.Merge();
-        g = merge_ret.first;
-        p = merge_ret.second;
       }
 
       tree.Eliminate(best_vertex);

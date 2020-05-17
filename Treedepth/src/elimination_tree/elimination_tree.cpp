@@ -21,22 +21,23 @@ bool EliminationTree::Component::operator==(Component const& other) const {
   return depth_ == other.depth_ && neighbours_ == other.neighbours_;
 }
 
-std::list<std::reference_wrapper<EliminationTree::Component const>>
+std::list<std::set<EliminationTree::Component,
+                   EliminationTree::ComponentCmp>::const_iterator>
 EliminationTree::Eliminate(VertexType v) {
 #ifdef TD_CHECK_ARGS
-  if (!std::get_if<std::reference_wrapper<Component const>>(&nodes_[v].get().v))
+  if (!std::get_if<decltype(components_)::const_iterator>(&nodes_[v].get().v))
     throw std::invalid_argument("Vertex " + std::to_string(v) +
                                 " is eliminated");
 #endif
-  std::list<std::reference_wrapper<EliminationTree::Component const>> ret;
+  std::list<decltype(components_)::const_iterator> ret;
   auto node = nodes_[v];
   auto component = components_.extract(
-      std::get<std::reference_wrapper<Component const>>(nodes_[v].get().v));
+      std::get<decltype(components_)::const_iterator>(nodes_[v].get().v));
   node.get().v = EliminatedNode{{}, v, component.value().Depth()};
   eliminated_nodes_.emplace_back(component.value().neighbours_.extract(v));
   for (auto& p : component.value().neighbours_)
     p.second.erase(v);
-  while (!component.value().neighbours_.empty()) {
+  while (!component.value().AdjacencyList().empty()) {
     Component new_component;
     new_component.depth_ = component.value().Depth() + 1;
     new_component.nedges_ = 0;
@@ -61,16 +62,16 @@ EliminationTree::Eliminate(VertexType v) {
 
     auto new_component_pos = components_.insert(std::move(new_component)).first;
     auto& node_ref = std::get<EliminatedNode>(node.get().v)
-                         .children.emplace_back(Node{*new_component_pos});
+                         .children.emplace_back(Node{new_component_pos});
     for (auto& p : new_component_pos->AdjacencyList())
       nodes_[p.first] = node_ref;
-    ret.push_back(*new_component_pos);
+    ret.push_back(new_component_pos);
   }
   return ret;
 }
 
 std::pair<EliminationTree::ComponentIterator,
-          EliminationTree::Component::AdjacencyListType::iterator>
+          EliminationTree::Component::AdjacencyListType::const_iterator>
 EliminationTree::Merge() {
 #ifdef TD_CHECK_ARGS
   if (eliminated_nodes_.size() == 0)
@@ -85,9 +86,8 @@ EliminationTree::Merge() {
        std::get<EliminatedNode>(nodes_[vertex_being_merged->first].get().v)
            .children) {
     auto child_component =
-        components_.extract(std::get<std::reference_wrapper<Component const>>(
-                                child_component_node.v)
-                                .get());
+        components_.extract(std::get<decltype(components_)::const_iterator>(
+            child_component_node.v));
     for (auto& p : child_component.value().neighbours_) {
       new_component.nedges_ += p.second.size();
       new_component.neighbours_[p.first] = std::move(p.second);
@@ -102,7 +102,7 @@ EliminationTree::Merge() {
   new_component.nedges_ /= 2;
 
   auto new_component_pos = components_.insert(std::move(new_component)).first;
-  nodes_[vertex_being_merged->first].get().v = *new_component_pos;
+  nodes_[vertex_being_merged->first].get().v = new_component_pos;
   for (auto& p : new_component_pos->AdjacencyList())
     nodes_[p.first] = nodes_[vertex_being_merged->first];
   return {ComponentIterator{new_component_pos}, vertex_being_merged};
