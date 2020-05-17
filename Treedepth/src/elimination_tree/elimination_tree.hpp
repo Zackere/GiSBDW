@@ -122,7 +122,7 @@ class EliminationTree {
    * Reverts last recorded elimination. This operation is analogous
    * to transformation T_wv->T_w
    */
-  VertexType Merge();
+  std::pair<ComponentIterator, Component::AdjacencyListType::iterator> Merge();
 
   /**
    *  @return Iterator to the first Component of EliminationTree.

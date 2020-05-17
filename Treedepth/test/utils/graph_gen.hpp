@@ -18,7 +18,6 @@ Graph RandomConnectedGraph(int n, float p, int seed = 0) {
     ret = Graph(ERGen(rng, n, p), ERGen(), n);
   } while (boost::connected_components(
                ret, std::vector<int>(boost::num_vertices(ret)).data()) != 1);
-  std::cout << seed << std::endl;
   return ret;
 }
 Graph RandomSparseConnectedGraph(int n, int seed = 0) {

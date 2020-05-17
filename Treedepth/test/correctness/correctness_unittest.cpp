@@ -18,6 +18,7 @@ time_t seed = 1589591285;
 }  // namespace
 
 TEST_P(CTF, CorrectnessTest) {
+  std::cout << seed << std::endl;
   auto const& g = GetParam();
   td::BranchAndBound bnb;
   auto res_bnb = bnb(g, std::make_unique<td::EdgeLowerBound>(),
@@ -26,7 +27,7 @@ TEST_P(CTF, CorrectnessTest) {
   dgpu(g);
   EXPECT_EQ(res_bnb.treedepth, dgpu.GetTreedepth(boost::num_vertices(g),
                                                  boost::num_vertices(g), 0));
-  td::EliminationTree et(GetParam());
+  td::EliminationTree et(g);
   for (auto v : dgpu.GetElimination<td::EliminationTree::VertexType>(
            boost::num_vertices(g), boost::num_vertices(g), 0))
     et.Eliminate(v);
@@ -45,7 +46,7 @@ TEST_P(CTF, CorrectnessTest) {
     file = std::ofstream("bnb.gviz", std::ios_base::trunc);
     boost::write_graphviz(file, res_bnb.td_decomp);
     file.close();
-    file = std::ofstream("dyn.gviz", std::ios_base::trunc);
+    file = std::ofstream("dyn_gpu.gviz", std::ios_base::trunc);
     boost::write_graphviz(file, res_dyngpu.td_decomp);
     file.close();
     file = std::ofstream("graph.gviz", std::ios_base::trunc);

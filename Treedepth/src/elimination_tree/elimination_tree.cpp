@@ -69,7 +69,9 @@ EliminationTree::Eliminate(VertexType v) {
   return ret;
 }
 
-EliminationTree::VertexType EliminationTree::Merge() {
+std::pair<EliminationTree::ComponentIterator,
+          EliminationTree::Component::AdjacencyListType::iterator>
+EliminationTree::Merge() {
 #ifdef TD_CHECK_ARGS
   if (eliminated_nodes_.size() == 0)
     throw std::runtime_error("No vertex to merge");
@@ -103,7 +105,7 @@ EliminationTree::VertexType EliminationTree::Merge() {
   nodes_[vertex_being_merged->first].get().v = *new_component_pos;
   for (auto& p : new_component_pos->AdjacencyList())
     nodes_[p.first] = nodes_[vertex_being_merged->first];
-  return vertex_being_merged->first;
+  return {ComponentIterator{new_component_pos}, vertex_being_merged};
 }
 
 EliminationTree::ComponentIterator EliminationTree::ComponentsBegin() const {
@@ -115,12 +117,12 @@ EliminationTree::ComponentIterator EliminationTree::ComponentsEnd() const {
 }
 
 EliminationTree::Component const&
-    EliminationTree::ComponentIterator::operator*() const {
+EliminationTree::ComponentIterator::operator*() const {
   return *current_;
 }
 
 EliminationTree::Component const*
-    EliminationTree::ComponentIterator::operator->() const {
+EliminationTree::ComponentIterator::operator->() const {
   return &*current_;
 }
 

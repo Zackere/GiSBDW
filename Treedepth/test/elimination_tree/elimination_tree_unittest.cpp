@@ -315,7 +315,7 @@ TEST_P(ParametrizedEliminationTreeFixture, CorrectMergeTest) {
                               std::end(testcase.components[i]), component),
                     std::end(testcase.components[i]));
         });
-    EXPECT_EQ(testcase.elimination[i - 1], et.Merge());
+    EXPECT_EQ(testcase.elimination[i - 1], et.Merge().second->first);
   }
   EXPECT_EQ(testcase.components[0].size(),
             std::distance(et.ComponentsBegin(), et.ComponentsEnd()));
