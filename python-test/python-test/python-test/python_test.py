@@ -11,6 +11,11 @@ import pandas as pd
 
 import GraphGenerator
 
+def RunTest(inputPath, xAxis, yAxis, plotType):
+    df = GatherData(inputPath)
+    df.sort_values(by=[xAxis], inplace = True)
+    ShowResults(df, xAxis=xAxis, yAxis=yAxis, hue="algorithm", plotType=plotType)
+
 def GetOutput(outputPath, inputFilename):
     path = f"{outputPath}/{basename(inputFilename)}{config['outputExtension']}"
     with open(path) as json_file:
@@ -30,13 +35,17 @@ def GetAbsoluteFilePaths(path):
     return [join(path, element) for element in listdir(path) if isfile(join(path, element))]
 
 
-def ShowResults(dataFrame, xAxis, yAxis, hue):
-    print(df)
-    ax = sns.barplot(x=xAxis, y=yAxis, hue=hue, data=df)
+def ShowResults(dataFrame, xAxis, yAxis, hue, plotType):
+    print(dataFrame)
+    if plotType == "bar":
+        ax = sns.barplot(x=xAxis, y=yAxis, hue=hue, data=dataFrame)
+    elif plotType == "scatter":
+        ax = sns.scatterplot(x=xAxis, y=yAxis, data=dataFrame, hue=hue)
     ax.plot()
     plt.show()
 
-def RunBenchmarkPlot(path):
+
+def GatherData(path):
     binPath = config["paths"]["bin"]
     outputPath = path + "Out"
     filenames = GetAbsoluteFilePaths(path)
@@ -53,12 +62,12 @@ def RunBenchmarkPlot(path):
             data["edges"].append(int(result["edges"]))
             data["vertices"].append(int(result["vertices"]))
 
-    df = pd.DataFrame(data)
-    ShowResults(df, "filename", "timeElapsed", "algorithm")
+    return pd.DataFrame(data)
+
 
 
 def CreateParser():
-    algorithms = ['bnbCPU', 'dynCPU', 'hyb', 'dynGPU']
+    algorithms = ['bnbCPU', 'dyn', 'hyb', 'dynGPU']
     tests = ['timeElapsed']
 
     parser = argparse.ArgumentParser(
@@ -68,11 +77,6 @@ def CreateParser():
 
     parser.add_argument('--algorithm', '-a', metavar='alg', type=str, nargs="+",
                     help='Algorithm to run.\nOne or more from: [%(choices)s]', required=True, choices=algorithms)
-
-
-    parser.add_argument('--test', '-t', metavar='t', type=str, nargs="+",
-                    help='Test to run.\n One or more from: [%(choices)s]', required=True, choices=tests)
-
 
     inputGroup = parser.add_mutually_exclusive_group(required=True)
     inputGroup.add_argument('--benchmark', action='store_true', help="Run on benchmark graphs.")
@@ -86,6 +90,13 @@ def CreateParser():
                            v - number of vertices,
                            dLow - starting density,
                            dHigh - end density
+                           n - number of graphs""")
+
+    inputGroup.add_argument('--vertices', metavar=('vLow','vHigh', 'd', 'n'), type=float, nargs=4,
+                           help="""Run on random graphs with incrasing vertices count.
+                           vLow - starting number of vertices,
+                           vHigh- ending number of vertices,
+                           d - density
                            n - number of graphs""")
     return parser
 
@@ -113,15 +124,17 @@ if __name__ == "__main__":
         v, d, n = args["random"]
         gg.GenerateRandomGraphs(int(n),d,int(v))
         executePath = config["paths"]["randomGraphs"]
+        RunTest(executePath, "filename", "timeElapsed")
 
     elif args["density"]:
         v, dLow, dHigh, n = args["density"]
         gg.GenerateGraphsWithIncrasingDensity(int(n),dLow,dHigh,int(v))
         executePath = config["paths"]["randomGraphs"]
+        RunTest(executePath, "edges", "timeElapsed", "scatter")
 
-    testSwitch = {
-        "timeElapsed": RunBenchmarkPlot
-        }
-
-    for test in args["test"]:
-        testSwitch[test](executePath)
+    elif args["vertices"]:
+        vLow, vHigh, d, n = args["vertices"]
+        gg.GenerateGraphsWithIncrasingNumberOfVertices(
+            int(n), int(vLow), int(vHigh), d)
+        executePath = config["paths"]["randomGraphs"]
+        RunTest(executePath, "vertices", "timeElapsed", "scatter")
