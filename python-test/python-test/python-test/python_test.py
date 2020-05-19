@@ -57,8 +57,12 @@ def GatherData(path):
         data[column] = []
     for filename in filenames:
         for algorithmType in args["algorithm"]:
-            result = ExecuteAlgorithm(binPath, algorithmType, filename, outputPath)
-            data["timeElapsed"].append(float(result["timeElapsed"]))
+            runsPerGraph, = args["runsPerGraph"]
+            timeElapsed = 0
+            for i in range(runsPerGraph):
+                result = ExecuteAlgorithm(binPath, algorithmType, filename, outputPath)
+                timeElapsed = timeElapsed + float(result["timeElapsed"])
+            data["timeElapsed"].append(timeElapsed/runsPerGraph)
             data["filename"].append(basename(filename))
             data["algorithm"].append(algorithmType)
             data["edges"].append(int(result["edges"]))
@@ -79,7 +83,8 @@ def CreateParser():
 
     parser.add_argument('--algorithm', '-a', metavar='alg', type=str, nargs="+",
                     help='Algorithm to run.\nOne or more from: [%(choices)s]', required=True, choices=algorithms)
-
+    parser.add_argument('--runsPerGraph', '-r', metavar='numOfRuns', type=int, nargs=1, default=1,
+                        help='Specify how many times time measurement should be repeated for each graph. Default = 1')
     inputGroup = parser.add_mutually_exclusive_group(required=True)
     inputGroup.add_argument('--benchmark', action='store_true', help="Run on benchmark graphs.")
     inputGroup.add_argument('--random', metavar=('v','d','n'), type=float, nargs=3,
