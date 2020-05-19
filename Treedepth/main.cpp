@@ -129,7 +129,8 @@ int main(int argc, char** argv) {
     graphFile.close();
 
     td::AlgorithmResult algorithmResult;
-    std::cout << "Processing graph " << path.filename() << std::endl;
+    std::cout << "Processing graph: " << path.filename() << std::endl;
+    std::cout << "Algorithm: " << algorithmType << std::endl;
     std::cout << "Vertices: " << graph.m_vertices.size() << std::endl;
     std::cout << "Edges: " << graph.m_edges.size() << std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -146,6 +147,8 @@ int main(int argc, char** argv) {
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() /
         1000.0;
     algorithmResult.timeElapsed = duration;
+    algorithmResult.vertices = graph.m_vertices.size();
+    algorithmResult.edges = graph.m_edges.size();
     std::cout << "Elapsed time: " << duration << " seconds\n";
     std::cout << "Treedepth: " << algorithmResult.treedepth << "\n";
     fs::path outputFilePath = ((outputPath / path.filename()) += ".out");
