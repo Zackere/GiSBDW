@@ -23,9 +23,21 @@ class GraphGenerator(object):
         self.DeleteRandomGraphsDir()
         self.CreateRandomGraphsDir()
 
-    def GenerateRandomGraphs(self, numberOfGraphs, density, numberOfVertices):
-        self.ResetRandomGraphsDir()
-        graphs = [nx.erdos_renyi_graph(numberOfVertices, density) for i in range(numberOfGraphs)]
+    def SaveRandomGraphs(self,graphs):
         for i, graph in enumerate(graphs):
             outputPath = os.path.join(self.randomGraphsPath, f"G{i}")
             nx.drawing.nx_pydot.write_dot(graph, outputPath)
+
+    def GenerateRandomGraphs(self, numberOfGraphs, density, numberOfVertices):
+        self.ResetRandomGraphsDir()
+        graphs = [nx.erdos_renyi_graph(numberOfVertices, density) for i in range(numberOfGraphs)]
+        self.SaveRandomGraphs(graphs)
+        #for i, graph in enumerate(graphs):
+        #    outputPath = os.path.join(self.randomGraphsPath, f"G{i}")
+        #    nx.drawing.nx_pydot.write_dot(graph, outputPath)
+
+    def GenerateGraphsWithIncrasingDensity(self, numberOfGraphs, densityMin, densityMax, numberOfVertices):
+        self.ResetRandomGraphsDir()
+        step = (densityMax - densityMin) / numberOfGraphs
+        graphs = [nx.erdos_renyi_graph(numberOfVertices, densityMin + i*step) for i in range(numberOfGraphs)]
+        self.SaveRandomGraphs(graphs)

@@ -30,11 +30,17 @@ def GetAbsoluteFilePaths(path):
     return [join(path, element) for element in listdir(path) if isfile(join(path, element))]
 
 
+def ShowResults(dataFrame, xAxis, yAxis, hue):
+    print(df)
+    ax = sns.barplot(x=xAxis, y=yAxis, hue=hue, data=df)
+    ax.plot()
+    plt.show()
+
 def RunBenchmarkPlot(path):
     binPath = config["paths"]["bin"]
     outputPath = path + "Out"
     filenames = GetAbsoluteFilePaths(path)
-    columns = ["algorithm","filename","timeElapsed"]
+    columns = ["algorithm","filename","timeElapsed","edges","vertices"]
     data = {}
     for column in columns:
         data[column] = []
@@ -44,11 +50,12 @@ def RunBenchmarkPlot(path):
             data["timeElapsed"].append(float(result["timeElapsed"]))
             data["filename"].append(basename(filename))
             data["algorithm"].append(algorithmType)
+            data["edges"].append(int(result["edges"]))
+            data["vertices"].append(int(result["vertices"]))
+
     df = pd.DataFrame(data)
-    print(df)
-    ax = sns.barplot(x="filename", y="timeElapsed", hue="algorithm", data=df)
-    ax.plot()
-    plt.show()
+    ShowResults(df, "filename", "timeElapsed", "algorithm")
+
 
 def CreateParser():
     algorithms = ['bnbCPU', 'dynCPU', 'hyb', 'dynGPU']
@@ -73,6 +80,12 @@ def CreateParser():
                            help="""Run on random graphs.
                            v - number of vertices,
                            d - density,
+                           n - number of graphs""")
+    inputGroup.add_argument('--density', metavar=('v','dLow','dHigh','n'), type=float, nargs=4,
+                           help="""Run on random graphs with incrasing density.
+                           v - number of vertices,
+                           dLow - starting density,
+                           dHigh - end density
                            n - number of graphs""")
     return parser
 
@@ -99,6 +112,11 @@ if __name__ == "__main__":
     elif args["random"]:
         v, d, n = args["random"]
         gg.GenerateRandomGraphs(int(n),d,int(v))
+        executePath = config["paths"]["randomGraphs"]
+
+    elif args["density"]:
+        v, dLow, dHigh, n = args["density"]
+        gg.GenerateGraphsWithIncrasingDensity(int(n),dLow,dHigh,int(v))
         executePath = config["paths"]["randomGraphs"]
 
     testSwitch = {
