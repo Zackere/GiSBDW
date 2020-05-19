@@ -1,20 +1,18 @@
 import sys
 import json
 import subprocess
+import argparse
+import GraphGenerator
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 from os import listdir, chdir
 from os.path import isfile, join, abspath, basename
-import argparse
-import seaborn as sns
 
-import matplotlib.pyplot as plt
-import pandas as pd
-
-import GraphGenerator
-
-def RunTest(inputPath, xAxis, yAxis, plotType):
+def RunTest(inputPath, xAxis, yAxis, plotType, description):
     df = GatherData(inputPath)
     df.sort_values(by=[xAxis], inplace = True)
-    ShowResults(df, xAxis=xAxis, yAxis=yAxis, hue="algorithm", plotType=plotType)
+    ShowResults(df, xAxis=xAxis, yAxis=yAxis, hue="algorithm", plotType=plotType, description=description)
 
 def GetOutput(outputPath, inputFilename):
     path = f"{outputPath}/{basename(inputFilename)}{config['outputExtension']}"
@@ -35,13 +33,17 @@ def GetAbsoluteFilePaths(path):
     return [join(path, element) for element in listdir(path) if isfile(join(path, element))]
 
 
-def ShowResults(dataFrame, xAxis, yAxis, hue, plotType):
-    print(dataFrame)
+def ShowResults(dataFrame, xAxis, yAxis, hue, plotType, description):
+    print(dataFrame.to_string())
     if plotType == "bar":
         ax = sns.barplot(x=xAxis, y=yAxis, hue=hue, data=dataFrame)
     elif plotType == "scatter":
         ax = sns.scatterplot(x=xAxis, y=yAxis, data=dataFrame, hue=hue)
-    ax.plot()
+    elif plotType == "lm":
+        ax = sns.lmplot(x=xAxis, y=yAxis, data=dataFrame, hue=hue, lowess=True)
+    else:
+        raise ValueError(f"Wrong plotType specified: {plotType}")
+    plt.figtext(0.5, 0.01, description, wrap=True, horizontalalignment='center', fontsize=12)
     plt.show()
 
 
@@ -72,7 +74,7 @@ def CreateParser():
 
     parser = argparse.ArgumentParser(
         description='Run benchmarks for treedepth algorithms',
-        epilog="Example app.py --random 10 0.4 12 --a dyn bnb -t timeElapsed"
+        epilog="Example app.py --random 10 0.4 12 --a dyn bnb"
         )
 
     parser.add_argument('--algorithm', '-a', metavar='alg', type=str, nargs="+",
@@ -119,22 +121,30 @@ if __name__ == "__main__":
     executePath = ""
     if args["benchmark"]:
         executePath = config["paths"]["benchmarkGraphs"]
+        RunTest(executePath, "filename", "timeElapsed", "bar", "Benchmark graphs")
 
     elif args["random"]:
         v, d, n = args["random"]
-        gg.GenerateRandomGraphs(int(n),d,int(v))
+        v = int(v)
+        n = int(n)
+        gg.GenerateRandomGraphs(n,d,v)
         executePath = config["paths"]["randomGraphs"]
-        RunTest(executePath, "filename", "timeElapsed")
+        RunTest(executePath, "filename", "timeElapsed", "scatter", f"Random graphs with {v} vertices")
 
     elif args["density"]:
         v, dLow, dHigh, n = args["density"]
-        gg.GenerateGraphsWithIncrasingDensity(int(n),dLow,dHigh,int(v))
+        v = int(v)
+        n = int(n)
+        gg.GenerateGraphsWithIncrasingDensity(n,dLow,dHigh,v)
         executePath = config["paths"]["randomGraphs"]
-        RunTest(executePath, "edges", "timeElapsed", "scatter")
+        RunTest(executePath, "edges", "timeElapsed", "lm", f"Random graphs with {v} vertices")
 
     elif args["vertices"]:
         vLow, vHigh, d, n = args["vertices"]
+        vLow = int(vLow)
+        vHigh = int(vHigh)
+        n = int(n)
         gg.GenerateGraphsWithIncrasingNumberOfVertices(
-            int(n), int(vLow), int(vHigh), d)
+            n, vLow, vHigh, d)
         executePath = config["paths"]["randomGraphs"]
-        RunTest(executePath, "vertices", "timeElapsed", "scatter")
+        RunTest(executePath, "vertices", "timeElapsed", "lm", f"Graphs with density {d}")
