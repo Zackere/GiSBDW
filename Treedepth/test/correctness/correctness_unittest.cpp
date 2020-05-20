@@ -4,17 +4,26 @@
 #include <fstream>
 
 #include "../../src/branch_and_bound/branch_and_bound.hpp"
-#include "../../src/dynamic_algorithm/dynamic_algorithm.hpp"
-#include "../../src/dynamic_gpu/dynamic_gpu.hpp"
+#include "../../src/dynamic_cpu/dynamic_cpu.hpp"
+#include "../../src/dynamic_cpu/dynamic_cpu_improv.hpp"
 #include "../../src/heuristics/highest_degree_heuristic.hpp"
+#include "../../src/lower_bound/basic_lower_bound.hpp"
 #include "../../src/lower_bound/edge_lower_bound.hpp"
+#include "../../src/union_find/std_set_union_find.hpp"
 #include "../utils/graph_gen.hpp"
 #include "../utils/utils.hpp"
 
 namespace {
 class CTF : public ::testing::TestWithParam<Graph> {};
-// time_t seed = time(0);
-time_t seed = 1589591285;
+time_t seed = time(0);
+// time_t seed = 1589591285;
+
+// time_t seed = 1589671678;
+// time_t seed = 1589671728;
+// time_t seed = 1589671906;
+// time_t seed = 1589671960;
+// time_t seed = 1589672194;
+// time_t seed = 1589729310;
 }  // namespace
 
 TEST_P(CTF, CorrectnessTest) {
@@ -23,73 +32,58 @@ TEST_P(CTF, CorrectnessTest) {
   td::BranchAndBound bnb;
   auto res_bnb = bnb(g, std::make_unique<td::EdgeLowerBound>(),
                      std::make_unique<td::HighestDegreeHeuristic>(nullptr));
-  td::DynamicGPU dgpu;
-  dgpu(g);
-  EXPECT_EQ(res_bnb.treedepth, dgpu.GetTreedepth(boost::num_vertices(g),
-                                                 boost::num_vertices(g), 0));
-  td::EliminationTree et(g);
-  for (auto v : dgpu.GetElimination<td::EliminationTree::VertexType>(
-           boost::num_vertices(g), boost::num_vertices(g), 0))
-    et.Eliminate(v);
-  auto res_dyngpu = et.Decompose();
-  EXPECT_EQ(res_bnb.treedepth, res_dyngpu.treedepth);
+  EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_bnb));
 
-  td::DynamicAlgorithm<int8_t> dalg;
-  int td = dalg.Run(g);
-  EXPECT_EQ(res_bnb.treedepth, td);
-  EXPECT_EQ(res_dyngpu.treedepth, td);
-  EXPECT_EQ(
-      dgpu.GetTreedepth(boost::num_vertices(g), boost::num_vertices(g), 0), td);
-  if (td != res_bnb.treedepth || td != res_dyngpu.treedepth ||
-      res_dyngpu.treedepth != td) {
-    std::ofstream file;
-    file = std::ofstream("bnb.gviz", std::ios_base::trunc);
-    boost::write_graphviz(file, res_bnb.td_decomp);
-    file.close();
-    file = std::ofstream("dyn_gpu.gviz", std::ios_base::trunc);
-    boost::write_graphviz(file, res_dyngpu.td_decomp);
-    file.close();
-    file = std::ofstream("graph.gviz", std::ios_base::trunc);
-    boost::write_graphviz(file, g);
-    file.close();
-  }
+  td::DynamicCPUImprov dyncpu_improv;
+  dyncpu_improv(g);
+  std::size_t code = 0;
+  for (std::size_t i = 0; i < boost::num_vertices(g); ++i)
+    code |= static_cast<std::size_t>(1) << i;
+  auto res_dyncpu_imrprov = dyncpu_improv.GetTDDecomp(code, g);
+  EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu_imrprov));
+  EXPECT_EQ(res_bnb.treedepth, res_dyncpu_imrprov.treedepth);
+
+  td::DynamicCPU dyncpu;
+  dyncpu(g);
+  auto res_dyncpu = dyncpu.GetTDDecomp(0, g);
+  EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu));
+  EXPECT_EQ(res_bnb.treedepth, res_dyncpu.treedepth);
 }
 
-// INSTANTIATE_TEST_SUITE_P(Paths,
-//                         CTF,
-//                         ::testing::Values(Path(5),
-//                                           Path(6),
-//                                           Path(7),
-//                                           Path(8),
-//                                           Path(9),
-//                                           Path(10),
-//                                           Path(11),
-//                                           Path(12),
-//                                           Path(13),
-//                                           Path(14),
-//                                           Path(15)));
-//
-// INSTANTIATE_TEST_SUITE_P(ChordalCycles,
-//                         CTF,
-//                         ::testing::Values(ChordalCycle(10),
-//                                           ChordalCycle(11),
-//                                           ChordalCycle(12),
-//                                           ChordalCycle(13),
-//                                           ChordalCycle(14),
-//                                           ChordalCycle(15)));
-//
-// INSTANTIATE_TEST_SUITE_P(Cycles,
-//                         CTF,
-//                         ::testing::Values(Cycle(7),
-//                                           Cycle(8),
-//                                           Cycle(9),
-//                                           Cycle(10),
-//                                           Cycle(11),
-//                                           Cycle(12),
-//                                           Cycle(13),
-//                                           Cycle(14),
-//                                           Cycle(15),
-//                                           Cycle(16)));
+INSTANTIATE_TEST_SUITE_P(Paths,
+                         CTF,
+                         ::testing::Values(Path(8),
+                                           Path(10),
+                                           Path(12),
+                                           Path(14),
+                                           Path(16),
+                                           Path(18),
+                                           Path(20),
+                                           Path(22),
+                                           Path(24),
+                                           Path(26)));
+
+INSTANTIATE_TEST_SUITE_P(ChordalCycles,
+                         CTF,
+                         ::testing::Values(ChordalCycle(10),
+                                           ChordalCycle(11),
+                                           ChordalCycle(12),
+                                           ChordalCycle(13),
+                                           ChordalCycle(14),
+                                           ChordalCycle(15)));
+
+INSTANTIATE_TEST_SUITE_P(Cycles,
+                         CTF,
+                         ::testing::Values(Cycle(7),
+                                           Cycle(8),
+                                           Cycle(9),
+                                           Cycle(10),
+                                           Cycle(11),
+                                           Cycle(12),
+                                           Cycle(13),
+                                           Cycle(14),
+                                           Cycle(15),
+                                           Cycle(16)));
 
 INSTANTIATE_TEST_SUITE_P(SparseGraphs,
                          CTF,
@@ -100,4 +94,10 @@ INSTANTIATE_TEST_SUITE_P(SparseGraphs,
                                            RandomSparseConnectedGraph(10, seed),
                                            RandomSparseConnectedGraph(9, seed),
                                            RandomSparseConnectedGraph(8,
+                                                                      seed)));
+
+INSTANTIATE_TEST_SUITE_P(SparseGraphs2,
+                         CTF,
+                         ::testing::Values(RandomSparseConnectedGraph(14, seed),
+                                           RandomSparseConnectedGraph(15,
                                                                       seed)));

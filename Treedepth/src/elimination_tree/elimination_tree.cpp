@@ -21,15 +21,14 @@ bool EliminationTree::Component::operator==(Component const& other) const {
   return depth_ == other.depth_ && neighbours_ == other.neighbours_;
 }
 
-std::list<std::set<EliminationTree::Component,
-                   EliminationTree::ComponentCmp>::const_iterator>
-EliminationTree::Eliminate(VertexType v) {
+std::list<EliminationTree::ComponentIterator> EliminationTree::Eliminate(
+    VertexType v) {
 #ifdef TD_CHECK_ARGS
   if (!std::get_if<decltype(components_)::const_iterator>(&nodes_[v].get().v))
     throw std::invalid_argument("Vertex " + std::to_string(v) +
                                 " is eliminated");
 #endif
-  std::list<decltype(components_)::const_iterator> ret;
+  std::list<ComponentIterator> ret;
   auto node = nodes_[v];
   auto component = components_.extract(
       std::get<decltype(components_)::const_iterator>(nodes_[v].get().v));
@@ -65,7 +64,7 @@ EliminationTree::Eliminate(VertexType v) {
                          .children.emplace_back(Node{new_component_pos});
     for (auto& p : new_component_pos->AdjacencyList())
       nodes_[p.first] = node_ref;
-    ret.push_back(new_component_pos);
+    ret.push_back(ComponentIterator(new_component_pos));
   }
   return ret;
 }

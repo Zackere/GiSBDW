@@ -115,9 +115,7 @@ class EliminationTree {
    *
    * @param v vertex to be eliminated
    */
-  std::list<std::set<EliminationTree::Component,
-                     EliminationTree::ComponentCmp>::const_iterator>
-  Eliminate(VertexType v);
+  std::list<ComponentIterator> Eliminate(VertexType v);
   /**
    * Reverts last recorded elimination. This operation is analogous
    * to transformation T_wv->T_w

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <memory>
 #include <numeric>
+#include <tuple>
 #include <utility>
 
 #include "../branch_and_bound/branch_and_bound.hpp"
@@ -29,7 +30,7 @@ class VarianceHeuristic : public BranchAndBound::Heuristic {
       double current_vertex_coef;
       int best_vertex_deg = -1;
       int current_vertex_deg;
-      EliminationTree::VertexType best_vertex;
+      EliminationTree::VertexType best_vertex = 0;
 
       auto g = tree.ComponentsBegin();  // take first component
       for (auto p = std::begin(g->AdjacencyList());
@@ -54,9 +55,7 @@ class VarianceHeuristic : public BranchAndBound::Heuristic {
         current_vertex_coef =
             D_ / (std::sqrt(gamma + A_)) + E_ * new_components.size();
 
-        auto merge_ret = tree.Merge();
-        g = merge_ret.first;
-        p = merge_ret.second;
+        std::tie(g, p) = tree.Merge();
 
         if (current_vertex_coef > best_vertex_coef ||
             (current_vertex_coef == best_vertex_coef &&
@@ -69,7 +68,13 @@ class VarianceHeuristic : public BranchAndBound::Heuristic {
 
       tree.Eliminate(best_vertex);
     }
-    return tree.Decompose();
+    auto result = tree.Decompose();
+    if (heuristic_) {
+      auto prev_result = heuristic_->Get(graph);
+      if (prev_result.treedepth < result.treedepth)
+        return prev_result;
+    }
+    return result;
   }
 
  private:

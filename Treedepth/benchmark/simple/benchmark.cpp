@@ -3,7 +3,10 @@
 #include <gtest/gtest.h>
 
 #include "../../src/branch_and_bound/branch_and_bound.hpp"
+#include "../../src/dynamic_cpu/dynamic_cpu.hpp"
+#include "../../src/dynamic_cpu/dynamic_cpu_improv.hpp"
 #include "../../src/heuristics/highest_degree_heuristic.hpp"
+#include "../../src/heuristics/variance_heuristic.hpp"
 #include "../../src/lower_bound/basic_lower_bound.hpp"
 #include "../../src/lower_bound/edge_lower_bound.hpp"
 #include "../../test/utils/graph_gen.hpp"
@@ -12,17 +15,45 @@ namespace {
 class BCF : public ::testing::TestWithParam<Graph> {};
 }  // namespace
 
-TEST_P(BCF, BranchAndBoundBasicLoweBoundHighestDegreeHeuristic) {
+TEST_P(BCF, DynamicCPU) {
+  td::DynamicCPU dyncpu;
+  dyncpu(GetParam());
+  dyncpu.GetTDDecomp(0, GetParam());
+}
+
+TEST_P(BCF, DynamicCPUImprov) {
+  td::DynamicCPUImprov dyncpu;
+  dyncpu(GetParam());
+  std::size_t code = 0;
+  for (std::size_t i = 0; i < boost::num_vertices(GetParam()); ++i)
+    code |= static_cast<std::size_t>(1) << i;
+  dyncpu.GetTDDecomp(code, GetParam());
+}
+
+TEST_P(BCF, BNBBasicLoweBoundHighestDegreeHeuristic) {
   td::BranchAndBound bnb;
   bnb(GetParam(), std::make_unique<td::BasicLowerBound>(),
       std::make_unique<td::HighestDegreeHeuristic>(nullptr));
 }
 
-TEST_P(BCF, BranchAndBoundEdgeLoweBoundHighestDegreeHeuristic) {
+TEST_P(BCF, BNBEdgeLoweBoundHighestDegreeHeuristic) {
   td::BranchAndBound bnb;
   bnb(GetParam(), std::make_unique<td::EdgeLowerBound>(),
-      std::make_unique<td::HighestDegreeHeuristic>(nullptr));
+      std::make_unique<td::HighestDegreeHeuristic>(
+          std::make_unique<td::VarianceHeuristic>(nullptr, 1.0, 0.2, 0.8)));
 }
+
+INSTANTIATE_TEST_SUITE_P(Complete,
+                         BCF,
+                         ::testing::Values(Complete(5),
+                                           Complete(6),
+                                           Complete(7),
+                                           Complete(8),
+                                           Complete(9),
+                                           Complete(10),
+                                           Complete(11),
+                                           Complete(12),
+                                           Complete(13)));
 
 INSTANTIATE_TEST_SUITE_P(Paths,
                          BCF,
@@ -75,6 +106,7 @@ INSTANTIATE_TEST_SUITE_P(
                       SpanningTree(RandomSparseConnectedGraph(26)),
                       SpanningTree(RandomSparseConnectedGraph(28)),
                       SpanningTree(RandomSparseConnectedGraph(30))));
+
 INSTANTIATE_TEST_SUITE_P(HalinGraphs,
                          BCF,
                          ::testing::Values(Halin(8),
@@ -90,17 +122,4 @@ INSTANTIATE_TEST_SUITE_P(SparseGraphs,
                                            RandomSparseConnectedGraph(10),
                                            RandomSparseConnectedGraph(12),
                                            RandomSparseConnectedGraph(14),
-                                           RandomSparseConnectedGraph(16),
-                                           RandomSparseConnectedGraph(18),
-                                           RandomSparseConnectedGraph(20)));
-INSTANTIATE_TEST_SUITE_P(Complete,
-                         BCF,
-                         ::testing::Values(Complete(2),
-                                           Complete(3),
-                                           Complete(4),
-                                           Complete(5),
-                                           Complete(6),
-                                           Complete(7),
-                                           Complete(8),
-                                           Complete(9),
-                                           Complete(10)));
+                                           RandomSparseConnectedGraph(16)));

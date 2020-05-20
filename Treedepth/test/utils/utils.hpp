@@ -2,6 +2,9 @@
 #pragma once
 
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/depth_first_search.hpp>
+#include <iostream>
+#include <set>
 
 #include "../../src/branch_and_bound/branch_and_bound.hpp"
 #include "../../src/elimination_tree/elimination_tree.hpp"
@@ -25,5 +28,59 @@ bool CheckIfTdDecompIsValid(td::BranchAndBound::Graph const& graph,
   // TODO(replinw): Implement it correctly
   return CompareBoostGraphs(actual.td_decomp, expected.td_decomp) &&
          actual.root == expected.root && actual.treedepth == expected.treedepth;
+}
+template <typename EnterCallback, typename ExitCallback>
+void DFS(int vertex,
+         td::EliminationTree::BoostGraph const& g,
+         std::set<int>& visited,
+         EnterCallback enter,
+         ExitCallback exit) {
+  if (visited.find(vertex) != std::end(visited))
+    return;
+  visited.insert(vertex);
+  enter(vertex);
+  for (auto [ai, ai_end] = boost::adjacent_vertices(vertex, g); ai != ai_end;
+       ++ai) {
+    DFS(*ai, g, visited, enter, exit);
+  }
+  exit(vertex);
+}
+
+bool CheckIfTdDecompIsValid(td::BranchAndBound::Graph const& graph,
+                            td::EliminationTree::Result const& result) {
+  for (int v = 0; v < boost::num_vertices(graph); ++v) {
+    for (auto [ai, ai_end] = boost::adjacent_vertices(v, graph); ai != ai_end;
+         ++ai) {
+      std::set<int> tmp = {};
+      int x = 0;
+      bool ok = false;
+      DFS(
+          result.root, result.td_decomp, tmp,
+          [&](auto current_vertex) {
+            if (current_vertex == v || current_vertex == *ai) {
+              if (++x == 2)
+                ok = true;
+            }
+          },
+          [&](auto current_vertex) {
+            if (current_vertex == v || current_vertex == *ai) {
+              --x;
+            }
+          });
+      if (!ok)
+        return false;
+    }
+  }
+  std::set<int> tmp = {};
+  unsigned depth = 0;
+  unsigned max_depth = 0;
+  DFS(
+      result.root, result.td_decomp, tmp,
+      [&](auto) {
+        ++depth;
+        max_depth = std::max(max_depth, depth);
+      },
+      [&](auto) { --depth; });
+  return result.treedepth == max_depth;
 }
 }  // namespace

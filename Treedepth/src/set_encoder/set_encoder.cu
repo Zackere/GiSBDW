@@ -15,5 +15,14 @@ std::size_t NChooseK(std::size_t n, std::size_t k) {
   }
   return ret;
 }
+
+std::size_t Encode(std::vector<bool> const& set) {
+  std::size_t ret = 0;
+  std::size_t k = 0;
+  for (std::size_t i = 0; i < set.size(); ++i)
+    if (set[i])
+      ret += NChooseK(i, ++k);
+  return ret;
+}
 }  // namespace set_encoder
 }  // namespace td

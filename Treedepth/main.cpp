@@ -17,7 +17,7 @@
 
 #include "src/algorithm_result/algorithm_result.hpp"
 #include "src/branch_and_bound/branch_and_bound.hpp"
-#include "src/dynamic_algorithm/dynamic_algorithm.hpp"
+#include "src/dynamic_cpu/dynamic_cpu_improv.hpp"
 #include "src/dynamic_gpu/dynamic_gpu.hpp"
 #include "src/elimination_tree/elimination_tree.hpp"
 #include "src/heuristics/highest_degree_heuristic.hpp"
@@ -137,8 +137,14 @@ int main(int argc, char** argv) {
     auto t1 = std::chrono::high_resolution_clock::now();
 
     if (algorithmType == "dynCPU") {
-      td::DynamicAlgorithm<int> dynamicAlgorithm;
-      algorithmResult.treedepth = dynamicAlgorithm.Run(graph);
+      td::DynamicCPUImprov dcpu;
+      dcpu(graph);
+      std::size_t code = 0;
+      for (std::size_t i = 0; i < boost::num_vertices(graph); ++i) {
+        code <<= 1;
+        code |= 1;
+      }
+      algorithmResult.treedepth = dcpu.GetTDDecomp(code, graph).treedepth;
     } else if (algorithmType == "dynGPU") {
       td::DynamicGPU dgpu;
       dgpu(graph);
@@ -147,8 +153,6 @@ int main(int argc, char** argv) {
         for (auto v : dgpu.GetElimination<td::EliminationTree::VertexType>(
                  boost::num_vertices(graph), boost::num_vertices(graph), 0))
           et.Eliminate(v);
-        auto res = et.Decompose();
-        res.treedepth;
         algorithmResult.treedepth = dgpu.GetTreedepth(
             boost::num_vertices(graph), boost::num_vertices(graph), 0);
       }

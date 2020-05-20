@@ -17,6 +17,8 @@ TEST_P(SECF, NChooseKTest) {
   auto n = GetParam();
   EXPECT_EQ(td::set_encoder::NChooseK(n, 0), 1);
   EXPECT_EQ(td::set_encoder::NChooseK(n, n), 1);
+  for (std::size_t i = n + 1; i < n + 10; ++i)
+    EXPECT_EQ(td::set_encoder::NChooseK(n, i), 0);
   for (std::size_t i = 1; i < n; ++i) {
     EXPECT_EQ(td::set_encoder::NChooseK(n, i),
               td::set_encoder::NChooseK(n - 1, i - 1) +
@@ -51,6 +53,21 @@ TEST_P(SECF, STDVectorEncodeDecode) {
         EXPECT_TRUE(0 <= v && v < n);
       EXPECT_EQ(vec.size(), i);
       EXPECT_EQ(td::set_encoder::Encode(vec.data(), vec.size()), j);
+      EXPECT_EQ(std::find(std::begin(sets), std::end(sets), vec),
+                std::end(sets));
+      sets.push_back(std::move(vec));
+    }
+  }
+}
+
+TEST_P(SECF, STDVectorBoolEncodeDecode) {
+  auto n = GetParam();
+  for (std::size_t i = 0; i <= n; ++i) {
+    std::list<std::vector<bool>> sets;
+    for (std::size_t j = 0; j < td::set_encoder::NChooseK(n, i); ++j) {
+      auto vec = td::set_encoder::Decode<std::vector<bool>>(n, i, j);
+      EXPECT_EQ(std::count(std::begin(vec), std::end(vec), true), i);
+      EXPECT_EQ(td::set_encoder::Encode(vec), j);
       EXPECT_EQ(std::find(std::begin(sets), std::end(sets), vec),
                 std::end(sets));
       sets.push_back(std::move(vec));

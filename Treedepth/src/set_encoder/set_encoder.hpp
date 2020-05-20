@@ -35,6 +35,7 @@ std::size_t Encode(std::map<Key, T, std::less<Key>, Allocator> const& m) {
     ret += NChooseK(v.first, ++i);
   return ret;
 }
+std::size_t Encode(std::vector<bool> const& set);
 
 template <typename VertexType>
 HD std::size_t Encode(VertexType const* sorted_set, std::size_t set_size) {
@@ -73,9 +74,9 @@ HD void Decode(std::size_t nverts,
 
 template <typename Container>
 struct DecodeImpl {
-  static Container Decode(std::size_t nverts,
-                          std::size_t subset_size,
-                          std::size_t subset_code);
+  static inline Container Decode(std::size_t nverts,
+                                 std::size_t subset_size,
+                                 std::size_t subset_code);
 };
 
 template <typename Container>
@@ -87,9 +88,9 @@ Container Decode(std::size_t nverts,
 
 template <typename VertexType>
 struct DecodeImpl<std::set<VertexType>> {
-  static std::set<VertexType> Decode(std::size_t nverts,
-                                     std::size_t subset_size,
-                                     std::size_t subset_code) {
+  static inline std::set<VertexType> Decode(std::size_t nverts,
+                                            std::size_t subset_size,
+                                            std::size_t subset_code) {
     std::set<VertexType> ret;
     while (subset_size > 0) {
       auto nk = NChooseK(--nverts, subset_size);
@@ -105,15 +106,33 @@ struct DecodeImpl<std::set<VertexType>> {
 
 template <typename VertexType>
 struct DecodeImpl<std::vector<VertexType>> {
-  static std::vector<VertexType> Decode(std::size_t nverts,
-                                        std::size_t subset_size,
-                                        std::size_t subset_code) {
+  static inline std::vector<VertexType> Decode(std::size_t nverts,
+                                               std::size_t subset_size,
+                                               std::size_t subset_code) {
     std::vector<VertexType> ret(subset_size);
     while (subset_size > 0) {
       auto nk = NChooseK(--nverts, subset_size);
       if (subset_code >= nk) {
         ret[--subset_size] = nverts;
         subset_code -= nk;
+      }
+    }
+    return ret;
+  }
+};
+
+template <>
+struct DecodeImpl<std::vector<bool>> {
+  static inline std::vector<bool> Decode(std::size_t nverts,
+                                         std::size_t subset_size,
+                                         std::size_t subset_code) {
+    std::vector<bool> ret(nverts);
+    while (subset_size > 0) {
+      auto nk = NChooseK(--nverts, subset_size);
+      if (subset_code >= nk) {
+        ret[nverts] = true;
+        subset_code -= nk;
+        --subset_size;
       }
     }
     return ret;
