@@ -3,17 +3,71 @@ import json
 import subprocess
 import argparse
 import GraphGenerator
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from os import listdir, chdir
 from os.path import isfile, join, abspath, basename
 
-def RunTest(inputPath, xAxis, yAxis, plotType, description):
-    df = GatherData(inputPath)
-    df.sort_values(by=[xAxis], inplace = True)
-    ShowResults(df, xAxis=xAxis, yAxisValues=yAxis, hue="algorithm", plotTypes=plotType, description=description)
+def RunTest(inputPath, groupBy, xAxes, yAxes, plotTypes, description):
+    dataFrame = GatherData(inputPath)
+    ShowResultss(dataFrame=dataFrame,
+                groupBy=groupBy,
+                xAxes=xAxes,
+                yAxes=yAxes,
+                plotTypes=plotTypes,
+                description=description)
 
+def ShowResultss(dataFrame, groupBy, xAxes, yAxes, plotTypes, description):
+    numberOfSubplots = len(xAxes)
+    fig, axes = plt.subplots(1,numberOfSubplots)
+    for ax, group, xAxis, yAxis, plotType in zip(axes, groupBy, xAxes, yAxes, plotTypes):
+        dataFrame.sort_values(by=[group, xAxis], inplace = True)
+        if plotType == "scatterFit":
+            for color, uniqueGroup in enumerate(dataFrame[group].unique()):
+                print(dataFrame.to_string())
+                filteredDf = dataFrame.loc[dataFrame[group] == uniqueGroup]
+                fooPlot(filteredDf[xAxis], filteredDf[yAxis], ax, color)
+        elif plotType == "bar":
+            sns.barplot(x=xAxis, y=yAxis, data=dataFrame, hue=group, ax=ax)
+        else:
+            raise ValueError(f"Wrong plot type specified -> {plotType}")
+    plt.show()
+
+#def ShowResults(dataFrame, groupBy, xAxes, yAxes, plotTypes, description):
+#    df.sort_values(by=[groupBy, xAxis], inplace = True)
+#    print(dataFrame.to_string())
+#    numberOfSubplots = len(yAxisValues)
+#    fig, ax = plt.subplots(1,numberOfSubplots)
+#    fooPlot(dataFrame, xAxis, yAxisValues[0], ax[0])
+#    plotArgs = {}
+#    plotArgs["x"]=xAxis
+#    plotArgs["data"]=dataFrame
+#    plotArgs["hue"]=hue
+#    for i, yAxisValue, plotType in zip(range(numberOfSubplots), yAxisValues, plotTypes):
+#        plotArgs["y"]=yAxisValue
+#        plotArgs["ax"]=ax[i]
+#        if plotType == "bar":
+#            sns.barplot(**plotArgs)
+#        elif plotType == "scatter":
+#            sns.scatterplot(**plotArgs)
+#        elif plotType == "lm":
+#            sns.regplot(**plotArgs, lowess=True)
+#        else:
+#            raise ValueError(f"Wrong plotType specified: {plotType}")
+
+#    plt.figtext(0.5, 0.01, description, wrap=True, horizontalalignment='center', fontsize=12)
+#    plt.show()
+
+def fooPlot(xAxisData, yAxisData, ax, color, degree = 3):
+    colors = "bgrcmykw"
+    p = np.poly1d(np.polyfit(xAxisData,yAxisData,degree))
+    x = np.amax(xAxisData)
+    x1 = np.amin(xAxisData)
+    t = np.linspace(x, x1, 200)
+    ax.plot(xAxisData, yAxisData, f'x{colors[color]}')
+    ax.plot(t, p(t), f'-{colors[color]}')
 
 def GetOutput(outputPath, inputFilename):
     path = f"{outputPath}/{basename(inputFilename)}{config['outputExtension']}"
@@ -34,29 +88,6 @@ def GetAbsoluteFilePaths(path):
     return [join(path, element) for element in listdir(path) if isfile(join(path, element))]
 
 
-def ShowResults(dataFrame, xAxis, yAxisValues, hue, plotTypes, description):
-    print(dataFrame.to_string())
-    numberOfSubplots = len(yAxisValues)
-    fig, ax = plt.subplots(1,numberOfSubplots)
-    plotArgs = {}
-    plotArgs["x"]=xAxis
-    plotArgs["data"]=dataFrame
-    plotArgs["hue"]=hue
-    for i, yAxisValue, plotType in zip(range(numberOfSubplots), yAxisValues, plotTypes):
-        plotArgs["y"]=yAxisValue
-        plotArgs["ax"]=ax[i]
-        if plotType == "bar":
-            sns.barplot(**plotArgs)
-        elif plotType == "scatter":
-            sns.scatterplot(**plotArgs)
-        elif plotType == "lm":
-            sns.regplot(**plotArgs, lowess=True)
-        else:
-            raise ValueError(f"Wrong plotType specified: {plotType}")
-
-    plt.figtext(0.5, 0.01, description, wrap=True, horizontalalignment='center', fontsize=12)
-    plt.show()
-
 
 
 
@@ -69,7 +100,9 @@ def GatherData(path):
     for column in columns:
         data[column] = []
     for filename in filenames:
+        algNum = 0
         for algorithmType in args["algorithm"]:
+            algNum = algNum + 1
             runsPerGraph, = args["runsPerGraph"]
             timeElapsed = 0
             for i in range(runsPerGraph):
@@ -77,14 +110,11 @@ def GatherData(path):
                 timeElapsed = timeElapsed + float(result["timeElapsed"])
             data["timeElapsed"].append(timeElapsed/runsPerGraph)
             data["filename"].append(basename(filename))
-            data["algorithm"].append(algorithmType)
+            data["algorithm"].append(f"{algorithmType}{algNum}")
             data["edges"].append(int(result["edges"]))
             data["vertices"].append(int(result["vertices"]))
             data["treedepth"].append(int(result["treedepth"]))
-
-
     return pd.DataFrame(data)
-
 
 
 def CreateParser():
@@ -141,7 +171,12 @@ if __name__ == "__main__":
     executePath = ""
     if args["benchmark"]:
         executePath = config["paths"]["benchmarkGraphs"]
-        RunTest(executePath, "filename", "timeElapsed", "bar", "Benchmark graphs")
+        RunTest(inputPath=executePath,
+               groupBy=["algorithm", "algorithm"],
+               xAxes=["filename","filename"],
+               yAxes=["timeElapsed", "treedepth"],
+               plotTypes=["bar", "bar"],
+               description=f"Benchmark graphs")
 
     elif args["random"]:
         v, d, n = args["random"]
@@ -149,7 +184,12 @@ if __name__ == "__main__":
         n = int(n)
         gg.GenerateRandomGraphs(n,d,v)
         executePath = config["paths"]["randomGraphs"]
-        RunTest(executePath, "filename", "timeElapsed", "scatter", f"Random graphs with {v} vertices")
+        RunTest(inputPath=executePath,
+               groupBy=["algorithm", "algorithm"],
+               xAxes=["filename","filename"],
+               yAxes=["timeElapsed", "treedepth"],
+               plotTypes=["bar", "bar"],
+               description=f"Random graphs with {v} vertices and density {d}")
 
     elif args["density"]:
         v, dLow, dHigh, n = args["density"]
@@ -157,7 +197,12 @@ if __name__ == "__main__":
         n = int(n)
         gg.GenerateGraphsWithIncrasingDensity(n,dLow,dHigh,v)
         executePath = config["paths"]["randomGraphs"]
-        RunTest(executePath, "edges", ["timeElapsed", "treedepth"], ["lm", "lm"], f"Random graphs with {v} vertices")
+        RunTest(inputPath=executePath,
+               groupBy=["algorithm", "algorithm"],
+               xAxes=["edges","edges"],
+               yAxes=["timeElapsed", "treedepth"],
+               plotTypes=["scatterFit", "scatterFit"],
+               description=f"Graphs with {v} vertices")
 
     elif args["vertices"]:
         vLow, vHigh, d, n = args["vertices"]
@@ -167,4 +212,9 @@ if __name__ == "__main__":
         gg.GenerateGraphsWithIncrasingNumberOfVertices(
             n, vLow, vHigh, d)
         executePath = config["paths"]["randomGraphs"]
-        RunTest(executePath, "vertices", ["timeElapsed", "treedepth"], ["lm", "lm"], f"Graphs with density {d}")
+        RunTest(inputPath=executePath,
+               groupBy=["algorithm", "algorithm"],
+               xAxes=["vertices","vertices"],
+               yAxes=["timeElapsed", "treedepth"],
+               plotTypes=["scatterFit", "scatterFit"],
+               description=f"Graphs with density {d}")
