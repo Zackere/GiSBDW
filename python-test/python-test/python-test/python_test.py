@@ -40,13 +40,17 @@ def ShowResultss(dataFrame, groupBy, xAxes, yAxes, plotTypes, description):
         print(dataFrame.to_string())
         if plotType == "scatterFit":
             ScatterFitPlot(dataFrame, group, xAxis, yAxis, ax, 5)
+            if(xAxis == "edges" and yAxis == "treedepth"):
+                axisIndex = yAxes.index("treedepth")
+                PlotLowerBound(
+                    dataFrame["edges"],
+                    dataFrame["vertices"][0],
+                    axes[axisIndex],
+                    "Lower bound")
         elif plotType == "bar":
             sns.barplot(x=xAxis, y=yAxis, data=dataFrame, hue=group, ax=ax)
         else:
             raise ValueError(f"Wrong plot type specified -> {plotType}")
-    if "treedepth" in yAxes:
-        axisIndex = yAxes.index("treedepth")
-        PlotLowerBound(dataFrame["edges"], dataFrame["vertices"][0], axes[axisIndex], "Lower bound")
     plt.figtext(0.5, 0.01, description, wrap=True, horizontalalignment='center', fontsize=12)
     plt.show()
 
