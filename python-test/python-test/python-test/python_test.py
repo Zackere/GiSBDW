@@ -14,6 +14,7 @@ def RunTest(inputPath, xAxis, yAxis, plotType, description):
     df.sort_values(by=[xAxis], inplace = True)
     ShowResults(df, xAxis=xAxis, yAxis=yAxis, hue="algorithm", plotType=plotType, description=description)
 
+
 def GetOutput(outputPath, inputFilename):
     path = f"{outputPath}/{basename(inputFilename)}{config['outputExtension']}"
     with open(path) as json_file:
@@ -83,8 +84,9 @@ def CreateParser():
 
     parser.add_argument('--algorithm', '-a', metavar='alg', type=str, nargs="+",
                     help='Algorithm to run.\nOne or more from: [%(choices)s]', required=True, choices=algorithms)
-    parser.add_argument('--runsPerGraph', '-r', metavar='numOfRuns', type=int, nargs=1, default=1,
+    parser.add_argument('--runsPerGraph', '-r', metavar='numOfRuns', type=int, nargs=1, default=[1],
                         help='Specify how many times time measurement should be repeated for each graph. Default = 1')
+
     inputGroup = parser.add_mutually_exclusive_group(required=True)
     inputGroup.add_argument('--benchmark', action='store_true', help="Run on benchmark graphs.")
     inputGroup.add_argument('--random', metavar=('v','d','n'), type=float, nargs=3,
@@ -98,7 +100,6 @@ def CreateParser():
                            dLow - starting density,
                            dHigh - end density
                            n - number of graphs""")
-
     inputGroup.add_argument('--vertices', metavar=('vLow','vHigh', 'd', 'n'), type=float, nargs=4,
                            help="""Run on random graphs with incrasing vertices count.
                            vLow - starting number of vertices,
