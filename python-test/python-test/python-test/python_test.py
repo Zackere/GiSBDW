@@ -66,7 +66,7 @@ def ScatterFitPlot(dataFrame, groupBy, xAxis, yAxis, ax, degree = 3):
         x1 = np.amin(xAxisData)
         t = np.linspace(x0, x1, 200)
         ax.plot(xAxisData, yAxisData, f'{colors[i%len(colors)]}{markers[i%len(markers)]}', label=uniqueGroup)
-        ax.plot(t, p(t), f'-{colors[i]}')
+        ax.plot(t, p(t), f':{colors[i]}')
     ax.set_xlabel(xAxis)
     ax.set_ylabel(yAxis)
     ax.legend()
@@ -104,9 +104,7 @@ def GatherData(path):
     for column in columns:
         data[column] = []
     for filename in filenames:
-        algNum = 0
         for algorithmType in args["algorithm"]:
-            algNum = algNum + 1
             runsPerGraph, = args["runsPerGraph"]
             timeElapsed = 0
             for i in range(runsPerGraph):
@@ -114,7 +112,7 @@ def GatherData(path):
                 timeElapsed = timeElapsed + float(result["timeElapsed"])
             data["timeElapsed"].append(timeElapsed/runsPerGraph)
             data["filename"].append(basename(filename))
-            data["algorithm"].append(f"{algorithmType}{algNum}")
+            data["algorithm"].append(algorithmType)
             data["edges"].append(int(result["edges"]))
             data["vertices"].append(int(result["vertices"]))
             data["treedepth"].append(int(result["treedepth"]))
