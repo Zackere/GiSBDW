@@ -1,5 +1,6 @@
 import sys
 import json
+import utils
 import subprocess
 import argparse
 import GraphGenerator
@@ -51,7 +52,10 @@ def ShowResultss(dataFrame, groupBy, xAxes, yAxes, plotTypes, description):
             sns.barplot(x=xAxis, y=yAxis, data=dataFrame, hue=group, ax=ax)
         else:
             raise ValueError(f"Wrong plot type specified -> {plotType}")
+        if xAxis == "filename":
+            plt.setp(ax.get_xticklabels(), rotation=90)
     plt.figtext(0.5, 0.01, description, wrap=True, horizontalalignment='center', fontsize=12)
+    plt.tight_layout()
     plt.show()
 
 def ScatterFitPlot(dataFrame, groupBy, xAxis, yAxis, ax, degree = 3):
@@ -71,8 +75,6 @@ def ScatterFitPlot(dataFrame, groupBy, xAxis, yAxis, ax, degree = 3):
     ax.set_ylabel(yAxis)
     ax.legend()
 
-
-
 def GetOutput(outputPath, inputFilename):
     path = f"{outputPath}/{basename(inputFilename)}{config['outputExtension']}"
     with open(path) as json_file:
@@ -88,9 +90,6 @@ def ExecuteAlgorithm(pathToBin, algorithmType, inputFile, outputPath, timeout):
 
 def GetAbsoluteFilePaths(path):
     return [join(path, element) for element in listdir(path) if isfile(join(path, element))]
-
-
-
 
 
 def GatherData(path):
@@ -133,6 +132,7 @@ def GatherData(path):
 def CreateParser():
     algorithms = ['bnbCPU', 'dyn', 'hyb', 'dynGPU']
     tests = ['timeElapsed']
+    benchmarkGraphs = ['paths', 'cliques']
 
     parser = argparse.ArgumentParser(
         description='Run benchmarks for treedepth algorithms',
@@ -145,10 +145,11 @@ def CreateParser():
                         help='Specify how many times time measurement should be repeated for each graph. Default = 1')
 
     parser.add_argument('--timeout', metavar='seconds', type=float, nargs=1, default=[None],
-                        help='Tests will be terminated after first timeout.')
+                        help='Results will be displayed after first timeout')
 
     inputGroup = parser.add_mutually_exclusive_group(required=True)
-    inputGroup.add_argument('--benchmark', action='store_true', help="Run on benchmark graphs.")
+    inputGroup.add_argument('--benchmark', type=str, nargs=1,
+                           help="Run on group of benchmark graphs. One from [%(choices)s]", choices=benchmarkGraphs)
     inputGroup.add_argument('--random', metavar=('v','d','n'), type=float, nargs=3,
                            help="""Run on random graphs.
                            v - number of vertices,
@@ -186,7 +187,8 @@ if __name__ == "__main__":
 
     executePath = ""
     if args["benchmark"]:
-        executePath = config["paths"]["benchmarkGraphs"]
+        executePath = config["paths"][args["benchmark"][0]]
+        utils.OverwriteDir(f"{executePath}Out")
         RunTest(inputPath=executePath,
                groupBy=["algorithm", "algorithm"],
                xAxes=["filename","filename"],

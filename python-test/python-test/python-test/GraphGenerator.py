@@ -1,5 +1,5 @@
 import networkx as nx
-import shutil
+import utils
 import os
 
 class GraphGenerator(object):
@@ -9,18 +9,16 @@ class GraphGenerator(object):
 
 
     def DeleteRandomGraphsDir(self):
-        if os.path.exists(self.randomGraphsPath):
-            shutil.rmtree(self.randomGraphsPath)
+        utils.DeleteDir(self.randomGraphsPath)
 
     def CreateRandomGraphsDir(self):
-        os.mkdir(self.randomGraphsPath)
+        utils.CreateDir(self.randomGraphsPath)
 
     def DeleteRandomGraphsOutputDir(self):
-        if os.path.exists(self.randomGraphsOutputPath):
-            shutil.rmtree(self.randomGraphsOutputPath)
+        utils.DeleteDir(self.randomGraphsOutputPath)
 
     def CreateRandomGraphsOutputDir(self):
-        os.mkdir(self.randomGraphsOutputPath)
+        utils.CreateDir(self.randomGraphsOutputPath)
 
     def ResetRandomGraphsOutputDir(self):
         self.DeleteRandomGraphsOutputDir()
@@ -36,8 +34,11 @@ class GraphGenerator(object):
 
     def SaveRandomGraphs(self,graphs):
         for i, graph in enumerate(graphs):
-            outputPath = os.path.join(self.randomGraphsPath, f"G{i:05d}")
-            nx.drawing.nx_pydot.write_dot(graph, outputPath)
+            self.SaveGraph(self.randomGraphsPath, f"G{i:05d}", graph)
+
+    def SaveGraph(self, path, filename, graph):
+        outputPath = os.path.join(self.randomGraphsPath, filename)
+        nx.drawing.nx_pydot.write_dot(graph, outputPath)
 
     def GenerateRandomGraphs(self, numberOfGraphs, density, numberOfVertices):
         self.ResetRandomGraphsDir()
@@ -55,3 +56,15 @@ class GraphGenerator(object):
         step = (vHigh - vLow) / numberOfGraphs
         graphs = [nx.erdos_renyi_graph(round(vLow + i*step), density) for i in range(numberOfGraphs)]
         self.SaveRandomGraphs(graphs)
+
+    def GeneratePaths(self, vLow, vHigh, step):
+        self.ResetRandomGraphsDirs()
+        graphs = [(nx.path_graph(i), f"path{(i):05d}") for i in range(vLow,vHigh,step)]
+        for graph, filename in graphs:
+            self.SaveGraph(self.randomGraphsPath, filename, graph)
+
+    def GenerateCliques(self, vLow, vHigh, step):
+        self.ResetRandomGraphsDirs()
+        graphs = [(nx.complete_graph(i), f"clique{(i):05d}") for i in range(vLow,vHigh,step)]
+        for graph, filename in graphs:
+            self.SaveGraph(self.randomGraphsPath, filename, graph)
