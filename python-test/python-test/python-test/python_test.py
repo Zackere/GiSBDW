@@ -12,7 +12,7 @@ from os.path import isfile, join, abspath, basename
 def RunTest(inputPath, xAxis, yAxis, plotType, description):
     df = GatherData(inputPath)
     df.sort_values(by=[xAxis], inplace = True)
-    ShowResults(df, xAxis=xAxis, yAxis=yAxis, hue="algorithm", plotType=plotType, description=description)
+    ShowResults(df, xAxis=xAxis, yAxisValues=yAxis, hue="algorithm", plotTypes=plotType, description=description)
 
 
 def GetOutput(outputPath, inputFilename):
@@ -34,25 +34,37 @@ def GetAbsoluteFilePaths(path):
     return [join(path, element) for element in listdir(path) if isfile(join(path, element))]
 
 
-def ShowResults(dataFrame, xAxis, yAxis, hue, plotType, description):
+def ShowResults(dataFrame, xAxis, yAxisValues, hue, plotTypes, description):
     print(dataFrame.to_string())
-    if plotType == "bar":
-        ax = sns.barplot(x=xAxis, y=yAxis, hue=hue, data=dataFrame)
-    elif plotType == "scatter":
-        ax = sns.scatterplot(x=xAxis, y=yAxis, data=dataFrame, hue=hue)
-    elif plotType == "lm":
-        ax = sns.lmplot(x=xAxis, y=yAxis, data=dataFrame, hue=hue, lowess=True)
-    else:
-        raise ValueError(f"Wrong plotType specified: {plotType}")
+    numberOfSubplots = len(yAxisValues)
+    fig, ax = plt.subplots(1,numberOfSubplots)
+    plotArgs = {}
+    plotArgs["x"]=xAxis
+    plotArgs["data"]=dataFrame
+    plotArgs["hue"]=hue
+    for i, yAxisValue, plotType in zip(range(numberOfSubplots), yAxisValues, plotTypes):
+        plotArgs["y"]=yAxisValue
+        plotArgs["ax"]=ax[i]
+        if plotType == "bar":
+            sns.barplot(**plotArgs)
+        elif plotType == "scatter":
+            sns.scatterplot(**plotArgs)
+        elif plotType == "lm":
+            sns.regplot(**plotArgs, lowess=True)
+        else:
+            raise ValueError(f"Wrong plotType specified: {plotType}")
+
     plt.figtext(0.5, 0.01, description, wrap=True, horizontalalignment='center', fontsize=12)
     plt.show()
+
+
 
 
 def GatherData(path):
     binPath = config["paths"]["bin"]
     outputPath = path + "Out"
     filenames = GetAbsoluteFilePaths(path)
-    columns = ["algorithm","filename","timeElapsed","edges","vertices"]
+    columns = ["algorithm","filename","timeElapsed","edges","vertices","treedepth"]
     data = {}
     for column in columns:
         data[column] = []
@@ -68,6 +80,8 @@ def GatherData(path):
             data["algorithm"].append(algorithmType)
             data["edges"].append(int(result["edges"]))
             data["vertices"].append(int(result["vertices"]))
+            data["treedepth"].append(int(result["treedepth"]))
+
 
     return pd.DataFrame(data)
 
@@ -143,7 +157,7 @@ if __name__ == "__main__":
         n = int(n)
         gg.GenerateGraphsWithIncrasingDensity(n,dLow,dHigh,v)
         executePath = config["paths"]["randomGraphs"]
-        RunTest(executePath, "edges", "timeElapsed", "lm", f"Random graphs with {v} vertices")
+        RunTest(executePath, "edges", ["timeElapsed", "treedepth"], ["lm", "lm"], f"Random graphs with {v} vertices")
 
     elif args["vertices"]:
         vLow, vHigh, d, n = args["vertices"]
@@ -153,4 +167,4 @@ if __name__ == "__main__":
         gg.GenerateGraphsWithIncrasingNumberOfVertices(
             n, vLow, vHigh, d)
         executePath = config["paths"]["randomGraphs"]
-        RunTest(executePath, "vertices", "timeElapsed", "lm", f"Graphs with density {d}")
+        RunTest(executePath, "vertices", ["timeElapsed", "treedepth"], ["lm", "lm"], f"Graphs with density {d}")
