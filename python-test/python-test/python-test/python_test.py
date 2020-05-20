@@ -7,8 +7,20 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from math import ceil, sqrt
 from os import listdir, chdir
 from os.path import isfile, join, abspath, basename
+
+
+def PlotLowerBound(x, n, ax, label):
+    def LowerBound(n,e):
+        val = 0.5 + n - sqrt(0.25+n+(n*n)-(2*n)-(2*e))
+        return ceil(val)
+    x = np.arange(np.amin(x),np.amax(x)+1)
+    y = [LowerBound(n,edge) for edge in x]
+    ax.plot(x,y,".m", label=label)
+    ax.legend()
+
 
 def RunTest(inputPath, groupBy, xAxes, yAxes, plotTypes, description):
     dataFrame = GatherData(inputPath)
@@ -27,40 +39,18 @@ def ShowResultss(dataFrame, groupBy, xAxes, yAxes, plotTypes, description):
         print(f"Result dataframe. Ordered by [{group}, {xAxis}]")
         print(dataFrame.to_string())
         if plotType == "scatterFit":
-            scatterFitPlot(dataFrame, group, xAxis, yAxis, ax, 5)
+            ScatterFitPlot(dataFrame, group, xAxis, yAxis, ax, 5)
         elif plotType == "bar":
             sns.barplot(x=xAxis, y=yAxis, data=dataFrame, hue=group, ax=ax)
         else:
             raise ValueError(f"Wrong plot type specified -> {plotType}")
+    if "treedepth" in yAxes:
+        axisIndex = yAxes.index("treedepth")
+        PlotLowerBound(dataFrame["edges"], dataFrame["vertices"][0], axes[axisIndex], "Lower bound")
     plt.figtext(0.5, 0.01, description, wrap=True, horizontalalignment='center', fontsize=12)
     plt.show()
 
-#def ShowResults(dataFrame, groupBy, xAxes, yAxes, plotTypes, description):
-#    df.sort_values(by=[groupBy, xAxis], inplace = True)
-#    print(dataFrame.to_string())
-#    numberOfSubplots = len(yAxisValues)
-#    fig, ax = plt.subplots(1,numberOfSubplots)
-#    fooPlot(dataFrame, xAxis, yAxisValues[0], ax[0])
-#    plotArgs = {}
-#    plotArgs["x"]=xAxis
-#    plotArgs["data"]=dataFrame
-#    plotArgs["hue"]=hue
-#    for i, yAxisValue, plotType in zip(range(numberOfSubplots), yAxisValues, plotTypes):
-#        plotArgs["y"]=yAxisValue
-#        plotArgs["ax"]=ax[i]
-#        if plotType == "bar":
-#            sns.barplot(**plotArgs)
-#        elif plotType == "scatter":
-#            sns.scatterplot(**plotArgs)
-#        elif plotType == "lm":
-#            sns.regplot(**plotArgs, lowess=True)
-#        else:
-#            raise ValueError(f"Wrong plotType specified: {plotType}")
-
-#    plt.figtext(0.5, 0.01, description, wrap=True, horizontalalignment='center', fontsize=12)
-#    plt.show()
-
-def scatterFitPlot(dataFrame, groupBy, xAxis, yAxis, ax, degree = 3):
+def ScatterFitPlot(dataFrame, groupBy, xAxis, yAxis, ax, degree = 3):
     colors = "bgrcmykw"
     markers = "os+D*px"
     for i, uniqueGroup in enumerate(dataFrame[groupBy].unique()):
