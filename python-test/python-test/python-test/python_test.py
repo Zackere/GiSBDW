@@ -78,12 +78,10 @@ def GetOutput(outputPath, inputFilename):
     with open(path) as json_file:
         return json.load(json_file)
 
-def ExecuteAlgorithm(pathToBin, algorithmType, inputFile, outputPath):
-
+def ExecuteAlgorithm(pathToBin, algorithmType, inputFile, outputPath, timeout):
     command = f"{pathToBin} -a {algorithmType} -o {outputPath} {inputFile}"
-    result = subprocess.run(command)
+    result = subprocess.run(command, timeout=timeout)
     if result.returncode != 0:
-
         raise ChildProcessError(f"{command} did not succeed. Return code: {result}")
 
     return GetOutput(outputPath, inputFile)
@@ -96,6 +94,7 @@ def GetAbsoluteFilePaths(path):
 
 
 def GatherData(path):
+    timeouted = False
     binPath = config["paths"]["bin"]
     outputPath = path + "Out"
     filenames = GetAbsoluteFilePaths(path)
@@ -104,18 +103,30 @@ def GatherData(path):
     for column in columns:
         data[column] = []
     for filename in filenames:
-        for algorithmType in args["algorithm"]:
-            runsPerGraph, = args["runsPerGraph"]
-            timeElapsed = 0
-            for i in range(runsPerGraph):
-                result = ExecuteAlgorithm(binPath, algorithmType, filename, outputPath)
-                timeElapsed = timeElapsed + float(result["timeElapsed"])
-            data["timeElapsed"].append(timeElapsed/runsPerGraph)
-            data["filename"].append(basename(filename))
-            data["algorithm"].append(algorithmType)
-            data["edges"].append(int(result["edges"]))
-            data["vertices"].append(int(result["vertices"]))
-            data["treedepth"].append(int(result["treedepth"]))
+        if not timeouted:
+            for algorithmType in args["algorithm"]:
+                runsPerGraph, = args["runsPerGraph"]
+                timeElapsed = 0
+                for i in range(runsPerGraph):
+                    try:
+                        result = ExecuteAlgorithm(binPath, algorithmType, filename, outputPath, args["timeout"][0])
+                    except subprocess.TimeoutExpired as ex:
+                        print(f"Timeout on graph {basename(filename)}")
+                        timeouted = True
+                        data["timeElapsed"].append(0)
+                        data["filename"].append(basename(filename))
+                        data["algorithm"].append(algorithmType)
+                        data["edges"].append(0)
+                        data["vertices"].append(0)
+                        data["treedepth"].append(0)
+                        break
+                    timeElapsed = timeElapsed + float(result["timeElapsed"])
+                data["timeElapsed"].append(timeElapsed/runsPerGraph)
+                data["filename"].append(basename(filename))
+                data["algorithm"].append(algorithmType)
+                data["edges"].append(int(result["edges"]))
+                data["vertices"].append(int(result["vertices"]))
+                data["treedepth"].append(int(result["treedepth"]))
     return pd.DataFrame(data)
 
 
@@ -132,6 +143,9 @@ def CreateParser():
                     help='Algorithm to run.\nOne or more from: [%(choices)s]', required=True, choices=algorithms)
     parser.add_argument('--runsPerGraph', '-r', metavar='numOfRuns', type=int, nargs=1, default=[1],
                         help='Specify how many times time measurement should be repeated for each graph. Default = 1')
+
+    parser.add_argument('--timeout', metavar='seconds', type=float, nargs=1, default=[None],
+                        help='Tests will be terminated after first timeout.')
 
     inputGroup = parser.add_mutually_exclusive_group(required=True)
     inputGroup.add_argument('--benchmark', action='store_true', help="Run on benchmark graphs.")
