@@ -24,15 +24,15 @@ def ShowResultss(dataFrame, groupBy, xAxes, yAxes, plotTypes, description):
     fig, axes = plt.subplots(1,numberOfSubplots)
     for ax, group, xAxis, yAxis, plotType in zip(axes, groupBy, xAxes, yAxes, plotTypes):
         dataFrame.sort_values(by=[group, xAxis], inplace = True)
+        print(f"Result dataframe. Ordered by [{group}, {xAxis}]")
+        print(dataFrame.to_string())
         if plotType == "scatterFit":
-            for color, uniqueGroup in enumerate(dataFrame[group].unique()):
-                print(dataFrame.to_string())
-                filteredDf = dataFrame.loc[dataFrame[group] == uniqueGroup]
-                fooPlot(filteredDf[xAxis], filteredDf[yAxis], ax, color)
+            scatterFitPlot(dataFrame, group, xAxis, yAxis, ax, 5)
         elif plotType == "bar":
             sns.barplot(x=xAxis, y=yAxis, data=dataFrame, hue=group, ax=ax)
         else:
             raise ValueError(f"Wrong plot type specified -> {plotType}")
+    plt.figtext(0.5, 0.01, description, wrap=True, horizontalalignment='center', fontsize=12)
     plt.show()
 
 #def ShowResults(dataFrame, groupBy, xAxes, yAxes, plotTypes, description):
@@ -60,14 +60,24 @@ def ShowResultss(dataFrame, groupBy, xAxes, yAxes, plotTypes, description):
 #    plt.figtext(0.5, 0.01, description, wrap=True, horizontalalignment='center', fontsize=12)
 #    plt.show()
 
-def fooPlot(xAxisData, yAxisData, ax, color, degree = 3):
+def scatterFitPlot(dataFrame, groupBy, xAxis, yAxis, ax, degree = 3):
     colors = "bgrcmykw"
-    p = np.poly1d(np.polyfit(xAxisData,yAxisData,degree))
-    x = np.amax(xAxisData)
-    x1 = np.amin(xAxisData)
-    t = np.linspace(x, x1, 200)
-    ax.plot(xAxisData, yAxisData, f'x{colors[color]}')
-    ax.plot(t, p(t), f'-{colors[color]}')
+    markers = "os+D*px"
+    for i, uniqueGroup in enumerate(dataFrame[groupBy].unique()):
+        filteredDf = dataFrame.loc[dataFrame[groupBy] == uniqueGroup]
+        xAxisData = filteredDf[xAxis]
+        yAxisData = filteredDf[yAxis]
+        p = np.poly1d(np.polyfit(xAxisData,yAxisData,degree))
+        x0 = np.amax(xAxisData)
+        x1 = np.amin(xAxisData)
+        t = np.linspace(x0, x1, 200)
+        ax.plot(xAxisData, yAxisData, f'{colors[i%len(colors)]}{markers[i%len(markers)]}', label=uniqueGroup)
+        ax.plot(t, p(t), f'-{colors[i]}')
+    ax.set_xlabel(xAxis)
+    ax.set_ylabel(yAxis)
+    ax.legend()
+
+
 
 def GetOutput(outputPath, inputFilename):
     path = f"{outputPath}/{basename(inputFilename)}{config['outputExtension']}"
