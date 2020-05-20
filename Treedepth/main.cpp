@@ -15,13 +15,15 @@
 #include <string>
 #include <vector>
 
-#include "src/algorithm_result/algorithm_result.hpp"
 #include "src/branch_and_bound/branch_and_bound.hpp"
 #include "src/dynamic_cpu/dynamic_cpu_improv.hpp"
 #include "src/dynamic_gpu/dynamic_gpu.hpp"
 #include "src/elimination_tree/elimination_tree.hpp"
 #include "src/heuristics/highest_degree_heuristic.hpp"
+#include "src/heuristics/spanning_tree_heuristic.hpp"
+#include "src/heuristics/variance_heuristic.hpp"
 #include "src/lower_bound/edge_lower_bound.hpp"
+#include "src/statistics/statistics.hpp"
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
@@ -59,13 +61,8 @@ bool IsFile(fs::path const& path) {
 int main(int argc, char** argv) {
   using Graph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
-  // typedef bo::property<bo::vertex_name_t, std::string,
-  //                   bo::property<bo::vertex_color_t, float>>
-  // vertex_p;
-  // using Graph =
-  //   //  bo::adjacency_list<bo::mapS, bo::vecS, bo::undirectedS, vertex_p>;
 
-  td::AlgorithmResult foo;
+  td::Statistics foo;
 
   std::string algorithmType;
   std::string outputDirString;
@@ -96,24 +93,21 @@ int main(int argc, char** argv) {
                   .positional(positionalArgs)
                   .run(),
               vm);
-    if (vm.count("help")) {
+    if (vm.count("help"))
       Usage(description);
-    }
     po::notify(vm);
   } catch (po::error& ex) {
     std::cerr << ex.what() << "\n";
     Usage(description);
   }
   outputPath = fs::path(outputDirString);
-  for (auto const& pathString : graphsPathsStrings) {
+  for (auto const& pathString : graphsPathsStrings)
     graphPaths.push_back(fs::path(pathString));
-  }
   if (!PathExists(outputPath) || !IsDirectory(outputPath))
     Usage(description);
-  for (fs::path const& path : graphPaths) {
+  for (fs::path const& path : graphPaths)
     if (!PathExists(path) || !IsFile(path))
       Usage(description);
-  }
 
   for (fs::path const& path : graphPaths) {
     std::ifstream file3(path);
@@ -130,7 +124,7 @@ int main(int argc, char** argv) {
          edges != std::sregex_iterator(); ++edges)
       boost::add_edge(std::stoi((*edges)[1]), std::stoi((*edges)[2]), graph);
 
-    td::AlgorithmResult algorithmResult;
+    td::Statistics stats;
     std::cout << "Processing graph " << path.filename() << std::endl;
     std::cout << "Vertices: " << graph.m_vertices.size() << std::endl;
     std::cout << "Edges: " << graph.m_edges.size() << std::endl;
@@ -144,7 +138,7 @@ int main(int argc, char** argv) {
         code <<= 1;
         code |= 1;
       }
-      algorithmResult.treedepth = dcpu.GetTDDecomp(code, graph).treedepth;
+      stats.decomposition = dcpu.GetTDDecomp(code, graph);
     } else if (algorithmType == "dynGPU") {
       td::DynamicGPU dgpu;
       dgpu(graph);
@@ -153,14 +147,16 @@ int main(int argc, char** argv) {
         for (auto v : dgpu.GetElimination<td::EliminationTree::VertexType>(
                  boost::num_vertices(graph), boost::num_vertices(graph), 0))
           et.Eliminate(v);
-        algorithmResult.treedepth = dgpu.GetTreedepth(
-            boost::num_vertices(graph), boost::num_vertices(graph), 0);
+        stats.decomposition = et.Decompose();
       }
     } else if (algorithmType == "bnbCPU") {
       td::BranchAndBound bnb;
       auto res = bnb(graph, std::make_unique<td::EdgeLowerBound>(),
-                     std::make_unique<td::HighestDegreeHeuristic>(nullptr));
-      algorithmResult.treedepth = res.treedepth;
+                     std::make_unique<td::HighestDegreeHeuristic>(
+                         std::make_unique<td::SpanningTreeHeuristic>(
+                             std::make_unique<td::VarianceHeuristic>(
+                                 nullptr, 1.0, 0.2, 0.8))));
+      stats.decomposition = res;
     } else {
       std::cerr << "Wrong algorithm option specified.\n";
       Usage(description);
@@ -169,12 +165,14 @@ int main(int argc, char** argv) {
     auto duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() /
         1000.0;
-    algorithmResult.timeElapsed = duration;
+    stats.time_elapsed = duration;
     std::cout << "Elapsed time: " << duration << " seconds\n";
-    std::cout << "Treedepth: " << algorithmResult.treedepth << "\n";
+    std::cout << "Treedepth: " << stats.decomposition.treedepth << "\n";
     fs::path outputFilePath = ((outputPath / path.filename()) += ".out");
     std::cout << "Output written to: " << outputFilePath << "\n\n";
-    algorithmResult.WriteToFile(outputFilePath);
+    std::ofstream file(outputFilePath);
+    file << stats;
+    file.close();
   }
 
   return 0;
