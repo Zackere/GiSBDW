@@ -1,6 +1,10 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 
+#include <memory>
+#include <set>
+#include <utility>
+
 #include "common/utils/graph_gen.hpp"
 #include "src/branch_and_bound/branch_and_bound.hpp"
 #include "src/elimination_tree/elimination_tree.hpp"

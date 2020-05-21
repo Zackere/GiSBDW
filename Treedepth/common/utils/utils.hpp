@@ -1,6 +1,7 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 
+#include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <iostream>
@@ -9,7 +10,7 @@
 #include "src/branch_and_bound/branch_and_bound.hpp"
 #include "src/elimination_tree/elimination_tree.hpp"
 
-namespace {
+namespace {  // NOLINT
 template <typename... Args>
 bool CompareBoostGraphs(boost::adjacency_list<Args...> const& g1,
                         boost::adjacency_list<Args...> const& g2) {
@@ -32,15 +33,15 @@ bool CheckIfTdDecompIsValid(td::BranchAndBound::Graph const& graph,
 template <typename EnterCallback, typename ExitCallback>
 void DFS(int vertex,
          td::EliminationTree::BoostGraph const& g,
-         std::set<int>& visited,
+         std::set<int>* visited,
          EnterCallback enter,
          ExitCallback exit) {
-  if (visited.find(vertex) != std::end(visited))
+  if (visited->find(vertex) != std::end(*visited))
     return;
-  visited.insert(vertex);
+  visited->insert(vertex);
   enter(vertex);
-  for (auto [ai, ai_end] = boost::adjacent_vertices(vertex, g); ai != ai_end;
-       ++ai) {
+  for (auto [ai, ai_end] = boost::adjacent_vertices(vertex, g);  // NOLINT
+       ai != ai_end; ++ai) {
     DFS(*ai, g, visited, enter, exit);
   }
   exit(vertex);
@@ -49,13 +50,13 @@ void DFS(int vertex,
 bool CheckIfTdDecompIsValid(td::BranchAndBound::Graph const& graph,
                             td::EliminationTree::Result const& result) {
   for (int v = 0; v < boost::num_vertices(graph); ++v) {
-    for (auto [ai, ai_end] = boost::adjacent_vertices(v, graph); ai != ai_end;
-         ++ai) {
+    for (auto [ai, ai_end] = boost::adjacent_vertices(v, graph);  // NOLINT
+         ai != ai_end; ++ai) {
       std::set<int> tmp = {};
       int x = 0;
       bool ok = false;
       DFS(
-          result.root, result.td_decomp, tmp,
+          result.root, result.td_decomp, &tmp,
           [&](auto current_vertex) {
             if (current_vertex == v || current_vertex == *ai) {
               if (++x == 2)
@@ -75,7 +76,7 @@ bool CheckIfTdDecompIsValid(td::BranchAndBound::Graph const& graph,
   unsigned depth = 0;
   unsigned max_depth = 0;
   DFS(
-      result.root, result.td_decomp, tmp,
+      result.root, result.td_decomp, &tmp,
       [&](auto) {
         ++depth;
         max_depth = std::max(max_depth, depth);

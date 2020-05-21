@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <boost/graph/iteration_macros.hpp>
 #include <limits>
+#include <set>
 
 #include "src/set_encoder/set_encoder.hpp"
 
@@ -29,10 +30,11 @@ std::size_t DynamicCPU::GetIterationsPerformed() const {
 std::size_t DynamicCPU::GetTreedepth(std::size_t nverts,
                                      std::size_t subset_size,
                                      std::size_t subset_code) {
-  if (subset_size < history_.size())
+  if (subset_size < history_.size()) {
     if (auto it = history_[subset_size].find(subset_code);
         it != std::end(history_[subset_size]))
       return std::get<0>(*it);
+  }
   return std::numeric_limits<std::size_t>::max();
 }
 

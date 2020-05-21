@@ -1,3 +1,4 @@
+// Copyright 2020 GISBDW. All rights reserved.
 #include <gtest/gtest.h>
 
 #include <boost/graph/graphviz.hpp>

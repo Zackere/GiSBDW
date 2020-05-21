@@ -1,5 +1,10 @@
+// Copyright 2020 GISBDW. All rights reserved.
 #include "dynamic_cpu_improv.hpp"
 
+#include <algorithm>
+#include <functional>
+#include <limits>
+#include <map>
 #include <tuple>
 
 namespace td {
@@ -41,7 +46,7 @@ std::size_t DynamicCPUImprov::Run(
 
 EliminationTree::Result DynamicCPUImprov::GetTDDecompImpl(std::size_t code,
                                                           BoostGraph const& g) {
-  if (boost::num_vertices(g) < history_.size())
+  if (boost::num_vertices(g) < history_.size()) {
     if (auto it = history_[boost::num_vertices(g)].find(code);
         it != std::end(history_[boost::num_vertices(g)])) {
       td::EliminationTree et(g);
@@ -51,6 +56,7 @@ EliminationTree::Result DynamicCPUImprov::GetTDDecompImpl(std::size_t code,
                     [Encode(et.ComponentsBegin()->AdjacencyList())]));
       return et.Decompose();
     }
+  }
   return EliminationTree::Result{EliminationTree::BoostGraph(),
                                  std::numeric_limits<unsigned>::max(), 0};
 }

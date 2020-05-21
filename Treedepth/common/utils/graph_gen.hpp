@@ -1,13 +1,15 @@
+// Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/erdos_renyi_generator.hpp>
 #include <random>
+#include <vector>
 
 #include "src/union_find/array_union_find.hpp"
 
-namespace {
+namespace {  // NOLINT
 using Graph =
     boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
 using ERGen = boost::sorted_erdos_renyi_iterator<std::minstd_rand, Graph>;

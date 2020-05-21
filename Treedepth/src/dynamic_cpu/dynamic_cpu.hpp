@@ -3,6 +3,7 @@
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/copy.hpp>
+#include <limits>
 #include <map>
 #include <tuple>
 #include <vector>
@@ -58,7 +59,7 @@ inline EliminationTree::Result DynamicCPU::GetTDDecomp(
                           VertexList,
                           boost::undirectedS,
                           Args...> const& induced_graph) {
-  if (boost::num_vertices(induced_graph) < history_.size())
+  if (boost::num_vertices(induced_graph) < history_.size()) {
     if (auto it = history_[boost::num_vertices(induced_graph)].find(code);
         it != std::end(history_[boost::num_vertices(induced_graph)])) {
       td::EliminationTree et(induced_graph);
@@ -69,6 +70,7 @@ inline EliminationTree::Result DynamicCPU::GetTDDecomp(
                                     et.ComponentsBegin()->AdjacencyList())]));
       return et.Decompose();
     }
+  }
   return EliminationTree::Result{EliminationTree::BoostGraph(),
                                  std::numeric_limits<unsigned>::max(), 0};
 }

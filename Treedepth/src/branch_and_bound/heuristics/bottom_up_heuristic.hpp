@@ -1,7 +1,8 @@
 // Copyright 2020 GISBDW. All rights reserved.
-
+#pragma once
 #include <limits>
 #include <memory>
+#include <utility>
 
 #include "src/branch_and_bound/branch_and_bound.hpp"
 #include "src/branch_and_bound/heuristics/bottom_up_heuristic_gpu_algorithm.hpp"

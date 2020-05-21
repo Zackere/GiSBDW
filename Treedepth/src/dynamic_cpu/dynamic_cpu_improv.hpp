@@ -3,9 +3,9 @@
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/copy.hpp>
-#include <map>
 #include <memory>
 #include <tuple>
+#include <unordered_map>
 #include <vector>
 
 #include "src/elimination_tree/elimination_tree.hpp"
