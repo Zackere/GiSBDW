@@ -160,12 +160,7 @@ int main(int argc, char** argv) {
     auto duration =
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() /
         1000.0;
-<<<<<<< HEAD
-    algorithmResult.timeElapsed = duration;
-    algorithmResult.vertices = graph.m_vertices.size();
-    algorithmResult.edges = graph.m_edges.size();
-    == == == = stats.time_elapsed = duration;
->>>>>>> xp
+    stats.time_elapsed = duration;
     std::cout << "Elapsed time: " << duration << " seconds\n";
     std::cout << "Treedepth: " << stats.decomposition.treedepth << "\n";
     fs::path stats_path = output_dir / graph_path.filename();
