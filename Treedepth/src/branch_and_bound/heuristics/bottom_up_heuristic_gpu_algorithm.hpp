@@ -14,7 +14,7 @@
 #include "src/set_encoder/set_encoder.hpp"
 
 namespace td {
-class DynamicGPU {
+class BottomUpHeuristicGPUAlgorithm {
  public:
   using BoostGraph =
       boost::adjacency_list<boost::mapS, boost::vecS, boost::undirectedS>;
@@ -60,27 +60,29 @@ class DynamicGPU {
 };
 
 template <typename OutEdgeList, typename VertexList, typename... Args>
-inline void DynamicGPU::operator()(boost::adjacency_list<OutEdgeList,
-                                                         VertexList,
-                                                         boost::undirectedS,
-                                                         Args...> const& g) {
+inline void BottomUpHeuristicGPUAlgorithm::operator()(
+    boost::adjacency_list<OutEdgeList,
+                          VertexList,
+                          boost::undirectedS,
+                          Args...> const& g) {
   return operator()(
       g, GetMaxIterations(boost::num_vertices(g), boost::num_edges(g), 0));
 }
 
 template <typename OutEdgeList, typename VertexList, typename... Args>
-inline void DynamicGPU::operator()(boost::adjacency_list<OutEdgeList,
-                                                         VertexList,
-                                                         boost::undirectedS,
-                                                         Args...> const& g,
-                                   std::size_t k) {
+inline void BottomUpHeuristicGPUAlgorithm::operator()(
+    boost::adjacency_list<OutEdgeList,
+                          VertexList,
+                          boost::undirectedS,
+                          Args...> const& g,
+    std::size_t k) {
   BoostGraph copy;
   boost::copy_graph(g, copy);
   Run(copy, k);
 }
 
 template <typename VertexType>
-inline std::list<VertexType> DynamicGPU::GetElimination(
+inline std::list<VertexType> BottomUpHeuristicGPUAlgorithm::GetElimination(
     std::size_t nverts,
     std::size_t subset_size,
     std::size_t subset_code) {

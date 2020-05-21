@@ -1,5 +1,5 @@
 // Copyright 2020 GISBDW. All rights reserved.
-#include "dynamic_gpu.hpp"
+#include "bottom_up_heuristic_gpu_algorithm.hpp"
 // clang-format on
 #ifdef CUDA_ENABLED
 
@@ -19,7 +19,7 @@ struct Graph {
   thrust::device_vector<OffsetType> source_offsets;
   thrust::device_vector<VertexType> destination;
 
-  explicit Graph(DynamicGPU::BoostGraph const& g)
+  explicit Graph(BottomUpHeuristicGPUAlgorithm::BoostGraph const& g)
       : nvertices(boost::num_vertices(g)),
         source_offsets(nvertices + 1),
         destination(2 * boost::num_edges(g)) {
@@ -151,9 +151,10 @@ void SyncStreams(std::vector<cudaStream_t> const& streams) {
 }
 }  // namespace
 
-std::size_t DynamicGPU::GetMaxIterations(std::size_t nvertices,
-                                         std::size_t nedges,
-                                         int device) const {
+std::size_t BottomUpHeuristicGPUAlgorithm::GetMaxIterations(
+    std::size_t nvertices,
+    std::size_t nedges,
+    int device) const {
   cudaSetDevice(device);
   cudaDeviceProp deviceProp;
   cudaGetDeviceProperties(&deviceProp, device);
@@ -173,38 +174,41 @@ std::size_t DynamicGPU::GetMaxIterations(std::size_t nvertices,
   return step;
 }
 
-std::size_t DynamicGPU::GetIterationsPerformed() const {
+std::size_t BottomUpHeuristicGPUAlgorithm::GetIterationsPerformed() const {
   return history_.size();
 }
 
-unsigned DynamicGPU::GetTreedepth(std::size_t nverts,
-                                  std::size_t subset_size,
-                                  std::size_t subset_code) {
+unsigned BottomUpHeuristicGPUAlgorithm::GetTreedepth(std::size_t nverts,
+                                                     std::size_t subset_size,
+                                                     std::size_t subset_code) {
   if (subset_size >= history_.size())
     return 0;
   std::unique_lock<std::mutex>{history_mtx_[subset_size]};
   return history_[subset_size][subset_code + history_[subset_size].size() / 2];
 }
 
-std::size_t DynamicGPU::SetPlaceholderSize(std::size_t nverts) const {
+std::size_t BottomUpHeuristicGPUAlgorithm::SetPlaceholderSize(
+    std::size_t nverts) const {
   return nverts + 2;
 }
 
-std::size_t DynamicGPU::SharedMemoryPerThread(std::size_t nverts,
-                                              std::size_t step_num) const {
+std::size_t BottomUpHeuristicGPUAlgorithm::SharedMemoryPerThread(
+    std::size_t nverts,
+    std::size_t step_num) const {
   return (SetPlaceholderSize(nverts) + step_num) * sizeof(VertexType);
 }
 
-std::size_t DynamicGPU::GlobalMemoryForStep(std::size_t nverts,
-                                            std::size_t nedges,
-                                            std::size_t step_num) const {
+std::size_t BottomUpHeuristicGPUAlgorithm::GlobalMemoryForStep(
+    std::size_t nverts,
+    std::size_t nedges,
+    std::size_t step_num) const {
   return (td::set_encoder::NChooseK(nverts, step_num) +
           td::set_encoder::NChooseK(nverts, step_num + 1)) *
              SetPlaceholderSize(nverts) * sizeof(VertexType) +
          (nverts + 1) * sizeof(OffsetType) + 2 * nedges * sizeof(VertexType);
 }
 
-void DynamicGPU::Run(BoostGraph const& in, std::size_t k) {
+void BottomUpHeuristicGPUAlgorithm::Run(BoostGraph const& in, std::size_t k) {
   Graph<VertexType, OffsetType> g(in);
   thrust::device_vector<VertexType> d_prev, d_next;
   if (k > g.nvertices / 2 && g.nvertices % 2) {

@@ -7,10 +7,10 @@
 
 #include "common/utils/graph_gen.hpp"
 #include "src/branch_and_bound/branch_and_bound.hpp"
+#include "src/branch_and_bound/heuristics/bottom_up_heuristic.hpp"
 #include "src/branch_and_bound/heuristics/highest_degree_heuristic.hpp"
 #include "src/branch_and_bound/heuristics/spanning_tree_heuristic.hpp"
 #include "src/branch_and_bound/heuristics/variance_heuristic.hpp"
-#include "src/branch_and_bound/lower_bound/dynamic_gpu_lower_bound.hpp"
 #include "src/branch_and_bound/lower_bound/edge_lower_bound.hpp"
 
 namespace {
@@ -22,17 +22,20 @@ TEST_P(BCF, HeuristicComparison) {
   td::VarianceHeuristic v_heuristic(nullptr, 0.2, 0.2, 0.8);
   td::HighestDegreeHeuristic hd_heuristic(nullptr);
   td::SpanningTreeHeuristic st_heuristic(nullptr);
+  td::BottomUpHeuristicGPU bu_heuristic(nullptr);
   td::BranchAndBound bnb;
   auto res_bnb =
       bnb(g, std::make_unique<td::EdgeLowerBound>(),
           std::make_unique<td::HighestDegreeHeuristic>(
               std::make_unique<td::VarianceHeuristic>(
-                  std::make_unique<td::SpanningTreeHeuristic>(nullptr), 1.0,
-                  0.2, 0.8)));
+                  std::make_unique<td::BottomUpHeuristicGPU>(nullptr), 1.0, 0.2,
+                  0.8)));
 
   std::cout << "Variance: " << v_heuristic.Get(g).treedepth << std::endl
             << "Highest degree: " << hd_heuristic.Get(g).treedepth << std::endl
             << "Spanning tree heuristic: " << st_heuristic.Get(g).treedepth
+            << std::endl
+            << "Akka dynamic heuristic: " << bu_heuristic.Get(g).treedepth
             << std::endl
             << "Actual treedepth: " << res_bnb.treedepth << std::endl;
 }
@@ -47,36 +50,36 @@ INSTANTIATE_TEST_SUITE_P(Paths,
 INSTANTIATE_TEST_SUITE_P(ChordalCycles,
                          BCF,
                          ::testing::Values(ChordalCycle(26),
-                                           ChordalCycle(27),
-                                           ChordalCycle(28),
-                                           ChordalCycle(29),
-                                           ChordalCycle(30),
-                                           ChordalCycle(41)));
+                                           ChordalCycle(21),
+                                           ChordalCycle(24),
+                                           ChordalCycle(25),
+                                           ChordalCycle(20),
+                                           ChordalCycle(21)));
 
 INSTANTIATE_TEST_SUITE_P(Cycles,
                          BCF,
                          ::testing::Values(Cycle(20),
+                                           Cycle(25),
+                                           Cycle(27),
+                                           Cycle(14),
+                                           Cycle(26),
+                                           Cycle(27),
+                                           Cycle(28),
+                                           Cycle(29),
                                            Cycle(30),
-                                           Cycle(34),
-                                           Cycle(35),
-                                           Cycle(36),
-                                           Cycle(37),
-                                           Cycle(38),
-                                           Cycle(39),
-                                           Cycle(40),
-                                           Cycle(44)));
+                                           Cycle(10)));
 
 INSTANTIATE_TEST_SUITE_P(SparseGraphs,
                          BCF,
                          ::testing::Values(RandomSparseConnectedGraph(22),
-                                           RandomSparseConnectedGraph(33),
-                                           RandomSparseConnectedGraph(34),
+                                           RandomSparseConnectedGraph(25),
+                                           RandomSparseConnectedGraph(24),
                                            RandomSparseConnectedGraph(35),
                                            RandomSparseConnectedGraph(36),
                                            RandomSparseConnectedGraph(37),
                                            RandomSparseConnectedGraph(38),
-                                           RandomSparseConnectedGraph(39),
-                                           RandomSparseConnectedGraph(40)));
+                                           RandomSparseConnectedGraph(29),
+                                           RandomSparseConnectedGraph(30)));
 
 INSTANTIATE_TEST_SUITE_P(SmallSparseGraphs,
                          BCF,
@@ -89,13 +92,13 @@ INSTANTIATE_TEST_SUITE_P(SmallSparseGraphs,
                                            RandomSparseConnectedGraph(16),
                                            RandomSparseConnectedGraph(17),
                                            RandomSparseConnectedGraph(18)));
-//
-// INSTANTIATE_TEST_SUITE_P(HalinGraphs,
-//                         BCF,
-//                         ::testing::Values(Halin(27),
-//                                           Halin(30),
-//                                           Halin(32),
-//                                           Halin(34),
-//                                           Halin(36),
-//                                           Halin(38),
-//                                           Halin(40)));
+
+INSTANTIATE_TEST_SUITE_P(HalinGraphs,
+                         BCF,
+                         ::testing::Values(Halin(7),
+                                           Halin(10),
+                                           Halin(12),
+                                           Halin(14),
+                                           Halin(15),
+                                           Halin(23),
+                                           Halin(27)));
