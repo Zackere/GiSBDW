@@ -15,12 +15,16 @@ class AlgorithmResult {
     boost::property_tree::ptree root;
     root.put("timeElapsed", timeElapsed);
     root.put("treedepth", treedepth);
+    root.put("edges", edges);
+    root.put("vertices", vertices);
     boost::property_tree::write_json(file, root);
     file.close();
   }
 
   int treedepth = -1;
   double timeElapsed = -1;
+  int edges = -1;
+  int vertices = -1;
 };
 
 }  // namespace td
