@@ -5,7 +5,7 @@
 #include <boost/graph/iteration_macros.hpp>
 #include <limits>
 
-#include "../set_encoder/set_encoder.hpp"
+#include "src/set_encoder/set_encoder.hpp"
 
 namespace td {
 namespace {

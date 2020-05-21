@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <utility>
 
-#include "../union_find/ext_array_union_find.hpp"
+#include "src/union_find/ext_array_union_find.hpp"
 
 namespace td {
 namespace {

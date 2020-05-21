@@ -8,8 +8,8 @@
 #include <tuple>
 #include <vector>
 
-#include "../elimination_tree/elimination_tree.hpp"
-#include "../set_encoder/set_encoder.hpp"
+#include "src/elimination_tree/elimination_tree.hpp"
+#include "src/set_encoder/set_encoder.hpp"
 
 namespace td {
 class DynamicCPUImprov {

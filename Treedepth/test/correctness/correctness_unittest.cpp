@@ -3,15 +3,14 @@
 #include <boost/graph/graphviz.hpp>
 #include <fstream>
 
-#include "../../src/branch_and_bound/branch_and_bound.hpp"
-#include "../../src/dynamic_cpu/dynamic_cpu.hpp"
-#include "../../src/dynamic_cpu/dynamic_cpu_improv.hpp"
-#include "../../src/heuristics/highest_degree_heuristic.hpp"
-#include "../../src/lower_bound/basic_lower_bound.hpp"
-#include "../../src/lower_bound/edge_lower_bound.hpp"
-#include "../../src/union_find/std_set_union_find.hpp"
-#include "../utils/graph_gen.hpp"
-#include "../utils/utils.hpp"
+#include "common/utils/graph_gen.hpp"
+#include "common/utils/utils.hpp"
+#include "src/branch_and_bound/branch_and_bound.hpp"
+#include "src/branch_and_bound/heuristics/highest_degree_heuristic.hpp"
+#include "src/branch_and_bound/lower_bound/basic_lower_bound.hpp"
+#include "src/branch_and_bound/lower_bound/edge_lower_bound.hpp"
+#include "src/dynamic_cpu/dynamic_cpu.hpp"
+#include "src/dynamic_cpu/dynamic_cpu_improv.hpp"
 
 namespace {
 class CTF : public ::testing::TestWithParam<Graph> {};
@@ -27,7 +26,6 @@ time_t seed = time(0);
 }  // namespace
 
 TEST_P(CTF, CorrectnessTest) {
-  std::cout << seed << std::endl;
   auto const& g = GetParam();
   td::BranchAndBound bnb;
   auto res_bnb = bnb(g, std::make_unique<td::EdgeLowerBound>(),
@@ -36,9 +34,7 @@ TEST_P(CTF, CorrectnessTest) {
 
   td::DynamicCPUImprov dyncpu_improv;
   dyncpu_improv(g);
-  std::size_t code = 0;
-  for (std::size_t i = 0; i < boost::num_vertices(g); ++i)
-    code |= static_cast<std::size_t>(1) << i;
+  std::size_t code = (1 << boost::num_vertices(g)) - 1;
   auto res_dyncpu_imrprov = dyncpu_improv.GetTDDecomp(code, g);
   EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu_imrprov));
   EXPECT_EQ(res_bnb.treedepth, res_dyncpu_imrprov.treedepth);

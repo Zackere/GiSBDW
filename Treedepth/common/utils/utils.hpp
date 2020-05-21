@@ -6,8 +6,8 @@
 #include <iostream>
 #include <set>
 
-#include "../../src/branch_and_bound/branch_and_bound.hpp"
-#include "../../src/elimination_tree/elimination_tree.hpp"
+#include "src/branch_and_bound/branch_and_bound.hpp"
+#include "src/elimination_tree/elimination_tree.hpp"
 
 namespace {
 template <typename... Args>

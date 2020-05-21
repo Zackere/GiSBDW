@@ -1,10 +1,11 @@
 // Copyright 2020 GISBDW. All rights reserved.
 
-#include "../../src/branch_and_bound/branch_and_bound.hpp"
+#include "src/branch_and_bound/branch_and_bound.hpp"
 
-#include "../utils/utils.hpp"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include "common/utils/utils.hpp"
 
 using ::testing::_;
 using ::testing::Return;

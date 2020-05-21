@@ -1,10 +1,10 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 
-#include "../../test/utils/graph_gen.hpp"
-#include "../branch_and_bound/branch_and_bound.hpp"
-#include "../elimination_tree/elimination_tree.hpp"
-#include "../union_find/array_union_find.hpp"
+#include "common/utils/graph_gen.hpp"
+#include "src/branch_and_bound/branch_and_bound.hpp"
+#include "src/elimination_tree/elimination_tree.hpp"
+#include "src/union_find/array_union_find.hpp"
 
 namespace td {
 class SpanningTreeHeuristic : public BranchAndBound::Heuristic {

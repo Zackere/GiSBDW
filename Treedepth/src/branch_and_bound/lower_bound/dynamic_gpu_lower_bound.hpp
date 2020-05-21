@@ -1,10 +1,10 @@
 // Copyright 2020 GISBDW. All rights reserved.
 #pragma once
 
-#include "../branch_and_bound/branch_and_bound.hpp"
-#include "../dynamic_gpu/dynamic_gpu.hpp"
-#include "../elimination_tree/elimination_tree.hpp"
-#include "../set_encoder/set_encoder.hpp"
+#include "src/branch_and_bound/branch_and_bound.hpp"
+#include "src/dynamic_gpu/dynamic_gpu.hpp"
+#include "src/elimination_tree/elimination_tree.hpp"
+#include "src/set_encoder/set_encoder.hpp"
 
 namespace td {
 class DynamicGPULowerBound : public BranchAndBound::LowerBound {

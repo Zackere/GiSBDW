@@ -3,8 +3,8 @@
 
 #include <cmath>
 
-#include "../branch_and_bound/branch_and_bound.hpp"
-#include "../elimination_tree/elimination_tree.hpp"
+#include "src/branch_and_bound/branch_and_bound.hpp"
+#include "src/elimination_tree/elimination_tree.hpp"
 
 namespace td {
 class EdgeLowerBound : public BranchAndBound::LowerBound {

@@ -16,13 +16,13 @@
 #include <vector>
 
 #include "src/branch_and_bound/branch_and_bound.hpp"
+#include "src/branch_and_bound/heuristics/highest_degree_heuristic.hpp"
+#include "src/branch_and_bound/heuristics/spanning_tree_heuristic.hpp"
+#include "src/branch_and_bound/heuristics/variance_heuristic.hpp"
+#include "src/branch_and_bound/lower_bound/edge_lower_bound.hpp"
 #include "src/dynamic_cpu/dynamic_cpu_improv.hpp"
 #include "src/dynamic_gpu/dynamic_gpu.hpp"
 #include "src/elimination_tree/elimination_tree.hpp"
-#include "src/heuristics/highest_degree_heuristic.hpp"
-#include "src/heuristics/spanning_tree_heuristic.hpp"
-#include "src/heuristics/variance_heuristic.hpp"
-#include "src/lower_bound/edge_lower_bound.hpp"
 #include "src/statistics/statistics.hpp"
 
 namespace po = boost::program_options;
@@ -133,11 +133,7 @@ int main(int argc, char** argv) {
     if (algorithmType == "dynCPU") {
       td::DynamicCPUImprov dcpu;
       dcpu(graph);
-      std::size_t code = 0;
-      for (std::size_t i = 0; i < boost::num_vertices(graph); ++i) {
-        code <<= 1;
-        code |= 1;
-      }
+      std::size_t code = (1 << boost::num_vertices(graph)) - 1;
       stats.decomposition = dcpu.GetTDDecomp(code, graph);
     } else if (algorithmType == "dynGPU") {
       td::DynamicGPU dgpu;

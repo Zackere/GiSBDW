@@ -11,7 +11,7 @@
 #include <set>
 #include <vector>
 
-#include "../set_encoder/set_encoder.hpp"
+#include "src/set_encoder/set_encoder.hpp"
 
 namespace td {
 class DynamicGPU {

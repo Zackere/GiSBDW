@@ -5,7 +5,7 @@
 #include <boost/graph/erdos_renyi_generator.hpp>
 #include <random>
 
-#include "../../src/union_find/array_union_find.hpp"
+#include "src/union_find/array_union_find.hpp"
 
 namespace {
 using Graph =

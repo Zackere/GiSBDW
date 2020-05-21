@@ -9,7 +9,7 @@
 #include <variant>
 #include <vector>
 
-#include "../elimination_tree/elimination_tree.hpp"
+#include "src/elimination_tree/elimination_tree.hpp"
 
 namespace td {
 class BranchAndBound {

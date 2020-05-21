@@ -1,13 +1,13 @@
 // Copyright 2020 GISBDW. All rights reserved.
 
-#include "../../src/set_encoder/set_encoder.hpp"
+#include "src/set_encoder/set_encoder.hpp"
+
+#include <gtest/gtest.h>
 
 #include <algorithm>
 #include <list>
 #include <set>
 #include <vector>
-
-#include "gtest/gtest.h"
 
 namespace {
 class SECF : public ::testing::TestWithParam<std::size_t> {};

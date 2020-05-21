@@ -1,8 +1,8 @@
 // Copyright 2020 GISBDW. All rights reserved.
 
-#include "../../src/union_find/array_union_find.hpp"
+#include "src/union_find/array_union_find.hpp"
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 TEST(ArrayUnionFindConstructorTest, DoesFindReturnCorrectSetId) {
   for (int i = 0; i < 10; ++i) {

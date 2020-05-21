@@ -2,14 +2,14 @@
 
 #include <gtest/gtest.h>
 
-#include "../../src/branch_and_bound/branch_and_bound.hpp"
-#include "../../src/dynamic_cpu/dynamic_cpu.hpp"
-#include "../../src/dynamic_cpu/dynamic_cpu_improv.hpp"
-#include "../../src/heuristics/highest_degree_heuristic.hpp"
-#include "../../src/heuristics/variance_heuristic.hpp"
-#include "../../src/lower_bound/basic_lower_bound.hpp"
-#include "../../src/lower_bound/edge_lower_bound.hpp"
-#include "../../test/utils/graph_gen.hpp"
+#include "common/utils/graph_gen.hpp"
+#include "src/branch_and_bound/branch_and_bound.hpp"
+#include "src/branch_and_bound/heuristics/highest_degree_heuristic.hpp"
+#include "src/branch_and_bound/heuristics/variance_heuristic.hpp"
+#include "src/branch_and_bound/lower_bound/basic_lower_bound.hpp"
+#include "src/branch_and_bound/lower_bound/edge_lower_bound.hpp"
+#include "src/dynamic_cpu/dynamic_cpu.hpp"
+#include "src/dynamic_cpu/dynamic_cpu_improv.hpp"
 
 namespace {
 class BCF : public ::testing::TestWithParam<Graph> {};
