@@ -14,7 +14,8 @@
 
 class ParametrizedEliminationTreeFixture;
 namespace td {
-/* Class representing treedepth decomposition of incomplete elimination defined
+/* *
+ * Class representing treedepth decomposition of incomplete elimination defined
  * in introductory documentation.
  */
 class EliminationTree {
@@ -59,9 +60,15 @@ class EliminationTree {
    private:
     friend class EliminationTree;
     friend class ::ParametrizedEliminationTreeFixture;
-    AdjacencyListType neighbours_;
-    unsigned depth_;
-    unsigned nedges_;
+    AdjacencyListType neighbours_ = {};
+    unsigned depth_ = 0;
+    unsigned nedges_ = 0;
+  };
+  struct ComponentCmp {
+    bool operator()(Component const& c1, Component const& c2) const {
+      return std::begin(c1.AdjacencyList())->first <
+             std::begin(c2.AdjacencyList())->first;
+    }
   };
   /**
    * Class used to iterate over leaves in EliminationTree which are represented
@@ -86,7 +93,7 @@ class EliminationTree {
 
    private:
     friend class EliminationTree;
-    using Iterator = std::set<Component*>::const_iterator;
+    using Iterator = std::set<Component, ComponentCmp>::const_iterator;
     explicit ComponentIterator(Iterator init);
     Iterator current_;
   };
@@ -108,12 +115,13 @@ class EliminationTree {
    *
    * @param v vertex to be eliminated
    */
-  void Eliminate(VertexType v);
+  std::list<ComponentIterator> Eliminate(VertexType v);
   /**
    * Reverts last recorded elimination. This operation is analogous
    * to transformation T_wv->T_w
    */
-  VertexType Merge();
+  std::pair<ComponentIterator, Component::AdjacencyListType::const_iterator>
+  Merge();
 
   /**
    *  @return Iterator to the first Component of EliminationTree.
@@ -128,8 +136,6 @@ class EliminationTree {
    * Converts EliminationTree to BoostGraph. Works only when all vertices had
    * been eliminated.
    *
-   * Usage: auto [g, depth, root] = et.Decompose();
-   *
    * @return EliminationTree representation in BoostGraph along with its
    * treedepth and root.
    */
@@ -138,15 +144,17 @@ class EliminationTree {
  private:
   struct Node;
   struct EliminatedNode {
-    std::list<Node> children;
-    VertexType vertex;
-    unsigned depth;
+    std::list<Node> children = {};
+    VertexType vertex = 0;
+    unsigned depth = 0;
   };
   struct Node {
-    std::variant<EliminatedNode, Component> v;
+    std::variant<EliminatedNode,
+                 std::set<Component, ComponentCmp>::const_iterator>
+        v = EliminatedNode{};
   } root_;
-  std::vector<Node*> nodes_;
-  std::set<Component*> components_;
+  std::vector<std::reference_wrapper<Node>> nodes_;
+  std::set<Component, ComponentCmp> components_;
   std::vector<Component::AdjacencyListType::node_type> eliminated_nodes_;
 
   EliminationTree(EliminationTree const&) = delete;
@@ -159,7 +167,7 @@ inline EliminationTree::EliminationTree(
                           VertexList,
                           boost::undirectedS,
                           Args...> const& g)
-    : nodes_(boost::num_vertices(g), &root_) {
+    : nodes_(boost::num_vertices(g), root_) {
 #ifdef TD_CHECK_ARGS
   if (boost::connected_components(
           g, std::vector<int>(boost::num_vertices(g)).data()) != 1)
@@ -179,8 +187,7 @@ inline EliminationTree::EliminationTree(
   for (int i = 0; i < boost::num_vertices(g); ++i)
     for (boost::tie(ei, ei_end) = boost::out_edges(i, g); ei != ei_end; ++ei)
       root.neighbours_[i].insert(boost::target(*ei, g));
-  root_.v = std::move(root);
-  components_.insert(&std::get<Component>(root_.v));
+  root_.v = components_.insert(std::move(root)).first;
 }
 
 inline EliminationTree::Result EliminationTree::Decompose() const {
@@ -193,10 +200,10 @@ inline EliminationTree::Result EliminationTree::Decompose() const {
   std::set<VertexType> insert_now, insert_next;
   insert_now.insert(std::get<EliminatedNode>(root_.v).vertex);
   while (!insert_now.empty()) {
-    for (auto v : insert_now) {
-      auto& v_node = std::get<EliminatedNode>(nodes_[v]->v);
-      for (auto& p : v_node.children) {
-        auto& p_node = std::get<EliminatedNode>(p.v);
+    for (auto const v : insert_now) {
+      auto const& v_node = std::get<EliminatedNode>(nodes_[v].get().v);
+      for (auto const& p : v_node.children) {
+        auto const& p_node = std::get<EliminatedNode>(p.v);
         boost::add_edge(v, p_node.vertex, ret.td_decomp);
         insert_next.insert(p_node.vertex);
       }

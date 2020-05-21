@@ -1,15 +1,15 @@
 // Copyright 2020 GISBDW. All rights reserved.
 
-#include "../../src/elimination_tree/elimination_tree.hpp"
+#include "src/elimination_tree/elimination_tree.hpp"
+
+#include <gtest/gtest.h>
 
 #include <algorithm>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/isomorphism.hpp>
 #include <list>
 #include <utility>
 #include <vector>
-
-#include "boost/graph/adjacency_list.hpp"
-#include "boost/graph/isomorphism.hpp"
-#include "gtest/gtest.h"
 
 namespace {
 struct EliminationTreeTestCase {
@@ -315,7 +315,7 @@ TEST_P(ParametrizedEliminationTreeFixture, CorrectMergeTest) {
                               std::end(testcase.components[i]), component),
                     std::end(testcase.components[i]));
         });
-    EXPECT_EQ(testcase.elimination[i - 1], et.Merge());
+    EXPECT_EQ(testcase.elimination[i - 1], et.Merge().second->first);
   }
   EXPECT_EQ(testcase.components[0].size(),
             std::distance(et.ComponentsBegin(), et.ComponentsEnd()));

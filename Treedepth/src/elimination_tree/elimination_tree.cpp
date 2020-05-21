@@ -21,31 +21,28 @@ bool EliminationTree::Component::operator==(Component const& other) const {
   return depth_ == other.depth_ && neighbours_ == other.neighbours_;
 }
 
-void EliminationTree::Eliminate(VertexType v) {
+std::list<EliminationTree::ComponentIterator> EliminationTree::Eliminate(
+    VertexType v) {
 #ifdef TD_CHECK_ARGS
-  if (!std::get_if<Component>(&nodes_[v]->v))
+  if (!std::get_if<decltype(components_)::const_iterator>(&nodes_[v].get().v))
     throw std::invalid_argument("Vertex " + std::to_string(v) +
                                 " is eliminated");
 #endif
-  auto& v_node = nodes_[v]->v;
-  auto& v_component = std::get<Component>(v_node);
-  // Remove v from graph and save its adjacency list for later
-  eliminated_nodes_.emplace_back(v_component.neighbours_.extract(v));
-  for (auto& p : v_component.neighbours_)
+  std::list<ComponentIterator> ret;
+  auto node = nodes_[v];
+  auto component = components_.extract(
+      std::get<decltype(components_)::const_iterator>(nodes_[v].get().v));
+  node.get().v = EliminatedNode{{}, v, component.value().Depth()};
+  eliminated_nodes_.emplace_back(component.value().neighbours_.extract(v));
+  for (auto& p : component.value().neighbours_)
     p.second.erase(v);
-  auto new_v_node = EliminatedNode{std::list<Node>{}, v, v_component.Depth()};
-  while (!v_component.neighbours_.empty()) {
-    Node new_node;
-    new_node.v = Component();
-    auto& new_component = std::get<Component>(new_node.v);
-    new_component.depth_ = v_component.Depth() + 1;
+  while (!component.value().AdjacencyList().empty()) {
+    Component new_component;
+    new_component.depth_ = component.value().Depth() + 1;
     new_component.nedges_ = 0;
-
-    // Desctructive BFS (separate connected components of v_component into
-    // separate Component objects)
-    decltype(v_component.neighbours_) to_be_added;
-    to_be_added.insert(
-        v_component.neighbours_.extract(std::begin(v_component.neighbours_)));
+    decltype(component.value().neighbours_) to_be_added;
+    to_be_added.insert(component.value().neighbours_.extract(
+        std::begin(component.value().neighbours_)));
     while (!to_be_added.empty()) {
       // Extract vertex to currently built component
       auto& neigbourhood =
@@ -56,52 +53,58 @@ void EliminationTree::Eliminate(VertexType v) {
       new_component.nedges_ += neigbourhood.size();
       // Schedule neighbourhood to be added into currently built component
       for (auto neigh : neigbourhood)
-        if (auto it = v_component.neighbours_.find(neigh);
-            it != std::end(v_component.neighbours_))
-          to_be_added.insert(v_component.neighbours_.extract(it));
+        if (auto it = component.value().neighbours_.find(neigh);
+            it != std::end(component.value().neighbours_))
+          to_be_added.insert(component.value().neighbours_.extract(it));
     }
-
     new_component.nedges_ /= 2;
-    new_v_node.children.push_back(std::move(new_node));
-    // Update location of vertices inside new_node
-    auto& back_ref = std::get<Component>(new_v_node.children.back().v);
-    for (auto& p : back_ref.neighbours_)
-      nodes_[p.first] = &new_v_node.children.back();
-    components_.insert(&back_ref);
+
+    auto new_component_pos = components_.insert(std::move(new_component)).first;
+    auto& node_ref = std::get<EliminatedNode>(node.get().v)
+                         .children.emplace_back(Node{new_component_pos});
+    for (auto& p : new_component_pos->AdjacencyList())
+      nodes_[p.first] = node_ref;
+    ret.push_back(ComponentIterator(new_component_pos));
   }
-  components_.erase(&v_component);
-  v_node = std::move(new_v_node);
+  return ret;
 }
 
-EliminationTree::VertexType EliminationTree::Merge() {
+std::pair<EliminationTree::ComponentIterator,
+          EliminationTree::Component::AdjacencyListType::const_iterator>
+EliminationTree::Merge() {
 #ifdef TD_CHECK_ARGS
   if (eliminated_nodes_.size() == 0)
     throw std::runtime_error("No vertex to merge");
 #endif
   Component new_component;
-  // Insert last removed vertex into new_component
-  auto to_be_merged =
+  auto vertex_being_merged =
       new_component.neighbours_.insert(std::move(eliminated_nodes_.back()))
           .position;
   eliminated_nodes_.pop_back();
-  auto& node = nodes_[to_be_merged->first];
-  new_component.depth_ = std::get<EliminatedNode>(node->v).depth;
-  // Merge child components into single graph
-  for (auto& child_component : std::get<EliminatedNode>(node->v).children) {
-    for (auto& p : std::get<Component>(child_component.v).neighbours_)
+  for (auto& child_component_node :
+       std::get<EliminatedNode>(nodes_[vertex_being_merged->first].get().v)
+           .children) {
+    auto child_component =
+        components_.extract(std::get<decltype(components_)::const_iterator>(
+            child_component_node.v));
+    for (auto& p : child_component.value().neighbours_) {
+      new_component.nedges_ += p.second.size();
       new_component.neighbours_[p.first] = std::move(p.second);
-    components_.erase(&std::get<Component>(child_component.v));
+    }
   }
-  // Add edges which were lost upon elimination
-  for (auto& p : to_be_merged->second)
-    new_component.neighbours_[p].insert(to_be_merged->first);
-  node->v = std::move(new_component);
-  // Update location of vertices inside new_component
-  auto& merged_component = std::get<Component>(node->v);
-  for (auto& p : merged_component.neighbours_)
-    nodes_[p.first] = node;
-  components_.insert(&merged_component);
-  return to_be_merged->first;
+  for (auto v : vertex_being_merged->second)
+    new_component.neighbours_[v].insert(vertex_being_merged->first);
+  new_component.depth_ =
+      std::get<EliminatedNode>(nodes_[vertex_being_merged->first].get().v)
+          .depth;
+  new_component.nedges_ += vertex_being_merged->second.size();
+  new_component.nedges_ /= 2;
+
+  auto new_component_pos = components_.insert(std::move(new_component)).first;
+  nodes_[vertex_being_merged->first].get().v = new_component_pos;
+  for (auto& p : new_component_pos->AdjacencyList())
+    nodes_[p.first] = nodes_[vertex_being_merged->first];
+  return {ComponentIterator{new_component_pos}, vertex_being_merged};
 }
 
 EliminationTree::ComponentIterator EliminationTree::ComponentsBegin() const {
@@ -114,12 +117,12 @@ EliminationTree::ComponentIterator EliminationTree::ComponentsEnd() const {
 
 EliminationTree::Component const&
 EliminationTree::ComponentIterator::operator*() const {
-  return **current_;
+  return *current_;
 }
 
 EliminationTree::Component const*
 EliminationTree::ComponentIterator::operator->() const {
-  return *current_;
+  return &*current_;
 }
 
 EliminationTree::ComponentIterator&

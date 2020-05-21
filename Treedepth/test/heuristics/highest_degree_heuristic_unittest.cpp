@@ -1,16 +1,15 @@
 // Copyright 2020 GISBDW. All rights reserved.
 
-#include "../../src/heuristics/highest_degree_heuristic.hpp"
+#include "src/branch_and_bound/heuristics/highest_degree_heuristic.hpp"
 
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+#include "common/utils/utils.hpp"
 
 using ::testing::Return;
 
 namespace {
-// Include here to avoid linker issues
-#include "../utils.hpp"
-
 class MockHeuristic : public td::BranchAndBound::Heuristic {
  public:
   MOCK_METHOD(td::EliminationTree::Result,

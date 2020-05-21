@@ -2,26 +2,10 @@
 #include "branch_and_bound.hpp"
 
 #include <algorithm>
+#include <list>
 
 namespace td {
 namespace {
-bool HasChanceImproving(
-    EliminationTree::Result const& best_tree,
-    EliminationTree::Component const& component,
-    std::variant<BranchAndBound::LowerBound::LowerBoundInfo,
-                 BranchAndBound::LowerBound::TreedepthInfo> const& v) {
-  if (auto* lbinfo =
-          std::get_if<BranchAndBound::LowerBound::LowerBoundInfo>(&v)) {
-    if (component.Depth() + lbinfo->lower_bound >= best_tree.treedepth)
-      return false;
-  } else if (auto* tdinfo =
-                 std::get_if<BranchAndBound::LowerBound::TreedepthInfo>(&v)) {
-    if (component.Depth() + tdinfo->treedepth >= best_tree.treedepth)
-      return false;
-  }
-  return true;
-}
-
 std::vector<EliminationTree::VertexType> DefaultAttemptOrder(
     EliminationTree::Component const& component) {
   std::vector<EliminationTree::VertexType> ret;
@@ -47,9 +31,9 @@ BranchAndBound::LowerBound::BetterResult(
   auto& v1 = *v1_p;
   auto& v2 = *v2_p;
 
-  if (auto* td_info1 = std::get_if<TreedepthInfo>(&v1))
+  if (std::get_if<TreedepthInfo>(&v1))
     return v1;
-  if (auto* td_info2 = std::get_if<TreedepthInfo>(&v2))
+  if (std::get_if<TreedepthInfo>(&v2))
     return v2;
   auto& lb_info1 = std::get<LowerBoundInfo>(v1);
   auto& lb_info2 = std::get<LowerBoundInfo>(v2);
@@ -72,34 +56,60 @@ void BranchAndBound::Algorithm() {
       best_tree_ = std::move(result);
     return;
   }
-
-  auto begin = elimination_tree_->ComponentsBegin();
-  auto& component = *begin;
-  auto lb_begin = lower_bound_->Get(*begin);
-  if (!HasChanceImproving(best_tree_, component, lb_begin))
-    return;
-  while (++begin != elimination_tree_->ComponentsEnd())
-    if (!HasChanceImproving(best_tree_, *begin, lower_bound_->Get(*begin)))
+  auto component_iterator = elimination_tree_->ComponentsBegin();
+  auto first_component_lb = lower_bound_->Get(*component_iterator);
+  auto first_component_depth = elimination_tree_->ComponentsBegin()->Depth();
+  std::list<EliminationTree::VertexType> to_be_eliminated;
+  while (++component_iterator != elimination_tree_->ComponentsEnd()) {
+    auto lb = lower_bound_->Get(*component_iterator);
+    if (auto* lbinfo = std::get_if<LowerBound::LowerBoundInfo>(&lb)) {
+      if (component_iterator->Depth() + lbinfo->lower_bound >=
+          best_tree_.treedepth)
+        return;
+    } else if (auto* tdinfo = std::get_if<LowerBound::TreedepthInfo>(&lb)) {
+      if (component_iterator->Depth() + tdinfo->treedepth >=
+          best_tree_.treedepth)
+        return;
+      to_be_eliminated.splice(std::end(to_be_eliminated),
+                              tdinfo->elimination_order);
+    }
+  }
+  if (auto* lbinfo =
+          std::get_if<LowerBound::LowerBoundInfo>(&first_component_lb)) {
+    if (first_component_depth + lbinfo->lower_bound >= best_tree_.treedepth)
       return;
-
-  if (auto* tdinfo = std::get_if<LowerBound::TreedepthInfo>(&lb_begin)) {
-    for (auto v : tdinfo->elimination_order)
+    std::vector<EliminationTree::VertexType> attempt_order;
+    if (lbinfo->attempt_order)
+      attempt_order = std::move(*lbinfo->attempt_order);
+    else
+      attempt_order =
+          DefaultAttemptOrder(*elimination_tree_->ComponentsBegin());
+    for (auto v : to_be_eliminated)
+      elimination_tree_->Eliminate(v);
+    for (auto v : attempt_order) {
+      elimination_tree_->Eliminate(v);
+      Algorithm();
+      elimination_tree_->Merge();
+    }
+    for (auto v : to_be_eliminated) {
+      (void)v;
+      elimination_tree_->Merge();
+    }
+    return;
+  } else if (auto* tdinfo =
+                 std::get_if<LowerBound::TreedepthInfo>(&first_component_lb)) {
+    if (first_component_depth + tdinfo->treedepth >= best_tree_.treedepth)
+      return;
+    to_be_eliminated.splice(std::end(to_be_eliminated),
+                            tdinfo->elimination_order);
+    for (auto v : to_be_eliminated)
       elimination_tree_->Eliminate(v);
     Algorithm();
-    for (int i = 0; i < tdinfo->elimination_order.size(); ++i)
+    for (auto v : to_be_eliminated) {
+      (void)v;
       elimination_tree_->Merge();
+    }
     return;
-  }
-  std::vector<EliminationTree::VertexType> attempt_order;
-  auto& lbinfo = std::get<LowerBound::LowerBoundInfo>(lb_begin);
-  if (lbinfo.attempt_order)
-    attempt_order = std::move(*lbinfo.attempt_order);
-  else
-    attempt_order = DefaultAttemptOrder(component);
-  for (auto v : attempt_order) {
-    elimination_tree_->Eliminate(v);
-    Algorithm();
-    elimination_tree_->Merge();
   }
 }
 }  // namespace td
