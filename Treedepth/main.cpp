@@ -20,6 +20,7 @@
 #include "src/branch_and_bound/heuristics/highest_degree_heuristic.hpp"
 #include "src/branch_and_bound/heuristics/spanning_tree_heuristic.hpp"
 #include "src/branch_and_bound/heuristics/variance_heuristic.hpp"
+#include "src/branch_and_bound/lower_bound/basic_lower_bound.hpp"
 #include "src/branch_and_bound/lower_bound/edge_lower_bound.hpp"
 #include "src/dynamic_cpu/dynamic_cpu.hpp"
 #include "src/dynamic_cpu/dynamic_cpu_improv.hpp"
@@ -137,10 +138,11 @@ int main(int argc, char** argv) {
       td::DynamicCPU dcpu;
       dcpu(graph);
       stats.decomposition = dcpu.GetTDDecomp(0, graph);
-    } else if ("dynCPUImprov") {
-      td::DynamicCPU dcpu;
+    } else if (algorithm_type == "dynCPUImprov") {
+      td::DynamicCPUImprov dcpu;
       dcpu(graph);
       std::size_t code = (1 << boost::num_vertices(graph)) - 1;
+      std::cout << code << std::endl;
       stats.decomposition = dcpu.GetTDDecomp(code, graph);
     } else if (algorithm_type == "bnbCPU") {
       td::BranchAndBound bnb;
