@@ -142,7 +142,6 @@ int main(int argc, char** argv) {
       td::DynamicCPUImprov dcpu;
       dcpu(graph);
       std::size_t code = (1 << boost::num_vertices(graph)) - 1;
-      std::cout << code << std::endl;
       stats.decomposition = dcpu.GetTDDecomp(code, graph);
     } else if (algorithm_type == "bnbCPU") {
       td::BranchAndBound bnb;
@@ -163,6 +162,7 @@ int main(int argc, char** argv) {
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() /
         1000.0;
     stats.time_elapsed = duration;
+    stats.algorithm_type = algorithm_type;
     std::cout << "Elapsed time: " << duration << " seconds\n";
     std::cout << "Treedepth: " << stats.decomposition.treedepth << "\n";
     fs::path stats_path = output_dir / graph_path.filename();
