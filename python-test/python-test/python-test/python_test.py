@@ -130,7 +130,7 @@ def GatherData(path):
 
 
 def CreateParser():
-    algorithms = ['bnbCPU', 'dyn', 'hyb', 'dynGPU']
+    algorithms = ['bnbCPU', 'dynCPU', 'dynCPUImprov']
     tests = ['timeElapsed']
     benchmarkGraphs = ['paths', 'cliques']
 
