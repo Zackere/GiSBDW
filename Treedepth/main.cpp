@@ -59,6 +59,16 @@ bool IsFile(fs::path const& path) {
   }
   return true;
 }
+
+std::string GetRandomFilenameSuffix() {
+  auto epoch = std::chrono::duration_cast<std::chrono::seconds>(
+                   std::chrono::high_resolution_clock::now().time_since_epoch())
+                   .count();
+  std::random_device dev;
+  std::mt19937 rng(dev());
+  std::uniform_int_distribution<> dist;
+  return std::to_string(epoch) + std::to_string(dist(rng));
+}
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -125,13 +135,17 @@ int main(int argc, char** argv) {
       boost::add_edge(std::stoi((*edges)[1]), std::stoi((*edges)[2]), graph);
 
     td::Statistics stats;
-    stats.graph_name = graph_path.filename().string();
+    auto graph_name = graph_path;
+    while (graph_name != graph_name.stem())
+      graph_name = graph_name.stem();
+    stats.graph_name = graph_name.string();
     stats.nvertices = boost::num_vertices(graph);
     stats.nedges = boost::num_edges(graph);
-    std::cout << "Processing graph " << graph_path.filename() << std::endl;
-    std::cout << "Algorithm: " << algorithm_type << std::endl;
-    std::cout << "Vertices: " << boost::num_vertices(graph) << std::endl;
-    std::cout << "Edges: " << boost::num_edges(graph) << std::endl;
+    stats.algorithm_type = algorithm_type;
+    std::cout << "Processing graph " << stats.graph_name << std::endl;
+    std::cout << "Algorithm: " << stats.algorithm_type << std::endl;
+    std::cout << "Vertices: " << stats.nvertices << std::endl;
+    std::cout << "Edges: " << stats.nedges << std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
 
     if (algorithm_type == "dynCPU") {
@@ -141,18 +155,18 @@ int main(int argc, char** argv) {
     } else if (algorithm_type == "dynCPUImprov") {
       td::DynamicCPUImprov dcpu;
       dcpu(graph);
-      std::size_t code = (1 << boost::num_vertices(graph)) - 1;
-      stats.decomposition = dcpu.GetTDDecomp(code, graph);
+      std::size_t code = 1;
+      code <<= boost::num_vertices(graph);
+      stats.decomposition = dcpu.GetTDDecomp(--code, graph);
     } else if (algorithm_type == "bnbCPU") {
       td::BranchAndBound bnb;
-      auto res =
+      stats.decomposition =
           bnb(graph, std::make_unique<td::EdgeLowerBound>(),
               std::make_unique<td::HighestDegreeHeuristic>(
                   std::make_unique<td::SpanningTreeHeuristic>(
                       std::make_unique<td::VarianceHeuristic>(
                           std::make_unique<td::BottomUpHeuristicGPU>(nullptr),
                           1.0, 0.2, 0.8))));
-      stats.decomposition = res;
     } else {
       std::cerr << "Wrong algorithm option specified.\n";
       Usage(description);
@@ -162,10 +176,11 @@ int main(int argc, char** argv) {
         std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() /
         1000.0;
     stats.time_elapsed = duration;
-    stats.algorithm_type = algorithm_type;
     std::cout << "Elapsed time: " << duration << " seconds\n";
     std::cout << "Treedepth: " << stats.decomposition.treedepth << "\n";
-    fs::path stats_path = output_dir / graph_path.filename();
+    fs::path stats_path = output_dir / graph_name;
+    stats_path += "_";
+    stats_path += GetRandomFilenameSuffix();
     stats_path += ".out";
     std::cout << "Output written to: " << stats_path << "\n\n";
     std::ofstream file(stats_path);
