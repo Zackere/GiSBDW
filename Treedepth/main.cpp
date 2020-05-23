@@ -87,7 +87,11 @@ int main(int argc, char** argv) {
       "Possible args:\n"
       "bnbCPU - for branch and bound algorithm ran on CPU\n"
       "dynCPU - for dynamic algorithm ran on CPU\n"
-      "dynCPUImprov - for dynamic algorithm ran on CPU version 2\n")(
+      "dynCPUImprov - for dynamic algorithm ran on CPU version 2\n"
+      "highestDegreeHeur - for highest degree heuristic\n"
+      "spanningTreeHeur - for spanning tree heuristic\n"
+      "varianceHeur - for variance heuristic\n"
+      "bottomUpHeur - for union-find based heurstic\n")(
       "input,i",
       po::value<std::vector<std::string>>(&graph_paths_string)->required(),
       "path to input graph")(
@@ -167,6 +171,15 @@ int main(int argc, char** argv) {
                       std::make_unique<td::VarianceHeuristic>(
                           std::make_unique<td::BottomUpHeuristicGPU>(nullptr),
                           1.0, 0.2, 0.8))));
+    } else if (algorithm_type == "highestDegreeHeur") {
+      stats.decomposition = td::HighestDegreeHeuristic(nullptr).Get(graph);
+    } else if (algorithm_type == "spanningTreeHeur") {
+      stats.decomposition = td::SpanningTreeHeuristic(nullptr).Get(graph);
+    } else if (algorithm_type == "varianceHeur") {
+      stats.decomposition =
+          td::VarianceHeuristic(nullptr, 1.0, 0.2, 0.8).Get(graph);
+    } else if (algorithm_type == "bottomUpHeur") {
+      stats.decomposition = td::BottomUpHeuristicGPU(nullptr).Get(graph);
     } else {
       std::cerr << "Wrong algorithm option specified.\n";
       Usage(description);
