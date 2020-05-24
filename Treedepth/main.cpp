@@ -159,7 +159,7 @@ int main(int argc, char** argv) {
     } else if (algorithm_type == "dynCPUImprov") {
       td::DynamicCPUImprov dcpu;
       dcpu(graph);
-      std::size_t code = 1;
+      td::DynamicCPUImprov::CodeType code = 1;
       code <<= boost::num_vertices(graph);
       stats.decomposition = dcpu.GetTDDecomp(--code, graph);
     } else if (algorithm_type == "bnbCPU") {

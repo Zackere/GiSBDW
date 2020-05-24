@@ -24,10 +24,9 @@ TEST_P(BCF, DynamicCPU) {
 TEST_P(BCF, DynamicCPUImprov) {
   td::DynamicCPUImprov dyncpu;
   dyncpu(GetParam());
-  std::size_t code = 0;
-  for (std::size_t i = 0; i < boost::num_vertices(GetParam()); ++i)
-    code |= static_cast<std::size_t>(1) << i;
-  dyncpu.GetTDDecomp(code, GetParam());
+  td::DynamicCPUImprov::CodeType code = 1;
+  code <<= boost::num_vertices(GetParam());
+  dyncpu.GetTDDecomp(--code, GetParam());
 }
 
 TEST_P(BCF, BNBBasicLoweBoundHighestDegreeHeuristic) {
@@ -66,7 +65,8 @@ INSTANTIATE_TEST_SUITE_P(Paths,
                                            Path(20),
                                            Path(22),
                                            Path(24),
-                                           Path(26)));
+                                           Path(26),
+                                           Path(27)));
 INSTANTIATE_TEST_SUITE_P(Cycles,
                          BCF,
                          ::testing::Values(Cycle(8),

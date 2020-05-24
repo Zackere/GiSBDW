@@ -35,7 +35,7 @@ TEST_P(CTF, CorrectnessTest) {
 
   td::DynamicCPUImprov dyncpu_improv;
   dyncpu_improv(g);
-  std::size_t code = (1 << boost::num_vertices(g)) - 1;
+  td::DynamicCPUImprov::CodeType code = (1 << boost::num_vertices(g)) - 1;
   auto res_dyncpu_imrprov = dyncpu_improv.GetTDDecomp(code, g);
   EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu_imrprov));
   EXPECT_EQ(res_bnb.treedepth, res_dyncpu_imrprov.treedepth);
@@ -54,11 +54,7 @@ INSTANTIATE_TEST_SUITE_P(Paths,
                                            Path(12),
                                            Path(14),
                                            Path(16),
-                                           Path(18),
-                                           Path(20),
-                                           Path(22),
-                                           Path(24),
-                                           Path(26)));
+                                           Path(18)));
 
 INSTANTIATE_TEST_SUITE_P(ChordalCycles,
                          CTF,

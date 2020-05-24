@@ -31,11 +31,11 @@ class DynamicCPU {
       boost::adjacency_list<OutEdgeList,
                             VertexList,
                             boost::undirectedS,
-                            Args...> const& induced_graph);
+                            Args...> const& induced_graph) const;
 
   std::size_t GetTreedepth(std::size_t nverts,
                            std::size_t subset_size,
-                           std::size_t subset_code);
+                           std::size_t subset_code) const;
 
  private:
   void Run(BoostGraph const& g);
@@ -49,7 +49,11 @@ inline void DynamicCPU::operator()(boost::adjacency_list<OutEdgeList,
                                                          Args...> const& g) {
   BoostGraph graph;
   boost::copy_graph(g, graph);
-  Run(graph);
+  try {
+    Run(graph);
+  } catch (std::bad_alloc const&) {
+    return;
+  }
 }
 
 template <typename OutEdgeList, typename VertexList, typename... Args>
@@ -58,7 +62,7 @@ inline EliminationTree::Result DynamicCPU::GetTDDecomp(
     boost::adjacency_list<OutEdgeList,
                           VertexList,
                           boost::undirectedS,
-                          Args...> const& induced_graph) {
+                          Args...> const& induced_graph) const {
   if (boost::num_vertices(induced_graph) < history_.size()) {
     if (auto it = history_[boost::num_vertices(induced_graph)].find(code);
         it != std::end(history_[boost::num_vertices(induced_graph)])) {
@@ -66,8 +70,9 @@ inline EliminationTree::Result DynamicCPU::GetTDDecomp(
       while (et.ComponentsBegin() != et.ComponentsEnd())
         et.Eliminate(
             std::get<1>(history_[et.ComponentsBegin()->AdjacencyList().size()]
-                                [set_encoder::Encode(
-                                    et.ComponentsBegin()->AdjacencyList())]));
+                            .find(set_encoder::Encode(
+                                et.ComponentsBegin()->AdjacencyList()))
+                            ->second));
       return et.Decompose();
     }
   }
