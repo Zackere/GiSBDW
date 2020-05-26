@@ -23,18 +23,11 @@ def PlotLowerBound(x, n, ax, label):
     ax.legend()
 
 
-def RunTest(inputPath, groupBy, xAxes, yAxes, plotTypes, description):
-    dataFrame = GatherData(inputPath)
-    ShowResultss(dataFrame=dataFrame,
-                groupBy=groupBy,
-                xAxes=xAxes,
-                yAxes=yAxes,
-                plotTypes=plotTypes,
-                description=description)
-
 def ShowResultss(dataFrame, groupBy, xAxes, yAxes, plotTypes, description):
     numberOfSubplots = len(xAxes)
     fig, axes = plt.subplots(1,numberOfSubplots)
+    if numberOfSubplots == 1:
+        axes = [axes]
     for ax, group, xAxis, yAxis, plotType in zip(axes, groupBy, xAxes, yAxes, plotTypes):
         dataFrame.sort_values(by=[group, xAxis], inplace = True)
         print(f"Result dataframe. Ordered by [{group}, {xAxis}]")
@@ -79,109 +72,25 @@ def LoadJson(path):
     with open(path) as json_file:
         return json.load(json_file)
 
-def GetOutput(outputPath, inputFilename):
-    path = f"{outputPath}/{basename(inputFilename)}{config['outputExtension']}"
-    with open(path) as json_file:
-        return json.load(json_file)
-
-def ExecuteAlgorithm(pathToBin, algorithmType, inputFile, outputPath, timeout):
-    command = f"{pathToBin} -a {algorithmType} -o {outputPath} {inputFile}"
-    result = subprocess.run(command, timeout=timeout)
-    if result.returncode != 0:
-        raise ChildProcessError(f"{command} did not succeed. Return code: {result}")
-
-    return GetOutput(outputPath, inputFile)
-
-def GetAbsoluteFilePaths(path):
-    return [join(path, element) for element in listdir(path) if isfile(join(path, element))]
-
-
-def GatherData(path):
-    timeouted = False
-    binPath = config["paths"]["bin"]
-    outputPath = path + "Out"
-    filenames = GetAbsoluteFilePaths(path)
-    columns = ["algorithm","filename","timeElapsed","edges","vertices","treedepth"]
-    data = {}
-    for column in columns:
-        data[column] = []
-    for filename in filenames:
-        if not timeouted:
-            for algorithmType in args["algorithm"]:
-                runsPerGraph, = args["runsPerGraph"]
-                timeElapsed = 0
-                for i in range(runsPerGraph):
-                    try:
-                        result = ExecuteAlgorithm(binPath, algorithmType, filename, outputPath, args["timeout"][0])
-                    except subprocess.TimeoutExpired as ex:
-                        print(f"Timeout on graph {basename(filename)}")
-                        timeouted = True
-                        data["timeElapsed"].append(0)
-                        data["filename"].append(basename(filename))
-                        data["algorithm"].append(algorithmType)
-                        data["edges"].append(0)
-                        data["vertices"].append(0)
-                        data["treedepth"].append(0)
-                        break
-                    timeElapsed = timeElapsed + float(result["timeElapsed"])
-                data["timeElapsed"].append(timeElapsed/runsPerGraph)
-                data["filename"].append(basename(filename))
-                data["algorithm"].append(algorithmType)
-                data["edges"].append(int(result["edges"]))
-                data["vertices"].append(int(result["vertices"]))
-                data["treedepth"].append(int(result["treedepth"]))
-    return pd.DataFrame(data)
-
-
 def CreateParser():
-    #algorithms = ['bnbCPU', 'dynCPU', 'dynCPUImprov']
-    #tests = ['timeElapsed']
-    #benchmarkGraphs = ['paths', 'cliques']
-
     parser = argparse.ArgumentParser(
         description='Run benchmarks for treedepth algorithms',
         epilog="Example app.py --random 10 0.4 12 --a dyn bnb"
         )
 
-    #parser.add_argument('--algorithm', '-a', metavar='alg', type=str, nargs="+",
-    #                help='Algorithm to run.\nOne or more from: [%(choices)s]', required=True, choices=algorithms)
-    #parser.add_argument('--runsPerGraph', '-r', metavar='numOfRuns', type=int, nargs=1, default=[1],
-    #                    help='Specify how many times time measurement should be repeated for each graph. Default = 1')
-
     parser.add_argument('--input', '-i', metavar='dir', type=str, nargs=1,
                         help='Input dir for stats')
 
-    #inputGroup = parser.add_mutually_exclusive_group(required=True)
-    #inputGroup.add_argument('--benchmark', type=str, nargs=1,
-    #                       help="Run on group of benchmark graphs. One from [%(choices)s]", choices=benchmarkGraphs)
-    #inputGroup.add_argument('--random', metavar=('v','d','n'), type=float, nargs=3,
-    #                       help="""Run on random graphs.
-    #                       v - number of vertices,
-    #                       d - density,
-    #                       n - number of graphs""")
-    #inputGroup.add_argument('--density', metavar=('v','dLow','dHigh','n'), type=float, nargs=4,
-    #                       help="""Run on random graphs with incrasing density.
-    #                       v - number of vertices,
-    #                       dLow - starting density,
-    #                       dHigh - end density
-    #                       n - number of graphs""")
-    #inputGroup.add_argument('--vertices', metavar=('vLow','vHigh', 'd', 'n'), type=float, nargs=4,
-    #                       help="""Run on random graphs with incrasing vertices count.
-    #                       vLow - starting number of vertices,
-    #                       vHigh- ending number of vertices,
-    #                       d - density
-    #                       n - number of graphs""")
+    parser.add_argument('--xAxis', '-x', metavar='stat', type=str, nargs='+',
+                        help='Variable of x axis', required=True)
+    parser.add_argument('--yAxis', '-y', metavar='stat', type=str, nargs='+',
+                        help='Variable of y axis', required=True)
+    parser.add_argument('--plot', '-p', metavar='plotType', type=str, nargs='+',
+                        help='Plot type', required=True)
+    parser.add_argument('--desc', '-d', metavar='description', type=str, nargs=1,
+                        help='Plot description', default=[''], required=False)
     return parser
 
-def LoadConfig(path):
-    with open('config.json') as jsonConfig:
-        global config
-        config = json.load(jsonConfig)
-    for key, value in config["paths"].items():
-        config["paths"][key] = abspath(value)
-
-config = {}
-args = {}
 
 def LoadDataToDataFrame(path):
     files = utils.GetAbsoluteFilePaths(path)
@@ -198,64 +107,26 @@ def LoadDataToDataFrame(path):
         data["vertices"].append(int(stats["vertices"]))
         data["treedepth"].append(int(stats["treedepth"]))
         data["timeElapsed"].append(float(stats["timeElapsed"]))
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    df = df.groupby(["algorithm", "filename"], as_index=False).mean()
+    return df
 
-config = {}
 
 if __name__ == "__main__":
-    LoadConfig("config.json")
     parser = CreateParser()
     args = vars(parser.parse_args());
     inputDir = args["input"][0]
     df = LoadDataToDataFrame(inputDir)
-    print(df)
-    #if args["benchmark"]:
-    #    executePath = config["paths"][args["benchmark"][0]]
-    #    utils.OverwriteDir(f"{executePath}Out")
-    #    RunTest(inputPath=executePath,
-    #           groupBy=["algorithm", "algorithm"],
-    #           xAxes=["filename","filename"],
-    #           yAxes=["timeElapsed", "treedepth"],
-    #           plotTypes=["bar", "bar"],
-    #           description=f"Benchmark graphs")
-
-    #elif args["random"]:
-    #    v, d, n = args["random"]
-    #    v = int(v)
-    #    n = int(n)
-    #    gg.GenerateRandomGraphs(n,d,v)
-    #    executePath = config["paths"]["randomGraphs"]
-    #    RunTest(inputPath=executePath,
-    #           groupBy=["algorithm", "algorithm"],
-    #           xAxes=["filename","filename"],
-    #           yAxes=["timeElapsed", "treedepth"],
-    #           plotTypes=["bar", "bar"],
-    #           description=f"Random graphs with {v} vertices and density {d}")
-
-    #elif args["density"]:
-    #    v, dLow, dHigh, n = args["density"]
-    #    v = int(v)
-    #    n = int(n)
-    #    gg.GenerateGraphsWithIncrasingDensity(n,dLow,dHigh,v)
-    #    executePath = config["paths"]["randomGraphs"]
-    #    RunTest(inputPath=executePath,
-    #           groupBy=["algorithm", "algorithm"],
-    #           xAxes=["edges","edges"],
-    #           yAxes=["timeElapsed", "treedepth"],
-    #           plotTypes=["scatterFit", "scatterFit"],
-    #           description=f"Graphs with {v} vertices")
-
-    #elif args["vertices"]:
-    #    vLow, vHigh, d, n = args["vertices"]
-    #    vLow = int(vLow)
-    #    vHigh = int(vHigh)
-    #    n = int(n)
-    #    gg.GenerateGraphsWithIncrasingNumberOfVertices(
-    #        n, vLow, vHigh, d)
-    #    executePath = config["paths"]["randomGraphs"]
-    #    RunTest(inputPath=executePath,
-    #           groupBy=["algorithm", "algorithm"],
-    #           xAxes=["vertices","vertices"],
-    #           yAxes=["timeElapsed", "treedepth"],
-    #           plotTypes=["scatterFit", "scatterFit"],
-    #           description=f"Graphs with density {d}")
+    xAxes = args['xAxis']
+    yAxes = args['yAxis']
+    plotTypes = args['plot']
+    groupBy = ["algorithm" for i in range(len (xAxes))]
+    description = args['desc'][0]
+    ShowResultss(
+        df,
+        groupBy=groupBy,
+        xAxes=xAxes,
+        yAxes=yAxes,
+        plotTypes=plotTypes,
+        description=description
+    )

@@ -4,7 +4,7 @@ import utils
 import json
 import subprocess
 import sys
-
+from os.path import abspath
 
 def CreateParser():
     algorithms = ['bnbCPU', 'dynCPU', 'dynCPUImprov']
