@@ -4,9 +4,6 @@ import utils
 import json
 import subprocess
 import sys
-from os.path import isfile, join, abspath, basename
-from os import listdir, chdir
-
 
 
 def CreateParser():
@@ -44,11 +41,9 @@ def ExecuteAlgorithm(pathToBin, algorithmType, inputFile, outputPath, timeout):
     if result.returncode != 0:
         raise ChildProcessError(f"{command} did not succeed. Return code: {result}")
 
-def GetAbsoluteFilePaths(path):
-    return [join(abspath(path), element) for element in listdir(path) if isfile(join(path, element))]
 
 def ExecuteAlgorithms(inputDir, outputDir, algorithms, timeout, runsPerGraph):
-    graphsAbsolutePaths = GetAbsoluteFilePaths(inputDir)
+    graphsAbsolutePaths = utils.GetAbsoluteFilePaths(inputDir)
     binPath = config["paths"]["bin"]
     timeouted = []
     for graphPath in graphsAbsolutePaths:
