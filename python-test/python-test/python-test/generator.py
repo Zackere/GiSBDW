@@ -15,6 +15,10 @@ def CreateParser():
                         help='Graphs generating expression', required=True)
     parser.add_argument('--output', '-o', metavar='dir', type=str, nargs=1,
                     help='Output directory path.', required=True)
+    parser.add_argument('--connected', '-c', metavar='dir',
+                        action='store_const', const=True, default = False,
+                    help='Filter out not connected graphs.', required=False)
+
     return parser
 
 
@@ -23,8 +27,13 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
     expression = args['exp'][0].strip('"').strip("'")
     outputDir = args['output'][0]
-    print(f"Args supplied:\nExpression -> {expression}\nOutput directory -> {outputDir}")
+    filterNotConnected = args['connected']
+    print(f"Args supplied:\nExpression -> {expression}")
+    print(f"Output directory -> {outputDir}")
+    print(f"Filter not connected graphs -> {filterNotConnected}")
     graphs = eval(expression)
+    if filterNotConnected:
+        graphs = filter(lambda graph : networkx.is_connected(graph), graphs)
     utils.OverwriteDir(outputDir)
     for i, graph in enumerate(graphs):
         filename = f"G{(i):05d}"
