@@ -15,11 +15,11 @@ namespace {
 class BCF : public ::testing::TestWithParam<Graph> {};
 }  // namespace
 
-TEST_P(BCF, DynamicCPU) {
-  td::DynamicCPU dyncpu;
-  dyncpu(GetParam());
-  dyncpu.GetTDDecomp(0, GetParam());
-}
+ TEST_P(BCF, DynamicCPU) {
+   td::DynamicCPU dyncpu;
+   dyncpu(GetParam());
+   dyncpu.GetTDDecomp(0, GetParam());
+ }
 
 TEST_P(BCF, DynamicCPUImprov) {
   td::DynamicCPUImprov dyncpu;
@@ -105,7 +105,7 @@ INSTANTIATE_TEST_SUITE_P(
                       SpanningTree(RandomSparseConnectedGraph(24)),
                       SpanningTree(RandomSparseConnectedGraph(26)),
                       SpanningTree(RandomSparseConnectedGraph(28)),
-                      SpanningTree(RandomSparseConnectedGraph(30))));
+                      SpanningTree(RandomSparseConnectedGraph(60))));
 
 INSTANTIATE_TEST_SUITE_P(HalinGraphs,
                          BCF,
