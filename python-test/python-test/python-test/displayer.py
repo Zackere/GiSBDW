@@ -104,7 +104,9 @@ def CreateParser():
     parser.add_argument('--xAxis', '-x', metavar='stat', type=str, nargs='+',
                         help='Variable of x axis', required=True)
     parser.add_argument('--algorithm', '-a', metavar='alg', type=str, nargs='+',
-                        help='Algorithms to show', required=False, default = ['bnbCPU','dynCPU','dynCPUImprov'])
+                        help='Algorithms to show', required=False, default = ['bnbCPU', 'dynCPU', 'dynCPUImprov',
+                  'highestDegreeHeur', 'spanningTreeHeur',
+                  'varianceHeur', 'bottomUpHeur'])
     parser.add_argument('--yAxis', '-y', metavar='stat', type=str, nargs='+',
                         help='Variable of y axis', required=True)
     parser.add_argument('--plot', '-p', metavar='plotType', type=str, nargs='+',
@@ -132,6 +134,7 @@ def LoadDataToDataFrame(path, predicate):
             data["timeElapsed"].append(float(stats["timeElapsed"]))
     df = pd.DataFrame(data)
     df = df.groupby(["algorithm", "filename"], as_index=False).mean()
+
     return df
 
 

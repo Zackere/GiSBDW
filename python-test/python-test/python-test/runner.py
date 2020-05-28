@@ -7,7 +7,9 @@ import sys
 from os.path import abspath
 
 def CreateParser():
-    algorithms = ['bnbCPU', 'dynCPU', 'dynCPUImprov']
+    algorithms = ['bnbCPU', 'dynCPU', 'dynCPUImprov',
+                  'highestDegreeHeur', 'spanningTreeHeur',
+                  'varianceHeur', 'bottomUpHeur']
 
     parser = argparse.ArgumentParser(
         description='Run algorithms on graphs in given directory',

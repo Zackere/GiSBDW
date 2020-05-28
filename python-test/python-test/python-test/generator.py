@@ -4,6 +4,7 @@ from networkx.generators import *
 import utils
 import os
 import sys
+import randomGraph
 from numpy import linspace
 
 def CreateParser():
