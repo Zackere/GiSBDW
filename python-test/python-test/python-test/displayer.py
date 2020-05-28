@@ -33,7 +33,16 @@ def ShowResultss(dataFrame, groupBy, xAxes, yAxes, plotTypes, description):
         print(f"Result dataframe. Ordered by [{group}, {xAxis}]")
         print(dataFrame.to_string())
         if plotType == "scatterFit":
-            ScatterFitPlot(dataFrame, group, xAxis, yAxis, ax, 5)
+            ScatterFitPlot(dataFrame, group, xAxis, yAxis, ax, 3)
+            if(xAxis == "edges" and yAxis == "treedepth"):
+                axisIndex = yAxes.index("treedepth")
+                PlotLowerBound(
+                    dataFrame["edges"],
+                    dataFrame["vertices"][0],
+                    axes[axisIndex],
+                    "Lower bound")
+        elif plotType == "scatter":
+            ScatterPlot(dataFrame, group, xAxis, yAxis, ax)
             if(xAxis == "edges" and yAxis == "treedepth"):
                 axisIndex = yAxes.index("treedepth")
                 PlotLowerBound(
@@ -68,6 +77,18 @@ def ScatterFitPlot(dataFrame, groupBy, xAxis, yAxis, ax, degree = 3):
     ax.set_ylabel(yAxis)
     ax.legend()
 
+def ScatterPlot(dataFrame, groupBy, xAxis, yAxis, ax):
+    colors = "bgrcmykw"
+    markers = "os+D*px"
+    for i, uniqueGroup in enumerate(dataFrame[groupBy].unique()):
+        filteredDf = dataFrame.loc[dataFrame[groupBy] == uniqueGroup]
+        xAxisData = filteredDf[xAxis]
+        yAxisData = filteredDf[yAxis]
+        ax.plot(xAxisData, yAxisData, f'{colors[i%len(colors)]}{markers[i%len(markers)]}', label=uniqueGroup)
+    ax.set_xlabel(xAxis)
+    ax.set_ylabel(yAxis)
+    ax.legend()
+
 def LoadJson(path):
     with open(path) as json_file:
         return json.load(json_file)
@@ -80,9 +101,10 @@ def CreateParser():
 
     parser.add_argument('--input', '-i', metavar='dir', type=str, nargs=1,
                         help='Input dir for stats')
-
     parser.add_argument('--xAxis', '-x', metavar='stat', type=str, nargs='+',
                         help='Variable of x axis', required=True)
+    parser.add_argument('--algorithm', '-a', metavar='alg', type=str, nargs='+',
+                        help='Algorithms to show', required=False, default = ['bnbCPU','dynCPU','dynCPUImprov'])
     parser.add_argument('--yAxis', '-y', metavar='stat', type=str, nargs='+',
                         help='Variable of y axis', required=True)
     parser.add_argument('--plot', '-p', metavar='plotType', type=str, nargs='+',
@@ -92,7 +114,7 @@ def CreateParser():
     return parser
 
 
-def LoadDataToDataFrame(path):
+def LoadDataToDataFrame(path, predicate):
     files = utils.GetAbsoluteFilePaths(path)
     files = list(filter(lambda x : not x.endswith(".gviz"), files))
     columns = ["algorithm","filename","timeElapsed","edges","vertices","treedepth"]
@@ -101,12 +123,13 @@ def LoadDataToDataFrame(path):
         data[column] = []
     for file in files:
         stats = LoadJson(file)
-        data["filename"].append(basename(stats["graphName"]))
-        data["algorithm"].append(stats["algorithmType"])
-        data["edges"].append(int(stats["edges"]))
-        data["vertices"].append(int(stats["vertices"]))
-        data["treedepth"].append(int(stats["treedepth"]))
-        data["timeElapsed"].append(float(stats["timeElapsed"]))
+        if predicate(stats):
+            data["filename"].append(basename(stats["graphName"]))
+            data["algorithm"].append(stats["algorithmType"])
+            data["edges"].append(int(stats["edges"]))
+            data["vertices"].append(int(stats["vertices"]))
+            data["treedepth"].append(int(stats["treedepth"]))
+            data["timeElapsed"].append(float(stats["timeElapsed"]))
     df = pd.DataFrame(data)
     df = df.groupby(["algorithm", "filename"], as_index=False).mean()
     return df
@@ -115,8 +138,9 @@ def LoadDataToDataFrame(path):
 if __name__ == "__main__":
     parser = CreateParser()
     args = vars(parser.parse_args());
+    algorithms = args['algorithm']
     inputDir = args["input"][0]
-    df = LoadDataToDataFrame(inputDir)
+    df = LoadDataToDataFrame(inputDir, lambda stats : stats['algorithmType'] in algorithms)
     xAxes = args['xAxis']
     yAxes = args['yAxis']
     plotTypes = args['plot']
