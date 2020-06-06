@@ -24,6 +24,7 @@
 #include "src/branch_and_bound/lower_bound/edge_lower_bound.hpp"
 #include "src/dynamic_cpu/dynamic_cpu.hpp"
 #include "src/dynamic_cpu/dynamic_cpu_improv.hpp"
+#include "src/dynamic_gpu/dynamic_gpu.hpp"
 #include "src/elimination_tree/elimination_tree.hpp"
 #include "src/statistics/statistics.hpp"
 
