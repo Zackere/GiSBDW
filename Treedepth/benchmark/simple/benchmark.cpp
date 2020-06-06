@@ -109,4 +109,4 @@ TEST_P(BCF, DynGPU) {
 //                                           RandomSparseConnectedGraph(14),
 //                                           RandomSparseConnectedGraph(16)));
 
-INSTANTIATE_TEST_SUITE_P(Test, BCF, ::testing::Values(Path(10)));
+INSTANTIATE_TEST_SUITE_P(Test, BCF, ::testing::Values(Path(16)));

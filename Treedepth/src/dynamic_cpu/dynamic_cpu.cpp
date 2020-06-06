@@ -51,15 +51,14 @@ void DynamicCPU::Run(BoostGraph const& g) {
       auto set =
           set_encoder::Decode<std::set<int>>(boost::num_vertices(g), i, code);
       std::set<int> visited;
-      SearchGraphOnVertices(
-          g, set,
-          [&visited](auto v) {
-            if (visited.find(v) != std::end(visited))
-              return true;
-            visited.insert(v);
-            return false;
-          },
-          *std::begin(set));
+      SearchGraphOnVertices(g, set,
+                            [&visited](auto v) {
+                              if (visited.find(v) != std::end(visited))
+                                return true;
+                              visited.insert(v);
+                              return false;
+                            },
+                            *std::begin(set));
       if (visited.size() != set.size())
         continue;
 
@@ -77,16 +76,15 @@ void DynamicCPU::Run(BoostGraph const& g) {
         BGL_FORALL_ADJ_T(v, neigh, g, DynamicCPU::BoostGraph) {
           if (!visited_total[neigh]) {
             visited.clear();
-            SearchGraphOnVertices(
-                g, set,
-                [&visited, &visited_total](auto v) {
-                  if (visited.find(v) != std::end(visited))
-                    return true;
-                  visited.insert(v);
-                  visited_total[v] = true;
-                  return false;
-                },
-                neigh);
+            SearchGraphOnVertices(g, set,
+                                  [&visited, &visited_total](auto v) {
+                                    if (visited.find(v) != std::end(visited))
+                                      return true;
+                                    visited.insert(v);
+                                    visited_total[v] = true;
+                                    return false;
+                                  },
+                                  neigh);
             component_treedepth = std::max(
                 component_treedepth,
                 std::get<0>(

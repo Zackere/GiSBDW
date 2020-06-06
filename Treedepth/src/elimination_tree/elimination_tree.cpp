@@ -115,24 +115,24 @@ EliminationTree::ComponentIterator EliminationTree::ComponentsEnd() const {
   return ComponentIterator{std::cend(components_)};
 }
 
-EliminationTree::Component const&
-EliminationTree::ComponentIterator::operator*() const {
+EliminationTree::Component const& EliminationTree::ComponentIterator::
+operator*() const {
   return *current_;
 }
 
-EliminationTree::Component const*
-EliminationTree::ComponentIterator::operator->() const {
+EliminationTree::Component const* EliminationTree::ComponentIterator::
+operator->() const {
   return &*current_;
 }
 
-EliminationTree::ComponentIterator&
-EliminationTree::ComponentIterator::operator++() {
+EliminationTree::ComponentIterator& EliminationTree::ComponentIterator::
+operator++() {
   ++current_;
   return *this;
 }
 
-EliminationTree::ComponentIterator&
-EliminationTree::ComponentIterator::operator--() {
+EliminationTree::ComponentIterator& EliminationTree::ComponentIterator::
+operator--() {
   --current_;
   return *this;
 }

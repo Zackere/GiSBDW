@@ -5,7 +5,7 @@
 #ifndef HD
 #define HD __host__ __device__
 #endif
-#elif
+#else
 #define HD
 #endif
 
