@@ -13,7 +13,7 @@
 namespace td {
 namespace {
 auto constexpr kThreads = 64;
-auto constexpr kBlocks = 2048;
+auto constexpr kBlocks = 4096;
 __device__ int ReadPermutation(int* const buf,
                                int n,
                                int perm_index,
@@ -133,6 +133,7 @@ __global__ void GenerateKernel(int* const in,
     my_perm[i] = -1;
   for (int i = threadIdx.x; i < blockDim.x * n; i += blockDim.x)
     buf_shared[i] = in[i + blockIdx.x * blockDim.x * n];
+  __syncthreads();
   int perm_len = -1;
   while (perm_len < n && my_perm[++perm_len] != -1)
     ;
@@ -194,7 +195,7 @@ __global__ void BruteForceKernel(int* const buf,
                                  int const* const offsets,
                                  int const* const out_edges,
                                  int* best_td) {
-  auto my_perm_index = stack_head - blockIdx.x * blockDim.x + threadIdx.x - 1;
+  auto my_perm_index = stack_head - blockIdx.x * blockDim.x - threadIdx.x - 1;
   extern __shared__ int8_t buf_shared[];
   int8_t* my_perm = &buf_shared[threadIdx.x * n];
   int8_t* component_depth_info = &buf_shared[threadIdx.x * n + blockDim.x * n];
@@ -202,17 +203,29 @@ __global__ void BruteForceKernel(int* const buf,
       &buf_shared[threadIdx.x * n + 2 * blockDim.x * n];
   for (int i = 0; i < n; ++i)
     my_perm[i] = -1;
+  for (int i = 0; i < n; i += 1) {
+    my_perm[i] = buf[my_perm_index * n + i];
+    buf[my_perm_index * n + i] = -1;
+  }
   __syncthreads();
-  int perm_len = ReadPermutation(buf, n, my_perm_index, my_perm) - 1;
-  __syncthreads();
-  int cur_perm_len = perm_len + 1;
+  int perm_len = -1;
+  while (perm_len < n && my_perm[++perm_len] != -1)
+    ;
+  auto cur_perm_len = perm_len;
   auto* in_perm = new int8_t[n + 1];
+  for (int i = 0; i <= n; ++i)
+    in_perm[i] = false;
   for (int i = 0; i < cur_perm_len; ++i)
     in_perm[my_perm[i]] = true;
   int ncomponent =
       EliminatePermutation(component_belong_info, component_depth_info, my_perm,
                            cur_perm_len, n, offsets, out_edges);
-  while (cur_perm_len > perm_len) {
+  if (LowerBound(component_belong_info, component_depth_info, ncomponent, n,
+                 offsets, out_edges) >= *best_td) {
+    delete[] in_perm;
+    return;
+  }
+  while (cur_perm_len >= perm_len) {
     if (ncomponent + cur_perm_len == n) {
       int max_td = 0;
       for (int i = 0; i < n; ++i)
@@ -220,32 +233,31 @@ __global__ void BruteForceKernel(int* const buf,
             max_td, component_depth_info[i] + (component_belong_info[i] != -1));
       atomicMin(best_td, max_td);
       --cur_perm_len;
+    }
+    do {
+      if (my_perm[cur_perm_len] != -1)
+        in_perm[my_perm[cur_perm_len]] = false;
+      do {
+        ++my_perm[cur_perm_len];
+      } while (my_perm[cur_perm_len] < n && in_perm[my_perm[cur_perm_len]]);
+      if (my_perm[cur_perm_len] >= n)
+        break;
+      int ncomponent = EliminatePermutation(
+          component_belong_info, component_depth_info, my_perm,
+          cur_perm_len + 1, n, offsets, out_edges);
+      if (LowerBound(component_belong_info, component_depth_info, ncomponent, n,
+                     offsets, out_edges) < *best_td)
+        break;
+    } while (true);
+    if (my_perm[cur_perm_len] >= n) {
+      my_perm[cur_perm_len] = -1;
+      --cur_perm_len;
       continue;
     }
-    if (my_perm[cur_perm_len] == -1) {
-      while (in_perm[++my_perm[cur_perm_len]])
-        ;
-      in_perm[my_perm[cur_perm_len++]] = true;
-      ncomponent =
-          EliminatePermutation(component_belong_info, component_depth_info,
-                               my_perm, cur_perm_len, n, offsets, out_edges);
-      continue;
-    }
-    ncomponent =
-        EliminatePermutation(component_belong_info, component_depth_info,
-                             my_perm, cur_perm_len, n, offsets, out_edges);
-    in_perm[my_perm[cur_perm_len]] = false;
-    while (in_perm[++my_perm[cur_perm_len]])
-      ;
-    if (my_perm[cur_perm_len] == n) {
-      my_perm[cur_perm_len--] = -1;
-      continue;
-    }
-    in_perm[my_perm[cur_perm_len++]] = true;
-    ncomponent =
-        EliminatePermutation(component_belong_info, component_depth_info,
-                             my_perm, cur_perm_len, n, offsets, out_edges);
+    in_perm[my_perm[cur_perm_len]] = true;
+    ++cur_perm_len;
   }
+  delete[] in_perm;
 }
 }  // namespace
 void BnBGPU::Run(BoostGraph const& g, std::size_t heur_td) {
@@ -372,53 +384,3 @@ void BnBGPU::Run(BoostGraph const& g, std::size_t heur_td) {
   std::cout << best_td[0] << std::endl;
 }
 }  // namespace td
-   // sprawdz czy wszyscy milo siedza w K1 lub sa w permutacji max=n-k k-dlugos
-   // permutacji
-   // bool verts[n],int a aktualny numer componentu, iterujesz po belongs i
-   // dorzucasz wierz i karawedzie
-   // for (int i = 0; i < blockDim.x; ++i) {
-   //  if (threadIdx.x == i) {
-   //    for (int j = 0; j < n; ++j)
-   //      printf("%d ", component_belong_info[j]);
-   //    printf("\n");
-   //    for (int j = 0; j < n; ++j)
-   //      printf("%d ", my_perm[j]);
-   //    printf("\n");
-   //  }
-   //  __syncthreads();
-   //}
-   /* int8_t* taken = &buf_shared[threadIdx.x * n + 3 * blockDim.x * n];
-    for (int i = 0; i < n; ++i)
-      taken[i] = false;
-    for (int i = 0; i < perm_len; ++i)
-      taken[my_perm[i]] = true;
-    int ntaken = perm_len;
-    ncomponent = 0;
-    while (ntaken < n) {
-      ++ncomponent;
-      int current_component;
-      int nverts = 0;
-      int nedges = 0;
-      int vert = -1;
-      while (vert < n && taken[++vert])
-        ;
-      if (vert == n)
-        break;
-      current_component = component_belong_info[vert];
-      for (int v = vert; v < n; ++v) {
-        if (component_belong_info[v] == current_component) {
-          taken[v] = true;
-          ++ntaken;
-          ++nverts;
-          for (int j = offsets[v]; j < offsets[v + 1]; ++j)
-            if (component_belong_info[out_edges[j]] == current_component)
-              ++nedges;
-        }
-      }
-      nedges /= 2;
-      if (std::ceil(0.5 + nverts -
-                    std::sqrt(0.25 + nverts * nverts - nverts - 2 * nedges)) +
-              component_depth_info[vert] >=
-          *best_td)
-        return;
-    }*/

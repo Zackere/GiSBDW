@@ -20,8 +20,19 @@ class BCF : public ::testing::TestWithParam<Graph> {};
 // TEST_P(BCF, DynamicCPU) {
 //  td::DynamicCPU dyncpu;
 //  dyncpu(GetParam());
-//  dyncpu.GetTDDecomp(0, GetParam());
+//  std::cout << dyncpu.GetTDDecomp(0, GetParam()).treedepth << std::endl;
 //}
+
+TEST_P(BCF, DynamicCPU) {
+  td::DynamicGPU dyngpu;
+  dyngpu(GetParam());
+  auto el = dyngpu.GetElimination<td::EliminationTree::VertexType>(
+      boost::num_vertices(GetParam()), boost::num_vertices(GetParam()), 0);
+  td::EliminationTree eltree(GetParam());
+  for (auto v : el)
+    eltree.Eliminate(v);
+  std::cout << eltree.Decompose().treedepth << std::endl;
+}
 
 // TEST_P(BCF, DynamicCPUImprov) {
 //  td::DynamicCPUImprov dyncpu;
@@ -37,12 +48,12 @@ class BCF : public ::testing::TestWithParam<Graph> {};
 //      std::make_unique<td::HighestDegreeHeuristic>(nullptr));
 //}
 //
-TEST_P(BCF, BNBEdgeLoweBoundHighestDegreeHeuristic) {
-  td::BranchAndBound bnb;
-  bnb(GetParam(), std::make_unique<td::EdgeLowerBound>(),
-      std::make_unique<td::HighestDegreeHeuristic>(
-          std::make_unique<td::VarianceHeuristic>(nullptr, 1.0, 0.2, 0.8)));
-}
+// TEST_P(BCF, BNBEdgeLoweBoundHighestDegreeHeuristic) {
+//  td::BranchAndBound bnb;
+//  bnb(GetParam(), std::make_unique<td::EdgeLowerBound>(),
+//      std::make_unique<td::HighestDegreeHeuristic>(
+//          std::make_unique<td::VarianceHeuristic>(nullptr, 1.0, 0.2, 0.8)));
+//}
 
 TEST_P(BCF, DynGPU) {
   // td::DynamicGPU dyngpu;
@@ -113,4 +124,4 @@ TEST_P(BCF, DynGPU) {
 //                                           RandomSparseConnectedGraph(14),
 //                                           RandomSparseConnectedGraph(16)));
 
-INSTANTIATE_TEST_SUITE_P(Test, BCF, ::testing::Values(Path(20)));
+INSTANTIATE_TEST_SUITE_P(Test, BCF, ::testing::Values(Cycle(25)));
