@@ -55,7 +55,8 @@ bool CheckIfTdDecompIsValid(td::BranchAndBound::Graph const& graph,
       std::set<int> tmp = {};
       int x = 0;
       bool ok = false;
-      DFS(result.root, result.td_decomp, &tmp,
+      DFS(
+          result.root, result.td_decomp, &tmp,
           [&](auto current_vertex) {
             if (current_vertex == v || current_vertex == *ai) {
               if (++x == 2)
@@ -74,7 +75,8 @@ bool CheckIfTdDecompIsValid(td::BranchAndBound::Graph const& graph,
   std::set<int> tmp = {};
   unsigned depth = 0;
   unsigned max_depth = 0;
-  DFS(result.root, result.td_decomp, &tmp,
+  DFS(
+      result.root, result.td_decomp, &tmp,
       [&](auto) {
         ++depth;
         max_depth = std::max(max_depth, depth);

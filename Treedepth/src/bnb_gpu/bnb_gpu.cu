@@ -12,8 +12,8 @@
 
 namespace td {
 namespace {
-auto constexpr kThreads = 512;
-auto constexpr kBlocks = 512;
+auto constexpr kThreads = 64;
+auto constexpr kBlocks = 2048;
 __device__ int ReadPermutation(int* const buf,
                                int n,
                                int perm_index,
@@ -106,9 +106,9 @@ __device__ int LowerBound(int8_t* component_belong_info,
         if (component_belong_info[out_edges[j]] == i)
           ++nedges;
 
-      nedges >>= 1;
       vert = v;
     }
+    nedges >>= 1;
     current_bound =
         std::ceil(0.5 + nverts -
                   std::sqrt(0.25 + nverts * nverts - nverts - 2 * nedges)) +
@@ -252,7 +252,7 @@ void BnBGPU::Run(BoostGraph const& g, std::size_t heur_td) {
   auto n = boost::num_vertices(g);
   std::size_t global_mem;
   cudaMemGetInfo(&global_mem, nullptr);
-  global_mem *= 0.2;
+  global_mem *= 0.9;
   global_mem /= sizeof(int);
   thrust::device_vector<int> buf((global_mem / n) * n, -1);
   for (int i = 0; i < n; ++i)
@@ -269,6 +269,7 @@ void BnBGPU::Run(BoostGraph const& g, std::size_t heur_td) {
       out_edge[offset++] = neigh;
     }
   }
+  offsets[n] = 2 * boost::num_edges(g);
   int perms = 0;
   while (stack_head[0] > 0) {
     while (stack_head[0] > 0 &&
