@@ -56,7 +56,8 @@ inline void DynamicCPUImprov::operator()(
                           boost::undirectedS,
                           Args...> const& g) {
   try {
-    decltype(history_)().swap(history_);
+    std::vector<std::unordered_map<CodeType, std::tuple<std::size_t, int>>>()
+        .swap(history_);
     if (kMaxVerts < boost::num_vertices(g))
       return;
     et_.reset(new td::EliminationTree(g));

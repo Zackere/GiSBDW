@@ -15,6 +15,7 @@
 #include <string>
 #include <vector>
 
+#include "src/bnb_gpu/bnb_gpu.hpp"
 #include "src/branch_and_bound/branch_and_bound.hpp"
 #include "src/branch_and_bound/heuristics/bottom_up_heuristic.hpp"
 #include "src/branch_and_bound/heuristics/highest_degree_heuristic.hpp"
@@ -24,6 +25,7 @@
 #include "src/branch_and_bound/lower_bound/edge_lower_bound.hpp"
 #include "src/dynamic_cpu/dynamic_cpu.hpp"
 #include "src/dynamic_cpu/dynamic_cpu_improv.hpp"
+#include "src/dynamic_gpu/dynamic_gpu.hpp"
 #include "src/elimination_tree/elimination_tree.hpp"
 #include "src/statistics/statistics.hpp"
 
@@ -88,6 +90,8 @@ int main(int argc, char** argv) {
       "bnbCPU - for branch and bound algorithm ran on CPU\n"
       "dynCPU - for dynamic algorithm ran on CPU\n"
       "dynCPUImprov - for dynamic algorithm ran on CPU version 2\n"
+      "bnbGPU - for branch and bound algorithm ran on GPU\n"
+      "dynGPU - for dynamic algorithm ran on GPU\n"
       "highestDegreeHeur - for highest degree heuristic\n"
       "spanningTreeHeur - for spanning tree heuristic\n"
       "varianceHeur - for variance heuristic\n"
@@ -171,6 +175,24 @@ int main(int argc, char** argv) {
                       std::make_unique<td::VarianceHeuristic>(
                           std::make_unique<td::BottomUpHeuristicGPU>(nullptr),
                           1.0, 0.2, 0.8))));
+    } else if (algorithm_type == "bnbGPU") {
+      td::BnBGPU bnb;
+      stats.decomposition.treedepth = bnb(
+          graph, std::make_unique<td::HighestDegreeHeuristic>(
+                     std::make_unique<td::VarianceHeuristic>(
+                         std::make_unique<td::BottomUpHeuristicGPU>(nullptr),
+                         1.0, 0.2, 0.8))
+                     ->Get(graph)
+                     .treedepth);
+    } else if (algorithm_type == "dynGPU") {
+      td::DynamicGPU dyngpu;
+      dyngpu(graph);
+      auto el = dyngpu.GetElimination<td::EliminationTree::VertexType>(
+          boost::num_vertices(graph), boost::num_vertices(graph), 0);
+      td::EliminationTree eltree(graph);
+      for (auto v : el)
+        eltree.Eliminate(v);
+      stats.decomposition = eltree.Decompose();
     } else if (algorithm_type == "highestDegreeHeur") {
       stats.decomposition = td::HighestDegreeHeuristic(nullptr).Get(graph);
     } else if (algorithm_type == "spanningTreeHeur") {

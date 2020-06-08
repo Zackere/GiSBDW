@@ -12,6 +12,7 @@
 #include "src/branch_and_bound/lower_bound/edge_lower_bound.hpp"
 #include "src/dynamic_cpu/dynamic_cpu.hpp"
 #include "src/dynamic_cpu/dynamic_cpu_improv.hpp"
+#include "src/dynamic_gpu/dynamic_gpu.hpp"
 
 namespace {
 class CTF : public ::testing::TestWithParam<Graph> {};
@@ -26,35 +27,51 @@ time_t seed = time(0);
 // time_t seed = 1589729310;
 }  // namespace
 
-TEST_P(CTF, CorrectnessTest) {
-  auto const& g = GetParam();
-  td::BranchAndBound bnb;
-  auto res_bnb = bnb(g, std::make_unique<td::EdgeLowerBound>(),
-                     std::make_unique<td::HighestDegreeHeuristic>(nullptr));
-  EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_bnb));
-
+// TEST_P(CTF, CorrectnessTest) {
+//   auto const& g = GetParam();
+//   td::BranchAndBound bnb;
+//   auto res_bnb = bnb(g, std::make_unique<td::EdgeLowerBound>(),
+//                      std::make_unique<td::HighestDegreeHeuristic>(nullptr));
+//   EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_bnb));
+//
+//   td::DynamicCPUImprov dyncpu_improv;
+//   dyncpu_improv(g);
+//   td::DynamicCPUImprov::CodeType code = (1 << boost::num_vertices(g)) - 1;
+//   auto res_dyncpu_imrprov = dyncpu_improv.GetTDDecomp(code, g);
+//   EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu_imrprov));
+//   EXPECT_EQ(res_bnb.treedepth, res_dyncpu_imrprov.treedepth);
+//
+//   td::DynamicCPU dyncpu;
+//   dyncpu(g);
+//   auto res_dyncpu = dyncpu.GetTDDecomp(0, g);
+//   EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu));
+//   EXPECT_EQ(res_bnb.treedepth, res_dyncpu.treedepth);
+// }
+TEST_P(CTF, idk) {
+  td::DynamicGPU dyngpu;
+  dyngpu(GetParam());
+  int n = boost::num_vertices(GetParam());
+  auto el = dyngpu.GetElimination<td::EliminationTree::VertexType>(n, n, 0);
+  td::EliminationTree eltree(GetParam());
+  for (auto v : el)
+    eltree.Eliminate(v);
+  auto tddecomp = eltree.Decompose();
   td::DynamicCPUImprov dyncpu_improv;
-  dyncpu_improv(g);
-  td::DynamicCPUImprov::CodeType code = (1 << boost::num_vertices(g)) - 1;
-  auto res_dyncpu_imrprov = dyncpu_improv.GetTDDecomp(code, g);
-  EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu_imrprov));
-  EXPECT_EQ(res_bnb.treedepth, res_dyncpu_imrprov.treedepth);
-
-  td::DynamicCPU dyncpu;
-  dyncpu(g);
-  auto res_dyncpu = dyncpu.GetTDDecomp(0, g);
-  EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu));
-  EXPECT_EQ(res_bnb.treedepth, res_dyncpu.treedepth);
+  dyncpu_improv(GetParam());
+  td::DynamicCPUImprov::CodeType code =
+      (1 << boost::num_vertices(GetParam())) - 1;
+  auto res_dyncpu_imrprov = dyncpu_improv.GetTDDecomp(code, GetParam());
+  EXPECT_EQ(tddecomp.treedepth, res_dyncpu_imrprov.treedepth);
 }
-
 INSTANTIATE_TEST_SUITE_P(Paths,
                          CTF,
-                         ::testing::Values(Path(8),
+                         ::testing::Values(Path(7),
+                                           Path(8),
                                            Path(10),
                                            Path(12),
                                            Path(14),
                                            Path(16),
-                                           Path(18)));
+                                           Path(21)));
 
 INSTANTIATE_TEST_SUITE_P(ChordalCycles,
                          CTF,
