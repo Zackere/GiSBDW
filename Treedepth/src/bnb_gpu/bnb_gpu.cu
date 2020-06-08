@@ -15,27 +15,11 @@ namespace {
 auto constexpr kThreads = 64;
 auto constexpr kBlocks = 2048;
 auto constexpr kBruteForceLen = 6;
-__device__ int ReadPermutation(int* const buf,
-                               int n,
-                               int perm_index,
-                               int8_t* dest) {
-  for (int i = 0; i < n; ++i) {
-    dest[i] = buf[perm_index * n + i];
-    buf[perm_index * n + i] = -1;
-  }
-  int perm_len = 0;
-  for (int i = 0; i < n; ++i)
-    if (dest[i] == -1)
-      break;
-    else
-      ++perm_len;
-  return perm_len;
-}
 
-__device__ int WyznaczTwojaStara(int8_t* component_belong_info,
-                                 int n,
-                                 int const* const offsets,
-                                 int const* const out_edges) {
+__device__ int GetComponents(int8_t* component_belong_info,
+                             int n,
+                             int const* const offsets,
+                             int const* const out_edges) {
   int ncomponent = 0;
   for (int v = 0; v < n; ++v) {
     if (component_belong_info[v] == -2) {
@@ -80,8 +64,7 @@ __device__ int EliminatePermutation(int8_t* component_belong_info,
       component_belong_info[j] = -2;
     for (int j = 0; j <= i; ++j)
       component_belong_info[my_perm[j]] = -1;
-    ncomponent =
-        WyznaczTwojaStara(component_belong_info, n, offsets, out_edges);
+    ncomponent = GetComponents(component_belong_info, n, offsets, out_edges);
   }
   return ncomponent;
 }
@@ -101,7 +84,6 @@ __device__ int LowerBound(int8_t* component_belong_info,
     for (int v = 0; v < n; ++v) {
       if (component_belong_info[v] != i)
         continue;
-
       ++nverts;
       for (int j = offsets[v]; j < offsets[v + 1]; ++j)
         if (component_belong_info[out_edges[j]] == i)
@@ -124,7 +106,7 @@ __device__ int LowerBound(int8_t* component_belong_info,
 
 __device__ void FinishPermutation(int8_t* const component_belong_info,
                                   int8_t* const component_depth_info,
-                                  int8_t* const my_perm,
+                                  int8_t* const perm,
                                   int perm_len,
                                   int n,
                                   int const* const offsets,
@@ -132,16 +114,16 @@ __device__ void FinishPermutation(int8_t* const component_belong_info,
                                   int* best_td) {
   auto cur_perm_len = perm_len;
   int ncomponent =
-      EliminatePermutation(component_belong_info, component_depth_info, my_perm,
+      EliminatePermutation(component_belong_info, component_depth_info, perm,
                            cur_perm_len, n, offsets, out_edges);
   if (LowerBound(component_belong_info, component_depth_info, ncomponent, n,
                  offsets, out_edges) >= *best_td)
     return;
-  auto* in_perm = new int8_t[n + 1];
+  auto* taken = new int8_t[n + 1];
   for (int i = 0; i <= n; ++i)
-    in_perm[i] = false;
+    taken[i] = false;
   for (int i = 0; i < perm_len; ++i)
-    in_perm[my_perm[i]] = true;
+    taken[perm[i]] = true;
   while (cur_perm_len >= perm_len) {
     if (ncomponent + cur_perm_len == n) {
       int max_td = 0;
@@ -152,29 +134,29 @@ __device__ void FinishPermutation(int8_t* const component_belong_info,
       --cur_perm_len;
     }
     do {
-      if (my_perm[cur_perm_len] != -1)
-        in_perm[my_perm[cur_perm_len]] = false;
+      if (perm[cur_perm_len] != -1)
+        taken[perm[cur_perm_len]] = false;
       do {
-        ++my_perm[cur_perm_len];
-      } while (my_perm[cur_perm_len] < n && in_perm[my_perm[cur_perm_len]]);
-      if (my_perm[cur_perm_len] >= n)
+        ++perm[cur_perm_len];
+      } while (perm[cur_perm_len] < n && taken[perm[cur_perm_len]]);
+      if (perm[cur_perm_len] >= n)
         break;
-      ncomponent = EliminatePermutation(
-          component_belong_info, component_depth_info, my_perm,
-          cur_perm_len + 1, n, offsets, out_edges);
+      ncomponent =
+          EliminatePermutation(component_belong_info, component_depth_info,
+                               perm, cur_perm_len + 1, n, offsets, out_edges);
       if (LowerBound(component_belong_info, component_depth_info, ncomponent, n,
                      offsets, out_edges) < *best_td)
         break;
     } while (true);
-    if (my_perm[cur_perm_len] >= n) {
-      my_perm[cur_perm_len] = -1;
+    if (perm[cur_perm_len] >= n) {
+      perm[cur_perm_len] = -1;
       --cur_perm_len;
       continue;
     }
-    in_perm[my_perm[cur_perm_len]] = true;
+    taken[perm[cur_perm_len]] = true;
     ++cur_perm_len;
   }
-  delete[] in_perm;
+  delete[] taken;
 }
 
 __global__ void GenerateKernel(int* const in,
@@ -185,17 +167,16 @@ __global__ void GenerateKernel(int* const in,
                                int const* const out_edges,
                                int* best_td) {
   extern __shared__ int8_t buf_shared[];
-  int8_t* my_perm = &buf_shared[threadIdx.x * n];
+  int8_t* perm = &buf_shared[threadIdx.x * n];
   for (int i = 0; i < n; ++i)
-    my_perm[i] = -1;
+    perm[i] = -1;
   for (int i = threadIdx.x; i < blockDim.x * n; i += blockDim.x)
     buf_shared[i] = in[i + blockIdx.x * blockDim.x * n];
   __syncthreads();
   int perm_len = -1;
-  while (perm_len < n && my_perm[++perm_len] != -1)
+  while (perm_len < n && perm[++perm_len] != -1)
     ;
-  int8_t* component_depth_info =
-      &buf_shared[threadIdx.x * n + 1 * blockDim.x * n];
+  int8_t* component_depth_info = &buf_shared[threadIdx.x * n + blockDim.x * n];
   int8_t* component_belong_info =
       &buf_shared[threadIdx.x * n + 2 * blockDim.x * n];
   for (int i = 0; i < n; ++i) {
@@ -205,16 +186,15 @@ __global__ void GenerateKernel(int* const in,
   int ncomponent = 0;
   for (int i = 0; i < perm_len; ++i) {
     ncomponent = 0;
-    auto belongs_to = component_belong_info[my_perm[i]];
+    auto belongs_to = component_belong_info[perm[i]];
     for (int j = 0; j < n; ++j)
       if (component_belong_info[j] == belongs_to)
         ++component_depth_info[j];
     for (int j = 0; j < n; ++j)
       component_belong_info[j] = -2;
     for (int j = 0; j <= i; ++j)
-      component_belong_info[my_perm[j]] = -1;
-    ncomponent =
-        WyznaczTwojaStara(component_belong_info, n, offsets, out_edges);
+      component_belong_info[perm[j]] = -1;
+    ncomponent = GetComponents(component_belong_info, n, offsets, out_edges);
   }
   if (LowerBound(component_belong_info, component_depth_info, ncomponent, n,
                  offsets, out_edges) >= *best_td)
@@ -229,21 +209,21 @@ __global__ void GenerateKernel(int* const in,
   }
   // sprobuj wsadzic nowe
   if (perm_len > n - kBruteForceLen)
-    return FinishPermutation(component_belong_info, component_depth_info,
-                             my_perm, perm_len, n, offsets, out_edges, best_td);
+    return FinishPermutation(component_belong_info, component_depth_info, perm,
+                             perm_len, n, offsets, out_edges, best_td);
   for (int i = 0; i < n; ++i) {
     int j;
-    for (j = 0; j < n && my_perm[j] != -1; ++j) {
-      if (i == my_perm[j])
+    for (j = 0; j < n && perm[j] != -1; ++j) {
+      if (i == perm[j])
         break;
     }
-    if (j < n && my_perm[j] == -1) {
-      my_perm[j] = i;
+    if (j < n && perm[j] == -1 && component_belong_info[i] == 0) {
+      perm[j] = i;
       auto new_perm_index = atomicAdd(stack_head, 1);
       for (int k = 0; k < n; ++k) {
-        buf[new_perm_index * n + k] = my_perm[k];
+        buf[new_perm_index * n + k] = perm[k];
       }
-      my_perm[j] = -1;
+      perm[j] = -1;
     }
   }
 }
@@ -254,27 +234,27 @@ __global__ void BruteForceKernel(int* const buf,
                                  int const* const offsets,
                                  int const* const out_edges,
                                  int* best_td) {
-  auto my_perm_index = stack_head - blockIdx.x * blockDim.x - threadIdx.x - 1;
+  auto my_perm_index = stack_head - blockIdx.x * blockDim.x - 1;
   extern __shared__ int8_t buf_shared[];
-  int8_t* my_perm = &buf_shared[threadIdx.x * n];
+  int8_t* perm = &buf_shared[threadIdx.x * n];
   int8_t* component_depth_info = &buf_shared[threadIdx.x * n + blockDim.x * n];
   int8_t* component_belong_info =
       &buf_shared[threadIdx.x * n + 2 * blockDim.x * n];
   for (int i = 0; i < n; ++i)
-    my_perm[i] = -1;
-  for (int i = 0; i < n; i += 1) {
-    my_perm[i] = buf[my_perm_index * n + i];
+    perm[i] = -1;
+  for (int i = threadIdx.x; i < blockDim.x * n; i += blockDim.x) {
+    buf_shared[i] = buf[my_perm_index * n + i];
     buf[my_perm_index * n + i] = -1;
   }
   __syncthreads();
   int perm_len = -1;
-  while (perm_len < n && my_perm[++perm_len] != -1)
+  while (perm_len < n && perm[++perm_len] != -1)
     ;
-  return FinishPermutation(component_belong_info, component_depth_info, my_perm,
+  return FinishPermutation(component_belong_info, component_depth_info, perm,
                            perm_len, n, offsets, out_edges, best_td);
 }
 }  // namespace
-void BnBGPU::Run(BoostGraph const& g, std::size_t heur_td) {
+int BnBGPU::Run(BoostGraph const& g, std::size_t heur_td) {
   auto n = boost::num_vertices(g);
   std::size_t global_mem;
   cudaMemGetInfo(&global_mem, nullptr);
@@ -300,9 +280,8 @@ void BnBGPU::Run(BoostGraph const& g, std::size_t heur_td) {
   while (stack_head[0] > 0) {
     while (stack_head[0] > 0 &&
            kThreads * kBlocks * n < buf.size() / n - stack_head[0]) {
-      std::cout << "gen\n";
-      std::cout << stack_head[0] << ' ' << best_td[0] << std::endl;
       int sh = stack_head[0];
+      // std::cout << sh << std::endl;
       if (sh < kThreads) {
         thrust::copy(thrust::device, buf.begin(),
                      buf.begin() + stack_head[0] * n, temporary_buf.begin());
@@ -356,9 +335,8 @@ void BnBGPU::Run(BoostGraph const& g, std::size_t heur_td) {
     }
     while (stack_head[0] > 0 &&
            kThreads * kBlocks * n > buf.size() / n - stack_head[0]) {
-      std::cout << "bf\n";
       int sh = stack_head[0];
-      std::cout << sh << ' ' << best_td[0] << std::endl;
+      // std::cout << sh << std::endl;
       if (sh < kThreads) {
         BruteForceKernel<<<1, sh, 3 * sh * n * sizeof(int8_t)>>>(
             thrust::raw_pointer_cast(buf.data()), sh, n,
@@ -391,10 +369,6 @@ void BnBGPU::Run(BoostGraph const& g, std::size_t heur_td) {
         std::cout << cudaGetErrorString(err) << std::endl;
     }
   }
-  std::cout << std::endl;
-  std::cout << stack_head[0] << std::endl;
-  std::cout << buf.size() / n << std::endl;
-  std::cout << perms << std::endl;
-  std::cout << best_td[0] << std::endl;
+  return best_td[0];
 }
 }  // namespace td
