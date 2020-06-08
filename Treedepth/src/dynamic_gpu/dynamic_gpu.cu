@@ -5,6 +5,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/execution_policy.h>
 #include <thrust/generate.h>
+#include <algorithm>
 #include <boost/graph/iteration_macros.hpp>
 
 namespace td {

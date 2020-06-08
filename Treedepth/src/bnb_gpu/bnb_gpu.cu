@@ -174,8 +174,8 @@ __global__ void GenerateKernel(int* const in,
     buf_shared[i] = in[i + blockIdx.x * blockDim.x * n];
   __syncthreads();
   int perm_len = -1;
-  while (perm_len < n && perm[++perm_len] != -1)
-    ;
+  while (perm_len < n && perm[++perm_len] != -1) {
+  }
   int8_t* component_depth_info = &buf_shared[threadIdx.x * n + blockDim.x * n];
   int8_t* component_belong_info =
       &buf_shared[threadIdx.x * n + 2 * blockDim.x * n];
@@ -248,8 +248,8 @@ __global__ void BruteForceKernel(int* const buf,
   }
   __syncthreads();
   int perm_len = -1;
-  while (perm_len < n && perm[++perm_len] != -1)
-    ;
+  while (perm_len < n && perm[++perm_len] != -1) {
+  }
   return FinishPermutation(component_belong_info, component_depth_info, perm,
                            perm_len, n, offsets, out_edges, best_td);
 }

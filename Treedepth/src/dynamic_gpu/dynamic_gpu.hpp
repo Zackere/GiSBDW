@@ -6,6 +6,8 @@
 #include <boost/graph/copy.hpp>
 
 #include <vector>
+#include <list>
+#include <set>
 
 #include "src/set_encoder/set_encoder.hpp"
 
