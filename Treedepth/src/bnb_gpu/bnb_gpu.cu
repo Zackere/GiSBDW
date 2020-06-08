@@ -13,7 +13,8 @@
 namespace td {
 namespace {
 auto constexpr kThreads = 64;
-auto constexpr kBlocks = 4096;
+auto constexpr kBlocks = 2048;
+auto constexpr kBruteForceLen = 6;
 __device__ int ReadPermutation(int* const buf,
                                int n,
                                int perm_index,
@@ -67,7 +68,7 @@ __device__ int EliminatePermutation(int8_t* component_belong_info,
                                     int const* const out_edges) {
   int ncomponent;
   for (int i = 0; i < n; ++i) {
-    component_belong_info[i] = 0;
+    component_belong_info[i] = -2;
     component_depth_info[i] = 0;
   }
   for (int i = 0; i < perm_len; ++i) {
@@ -120,6 +121,62 @@ __device__ int LowerBound(int8_t* component_belong_info,
 
   return lower_bound;
 }
+
+__device__ void FinishPermutation(int8_t* const component_belong_info,
+                                  int8_t* const component_depth_info,
+                                  int8_t* const my_perm,
+                                  int perm_len,
+                                  int n,
+                                  int const* const offsets,
+                                  int const* const out_edges,
+                                  int* best_td) {
+  auto cur_perm_len = perm_len;
+  int ncomponent =
+      EliminatePermutation(component_belong_info, component_depth_info, my_perm,
+                           cur_perm_len, n, offsets, out_edges);
+  if (LowerBound(component_belong_info, component_depth_info, ncomponent, n,
+                 offsets, out_edges) >= *best_td)
+    return;
+  auto* in_perm = new int8_t[n + 1];
+  for (int i = 0; i <= n; ++i)
+    in_perm[i] = false;
+  for (int i = 0; i < perm_len; ++i)
+    in_perm[my_perm[i]] = true;
+  while (cur_perm_len >= perm_len) {
+    if (ncomponent + cur_perm_len == n) {
+      int max_td = 0;
+      for (int i = 0; i < n; ++i)
+        max_td = max(
+            max_td, component_depth_info[i] + (component_belong_info[i] != -1));
+      atomicMin(best_td, max_td);
+      --cur_perm_len;
+    }
+    do {
+      if (my_perm[cur_perm_len] != -1)
+        in_perm[my_perm[cur_perm_len]] = false;
+      do {
+        ++my_perm[cur_perm_len];
+      } while (my_perm[cur_perm_len] < n && in_perm[my_perm[cur_perm_len]]);
+      if (my_perm[cur_perm_len] >= n)
+        break;
+      ncomponent = EliminatePermutation(
+          component_belong_info, component_depth_info, my_perm,
+          cur_perm_len + 1, n, offsets, out_edges);
+      if (LowerBound(component_belong_info, component_depth_info, ncomponent, n,
+                     offsets, out_edges) < *best_td)
+        break;
+    } while (true);
+    if (my_perm[cur_perm_len] >= n) {
+      my_perm[cur_perm_len] = -1;
+      --cur_perm_len;
+      continue;
+    }
+    in_perm[my_perm[cur_perm_len]] = true;
+    ++cur_perm_len;
+  }
+  delete[] in_perm;
+}
+
 __global__ void GenerateKernel(int* const in,
                                int* const buf,
                                int* stack_head,
@@ -171,7 +228,9 @@ __global__ void GenerateKernel(int* const in,
     return;
   }
   // sprobuj wsadzic nowe
-
+  if (perm_len > n - kBruteForceLen)
+    return FinishPermutation(component_belong_info, component_depth_info,
+                             my_perm, perm_len, n, offsets, out_edges, best_td);
   for (int i = 0; i < n; ++i) {
     int j;
     for (j = 0; j < n && my_perm[j] != -1; ++j) {
@@ -211,53 +270,8 @@ __global__ void BruteForceKernel(int* const buf,
   int perm_len = -1;
   while (perm_len < n && my_perm[++perm_len] != -1)
     ;
-  auto cur_perm_len = perm_len;
-  auto* in_perm = new int8_t[n + 1];
-  for (int i = 0; i <= n; ++i)
-    in_perm[i] = false;
-  for (int i = 0; i < cur_perm_len; ++i)
-    in_perm[my_perm[i]] = true;
-  int ncomponent =
-      EliminatePermutation(component_belong_info, component_depth_info, my_perm,
-                           cur_perm_len, n, offsets, out_edges);
-  if (LowerBound(component_belong_info, component_depth_info, ncomponent, n,
-                 offsets, out_edges) >= *best_td) {
-    delete[] in_perm;
-    return;
-  }
-  while (cur_perm_len >= perm_len) {
-    if (ncomponent + cur_perm_len == n) {
-      int max_td = 0;
-      for (int i = 0; i < n; ++i)
-        max_td = max(
-            max_td, component_depth_info[i] + (component_belong_info[i] != -1));
-      atomicMin(best_td, max_td);
-      --cur_perm_len;
-    }
-    do {
-      if (my_perm[cur_perm_len] != -1)
-        in_perm[my_perm[cur_perm_len]] = false;
-      do {
-        ++my_perm[cur_perm_len];
-      } while (my_perm[cur_perm_len] < n && in_perm[my_perm[cur_perm_len]]);
-      if (my_perm[cur_perm_len] >= n)
-        break;
-      int ncomponent = EliminatePermutation(
-          component_belong_info, component_depth_info, my_perm,
-          cur_perm_len + 1, n, offsets, out_edges);
-      if (LowerBound(component_belong_info, component_depth_info, ncomponent, n,
-                     offsets, out_edges) < *best_td)
-        break;
-    } while (true);
-    if (my_perm[cur_perm_len] >= n) {
-      my_perm[cur_perm_len] = -1;
-      --cur_perm_len;
-      continue;
-    }
-    in_perm[my_perm[cur_perm_len]] = true;
-    ++cur_perm_len;
-  }
-  delete[] in_perm;
+  return FinishPermutation(component_belong_info, component_depth_info, my_perm,
+                           perm_len, n, offsets, out_edges, best_td);
 }
 }  // namespace
 void BnBGPU::Run(BoostGraph const& g, std::size_t heur_td) {

@@ -23,7 +23,7 @@ class BCF : public ::testing::TestWithParam<Graph> {};
 //  std::cout << dyncpu.GetTDDecomp(0, GetParam()).treedepth << std::endl;
 //}
 
-TEST_P(BCF, DynamicCPU) {
+TEST_P(BCF, DynamicGPU) {
   td::DynamicGPU dyngpu;
   dyngpu(GetParam());
   auto el = dyngpu.GetElimination<td::EliminationTree::VertexType>(
@@ -55,9 +55,7 @@ TEST_P(BCF, DynamicCPU) {
 //          std::make_unique<td::VarianceHeuristic>(nullptr, 1.0, 0.2, 0.8)));
 //}
 
-TEST_P(BCF, DynGPU) {
-  // td::DynamicGPU dyngpu;
-  // dyngpu(GetParam());
+TEST_P(BCF, BnBGPU) {
   td::BnBGPU bnb;
   bnb(GetParam(),
       std::make_unique<td::HighestDegreeHeuristic>(
@@ -124,4 +122,4 @@ TEST_P(BCF, DynGPU) {
 //                                           RandomSparseConnectedGraph(14),
 //                                           RandomSparseConnectedGraph(16)));
 
-INSTANTIATE_TEST_SUITE_P(Test, BCF, ::testing::Values(Cycle(25)));
+INSTANTIATE_TEST_SUITE_P(Test, BCF, ::testing::Values(Halin(20)));
