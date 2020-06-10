@@ -10,10 +10,11 @@
 namespace td {
 namespace {
 template <typename Key, typename T, typename Allocator>
-std::size_t Encode(std::map<Key, T, std::less<Key>, Allocator> const& m) {
-  std::size_t ret = 0;
+DynamicCPUImprov::CodeType Encode(
+    std::map<Key, T, std::less<Key>, Allocator> const& m) {
+  DynamicCPUImprov::CodeType ret = 0;
   for (auto& p : m)
-    ret |= static_cast<std::size_t>(1) << p.first;
+    ret |= static_cast<DynamicCPUImprov::CodeType>(1) << p.first;
   return ret;
 }
 }  // namespace
@@ -44,16 +45,18 @@ std::size_t DynamicCPUImprov::Run(
   return std::get<0>(tdinfoit->second);
 }
 
-EliminationTree::Result DynamicCPUImprov::GetTDDecompImpl(std::size_t code,
-                                                          BoostGraph const& g) {
+EliminationTree::Result DynamicCPUImprov::GetTDDecompImpl(
+    CodeType code,
+    BoostGraph const& g) const {
   if (boost::num_vertices(g) < history_.size()) {
     if (auto it = history_[boost::num_vertices(g)].find(code);
         it != std::end(history_[boost::num_vertices(g)])) {
       td::EliminationTree et(g);
       while (et.ComponentsBegin() != et.ComponentsEnd())
-        et.Eliminate(std::get<1>(
-            history_[et.ComponentsBegin()->AdjacencyList().size()]
-                    [Encode(et.ComponentsBegin()->AdjacencyList())]));
+        et.Eliminate(
+            std::get<1>(history_[et.ComponentsBegin()->AdjacencyList().size()]
+                            .find(Encode(et.ComponentsBegin()->AdjacencyList()))
+                            ->second));
       return et.Decompose();
     }
   }

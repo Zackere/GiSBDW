@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include "common/utils/graph_gen.hpp"
+#include "src/bnb_gpu/bnb_gpu.hpp"
 #include "src/branch_and_bound/branch_and_bound.hpp"
 #include "src/branch_and_bound/heuristics/highest_degree_heuristic.hpp"
 #include "src/branch_and_bound/heuristics/variance_heuristic.hpp"
@@ -10,6 +11,7 @@
 #include "src/branch_and_bound/lower_bound/edge_lower_bound.hpp"
 #include "src/dynamic_cpu/dynamic_cpu.hpp"
 #include "src/dynamic_cpu/dynamic_cpu_improv.hpp"
+#include "src/dynamic_gpu/dynamic_gpu.hpp"
 
 namespace {
 class BCF : public ::testing::TestWithParam<Graph> {};
@@ -18,16 +20,26 @@ class BCF : public ::testing::TestWithParam<Graph> {};
 TEST_P(BCF, DynamicCPU) {
   td::DynamicCPU dyncpu;
   dyncpu(GetParam());
-  dyncpu.GetTDDecomp(0, GetParam());
+  std::cout << dyncpu.GetTDDecomp(0, GetParam()).treedepth << std::endl;
+}
+
+TEST_P(BCF, DynamicGPU) {
+  td::DynamicGPU dyngpu;
+  dyngpu(GetParam());
+  auto el = dyngpu.GetElimination<td::EliminationTree::VertexType>(
+      boost::num_vertices(GetParam()), boost::num_vertices(GetParam()), 0);
+  td::EliminationTree eltree(GetParam());
+  for (auto v : el)
+    eltree.Eliminate(v);
+  eltree.Decompose();
 }
 
 TEST_P(BCF, DynamicCPUImprov) {
   td::DynamicCPUImprov dyncpu;
   dyncpu(GetParam());
-  std::size_t code = 0;
-  for (std::size_t i = 0; i < boost::num_vertices(GetParam()); ++i)
-    code |= static_cast<std::size_t>(1) << i;
-  dyncpu.GetTDDecomp(code, GetParam());
+  td::DynamicCPUImprov::CodeType code = 1;
+  code <<= boost::num_vertices(GetParam());
+  dyncpu.GetTDDecomp(--code, GetParam());
 }
 
 TEST_P(BCF, BNBBasicLoweBoundHighestDegreeHeuristic) {
@@ -43,6 +55,15 @@ TEST_P(BCF, BNBEdgeLoweBoundHighestDegreeHeuristic) {
           std::make_unique<td::VarianceHeuristic>(nullptr, 1.0, 0.2, 0.8)));
 }
 
+TEST_P(BCF, BnBGPU) {
+  td::BnBGPU bnb;
+  bnb(GetParam(),
+      std::make_unique<td::HighestDegreeHeuristic>(
+          std::make_unique<td::VarianceHeuristic>(nullptr, 1.0, 0.2, 0.8))
+          ->Get(GetParam())
+          .treedepth);
+}
+
 INSTANTIATE_TEST_SUITE_P(Complete,
                          BCF,
                          ::testing::Values(Complete(5),
@@ -55,18 +76,10 @@ INSTANTIATE_TEST_SUITE_P(Complete,
                                            Complete(12),
                                            Complete(13)));
 
-INSTANTIATE_TEST_SUITE_P(Paths,
-                         BCF,
-                         ::testing::Values(Path(8),
-                                           Path(10),
-                                           Path(12),
-                                           Path(14),
-                                           Path(16),
-                                           Path(18),
-                                           Path(20),
-                                           Path(22),
-                                           Path(24),
-                                           Path(26)));
+INSTANTIATE_TEST_SUITE_P(
+    Paths,
+    BCF,
+    ::testing::Values(Path(8), Path(10), Path(12), Path(14), Path(16)));
 INSTANTIATE_TEST_SUITE_P(Cycles,
                          BCF,
                          ::testing::Values(Cycle(8),
@@ -74,11 +87,7 @@ INSTANTIATE_TEST_SUITE_P(Cycles,
                                            Cycle(12),
                                            Cycle(14),
                                            Cycle(16),
-                                           Cycle(18),
-                                           Cycle(20),
-                                           Cycle(22),
-                                           Cycle(24),
-                                           Cycle(26)));
+                                           Cycle(18)));
 INSTANTIATE_TEST_SUITE_P(ChordalCycles,
                          BCF,
                          ::testing::Values(ChordalCycle(8),
@@ -86,11 +95,7 @@ INSTANTIATE_TEST_SUITE_P(ChordalCycles,
                                            ChordalCycle(12),
                                            ChordalCycle(14),
                                            ChordalCycle(16),
-                                           ChordalCycle(18),
-                                           ChordalCycle(20),
-                                           ChordalCycle(22),
-                                           ChordalCycle(24),
-                                           ChordalCycle(26)));
+                                           ChordalCycle(18)));
 INSTANTIATE_TEST_SUITE_P(
     Trees,
     BCF,
@@ -98,14 +103,7 @@ INSTANTIATE_TEST_SUITE_P(
                       SpanningTree(RandomSparseConnectedGraph(10)),
                       SpanningTree(RandomSparseConnectedGraph(12)),
                       SpanningTree(RandomSparseConnectedGraph(14)),
-                      SpanningTree(RandomSparseConnectedGraph(16)),
-                      SpanningTree(RandomSparseConnectedGraph(18)),
-                      SpanningTree(RandomSparseConnectedGraph(20)),
-                      SpanningTree(RandomSparseConnectedGraph(22)),
-                      SpanningTree(RandomSparseConnectedGraph(24)),
-                      SpanningTree(RandomSparseConnectedGraph(26)),
-                      SpanningTree(RandomSparseConnectedGraph(28)),
-                      SpanningTree(RandomSparseConnectedGraph(30))));
+                      SpanningTree(RandomSparseConnectedGraph(16))));
 
 INSTANTIATE_TEST_SUITE_P(HalinGraphs,
                          BCF,

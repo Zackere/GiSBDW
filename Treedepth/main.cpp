@@ -15,14 +15,17 @@
 #include <string>
 #include <vector>
 
+#include "src/bnb_gpu/bnb_gpu.hpp"
 #include "src/branch_and_bound/branch_and_bound.hpp"
 #include "src/branch_and_bound/heuristics/bottom_up_heuristic.hpp"
 #include "src/branch_and_bound/heuristics/highest_degree_heuristic.hpp"
 #include "src/branch_and_bound/heuristics/spanning_tree_heuristic.hpp"
 #include "src/branch_and_bound/heuristics/variance_heuristic.hpp"
+#include "src/branch_and_bound/lower_bound/basic_lower_bound.hpp"
 #include "src/branch_and_bound/lower_bound/edge_lower_bound.hpp"
 #include "src/dynamic_cpu/dynamic_cpu.hpp"
 #include "src/dynamic_cpu/dynamic_cpu_improv.hpp"
+#include "src/dynamic_gpu/dynamic_gpu.hpp"
 #include "src/elimination_tree/elimination_tree.hpp"
 #include "src/statistics/statistics.hpp"
 
@@ -58,6 +61,16 @@ bool IsFile(fs::path const& path) {
   }
   return true;
 }
+
+std::string GetRandomFilenameSuffix() {
+  auto epoch = std::chrono::duration_cast<std::chrono::seconds>(
+                   std::chrono::high_resolution_clock::now().time_since_epoch())
+                   .count();
+  std::random_device dev;
+  std::mt19937 rng(dev());
+  std::uniform_int_distribution<> dist;
+  return std::to_string(epoch) + std::to_string(dist(rng));
+}
 }  // namespace
 
 int main(int argc, char** argv) {
@@ -76,7 +89,13 @@ int main(int argc, char** argv) {
       "Possible args:\n"
       "bnbCPU - for branch and bound algorithm ran on CPU\n"
       "dynCPU - for dynamic algorithm ran on CPU\n"
-      "dynCPUImprov - for dynamic algorithm ran on CPU version 2\n")(
+      "dynCPUImprov - for dynamic algorithm ran on CPU version 2\n"
+      "bnbGPU - for branch and bound algorithm ran on GPU\n"
+      "dynGPU - for dynamic algorithm ran on GPU\n"
+      "highestDegreeHeur - for highest degree heuristic\n"
+      "spanningTreeHeur - for spanning tree heuristic\n"
+      "varianceHeur - for variance heuristic\n"
+      "bottomUpHeur - for union-find based heurstic\n")(
       "input,i",
       po::value<std::vector<std::string>>(&graph_paths_string)->required(),
       "path to input graph")(
@@ -124,34 +143,65 @@ int main(int argc, char** argv) {
       boost::add_edge(std::stoi((*edges)[1]), std::stoi((*edges)[2]), graph);
 
     td::Statistics stats;
-    stats.graph_name = graph_path.filename().string();
+    auto graph_name = graph_path;
+    while (graph_name != graph_name.stem())
+      graph_name = graph_name.stem();
+    stats.graph_name = graph_name.string();
     stats.nvertices = boost::num_vertices(graph);
     stats.nedges = boost::num_edges(graph);
-    std::cout << "Processing graph " << graph_path.filename() << std::endl;
-    std::cout << "Algorithm: " << algorithm_type << std::endl;
-    std::cout << "Vertices: " << boost::num_vertices(graph) << std::endl;
-    std::cout << "Edges: " << boost::num_edges(graph) << std::endl;
+    stats.algorithm_type = algorithm_type;
+    std::cout << "Processing graph " << stats.graph_name << std::endl;
+    std::cout << "Algorithm: " << stats.algorithm_type << std::endl;
+    std::cout << "Vertices: " << stats.nvertices << std::endl;
+    std::cout << "Edges: " << stats.nedges << std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
 
     if (algorithm_type == "dynCPU") {
       td::DynamicCPU dcpu;
       dcpu(graph);
       stats.decomposition = dcpu.GetTDDecomp(0, graph);
-    } else if ("dynCPUImprov") {
-      td::DynamicCPU dcpu;
+    } else if (algorithm_type == "dynCPUImprov") {
+      td::DynamicCPUImprov dcpu;
       dcpu(graph);
-      std::size_t code = (1 << boost::num_vertices(graph)) - 1;
-      stats.decomposition = dcpu.GetTDDecomp(code, graph);
+      td::DynamicCPUImprov::CodeType code = 1;
+      code <<= boost::num_vertices(graph);
+      stats.decomposition = dcpu.GetTDDecomp(--code, graph);
     } else if (algorithm_type == "bnbCPU") {
       td::BranchAndBound bnb;
-      auto res =
+      stats.decomposition =
           bnb(graph, std::make_unique<td::EdgeLowerBound>(),
               std::make_unique<td::HighestDegreeHeuristic>(
                   std::make_unique<td::SpanningTreeHeuristic>(
                       std::make_unique<td::VarianceHeuristic>(
                           std::make_unique<td::BottomUpHeuristicGPU>(nullptr),
                           1.0, 0.2, 0.8))));
-      stats.decomposition = res;
+    } else if (algorithm_type == "bnbGPU") {
+      td::BnBGPU bnb;
+      stats.decomposition.treedepth = bnb(
+          graph, std::make_unique<td::HighestDegreeHeuristic>(
+                     std::make_unique<td::VarianceHeuristic>(
+                         std::make_unique<td::BottomUpHeuristicGPU>(nullptr),
+                         1.0, 0.2, 0.8))
+                     ->Get(graph)
+                     .treedepth);
+    } else if (algorithm_type == "dynGPU") {
+      td::DynamicGPU dyngpu;
+      dyngpu(graph);
+      auto el = dyngpu.GetElimination<td::EliminationTree::VertexType>(
+          boost::num_vertices(graph), boost::num_vertices(graph), 0);
+      td::EliminationTree eltree(graph);
+      for (auto v : el)
+        eltree.Eliminate(v);
+      stats.decomposition = eltree.Decompose();
+    } else if (algorithm_type == "highestDegreeHeur") {
+      stats.decomposition = td::HighestDegreeHeuristic(nullptr).Get(graph);
+    } else if (algorithm_type == "spanningTreeHeur") {
+      stats.decomposition = td::SpanningTreeHeuristic(nullptr).Get(graph);
+    } else if (algorithm_type == "varianceHeur") {
+      stats.decomposition =
+          td::VarianceHeuristic(nullptr, 1.0, 0.2, 0.8).Get(graph);
+    } else if (algorithm_type == "bottomUpHeur") {
+      stats.decomposition = td::BottomUpHeuristicGPU(nullptr).Get(graph);
     } else {
       std::cerr << "Wrong algorithm option specified.\n";
       Usage(description);
@@ -163,7 +213,9 @@ int main(int argc, char** argv) {
     stats.time_elapsed = duration;
     std::cout << "Elapsed time: " << duration << " seconds\n";
     std::cout << "Treedepth: " << stats.decomposition.treedepth << "\n";
-    fs::path stats_path = output_dir / graph_path.filename();
+    fs::path stats_path = output_dir / graph_name;
+    stats_path += "_";
+    stats_path += GetRandomFilenameSuffix();
     stats_path += ".out";
     std::cout << "Output written to: " << stats_path << "\n\n";
     std::ofstream file(stats_path);

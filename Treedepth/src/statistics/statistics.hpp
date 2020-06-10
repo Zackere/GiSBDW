@@ -9,6 +9,7 @@
 namespace td {
 struct Statistics {
   std::string graph_name;
+  std::string algorithm_type;
   EliminationTree::Result decomposition;
   double time_elapsed;
   std::size_t nedges;
@@ -17,6 +18,7 @@ struct Statistics {
 
 std::ostream& operator<<(std::ostream& out, Statistics const& s) {
   boost::property_tree::ptree root;
+  root.put("algorithmType", s.algorithm_type);
   root.put("graphName", s.graph_name);
   root.put("timeElapsed", s.time_elapsed);
   root.put("treedepth", s.decomposition.treedepth);
