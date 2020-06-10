@@ -138,7 +138,8 @@ __device__ void FinishPermutation(int8_t* const component_belong_info,
         taken[perm[cur_perm_len]] = false;
       do {
         ++perm[cur_perm_len];
-      } while (perm[cur_perm_len] < n && taken[perm[cur_perm_len]]);
+      } while (perm[cur_perm_len] < n && taken[perm[cur_perm_len]] &&
+               component_belong_info[perm[cur_perm_len]] != 0);
       if (perm[cur_perm_len] >= n)
         break;
       ncomponent =

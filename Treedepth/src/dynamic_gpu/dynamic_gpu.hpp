@@ -5,9 +5,9 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/copy.hpp>
 
-#include <vector>
 #include <list>
 #include <set>
+#include <vector>
 
 #include "src/set_encoder/set_encoder.hpp"
 
