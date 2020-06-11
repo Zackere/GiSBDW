@@ -20,7 +20,6 @@ class BCF : public ::testing::TestWithParam<Graph> {};
 TEST_P(BCF, DynamicCPU) {
   td::DynamicCPU dyncpu;
   dyncpu(GetParam());
-  std::cout << dyncpu.GetTDDecomp(0, GetParam()).treedepth << std::endl;
 }
 
 TEST_P(BCF, DynamicGPU) {
