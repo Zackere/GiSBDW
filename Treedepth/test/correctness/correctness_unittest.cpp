@@ -6,8 +6,11 @@
 
 #include "common/utils/graph_gen.hpp"
 #include "common/utils/utils.hpp"
+#include "src/bnb_gpu/bnb_gpu.hpp"
 #include "src/branch_and_bound/branch_and_bound.hpp"
+#include "src/branch_and_bound/heuristics/bottom_up_heuristic.hpp"
 #include "src/branch_and_bound/heuristics/highest_degree_heuristic.hpp"
+#include "src/branch_and_bound/heuristics/variance_heuristic.hpp"
 #include "src/branch_and_bound/lower_bound/basic_lower_bound.hpp"
 #include "src/branch_and_bound/lower_bound/edge_lower_bound.hpp"
 #include "src/dynamic_cpu/dynamic_cpu.hpp"
@@ -27,42 +30,51 @@ time_t seed = time(0);
 // time_t seed = 1589729310;
 }  // namespace
 
-// TEST_P(CTF, CorrectnessTest) {
-//   auto const& g = GetParam();
-//   td::BranchAndBound bnb;
-//   auto res_bnb = bnb(g, std::make_unique<td::EdgeLowerBound>(),
-//                      std::make_unique<td::HighestDegreeHeuristic>(nullptr));
-//   EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_bnb));
-//
-//   td::DynamicCPUImprov dyncpu_improv;
-//   dyncpu_improv(g);
-//   td::DynamicCPUImprov::CodeType code = (1 << boost::num_vertices(g)) - 1;
-//   auto res_dyncpu_imrprov = dyncpu_improv.GetTDDecomp(code, g);
-//   EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu_imrprov));
-//   EXPECT_EQ(res_bnb.treedepth, res_dyncpu_imrprov.treedepth);
-//
-//   td::DynamicCPU dyncpu;
-//   dyncpu(g);
-//   auto res_dyncpu = dyncpu.GetTDDecomp(0, g);
-//   EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu));
-//   EXPECT_EQ(res_bnb.treedepth, res_dyncpu.treedepth);
-// }
-TEST_P(CTF, idk) {
+TEST_P(CTF, CorrectnessTest) {
+  auto const& g = GetParam();
+  td::BranchAndBound bnb;
+  auto res_bnb =
+      bnb(g, std::make_unique<td::EdgeLowerBound>(),
+          std::make_unique<td::HighestDegreeHeuristic>(
+              std::make_unique<td::VarianceHeuristic>(
+                  std::make_unique<td::BottomUpHeuristicGPU>(nullptr), 1.0, 0.2,
+                  0.8)));
+  EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_bnb));
+
+  td::DynamicCPUImprov dyncpu_improv;
+  dyncpu_improv(g);
+  td::DynamicCPUImprov::CodeType code = (1 << boost::num_vertices(g)) - 1;
+  auto res_dyncpu_imrprov = dyncpu_improv.GetTDDecomp(code, g);
+  EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu_imrprov));
+  EXPECT_EQ(res_bnb.treedepth, res_dyncpu_imrprov.treedepth);
+
+  td::DynamicCPU dyncpu;
+  dyncpu(g);
+  auto res_dyncpu = dyncpu.GetTDDecomp(0, g);
+  EXPECT_TRUE(CheckIfTdDecompIsValid(g, res_dyncpu));
+  EXPECT_EQ(res_bnb.treedepth, res_dyncpu.treedepth);
+
   td::DynamicGPU dyngpu;
   dyngpu(GetParam());
-  int n = boost::num_vertices(GetParam());
-  auto el = dyngpu.GetElimination<td::EliminationTree::VertexType>(n, n, 0);
+  auto el = dyngpu.GetElimination<td::EliminationTree::VertexType>(
+      boost::num_vertices(GetParam()), boost::num_vertices(GetParam()), 0);
   td::EliminationTree eltree(GetParam());
   for (auto v : el)
     eltree.Eliminate(v);
-  auto tddecomp = eltree.Decompose();
-  td::DynamicCPUImprov dyncpu_improv;
-  dyncpu_improv(GetParam());
-  td::DynamicCPUImprov::CodeType code =
-      (1 << boost::num_vertices(GetParam())) - 1;
-  auto res_dyncpu_imrprov = dyncpu_improv.GetTDDecomp(code, GetParam());
-  EXPECT_EQ(tddecomp.treedepth, res_dyncpu_imrprov.treedepth);
+  auto res_dyncgpu = eltree.Decompose();
+  EXPECT_EQ(res_bnb.treedepth, res_dyncgpu.treedepth);
+
+  td::BnBGPU bnbgpu;
+  auto tdbnbgpu =
+      bnbgpu(g, std::make_unique<td::HighestDegreeHeuristic>(
+                    std::make_unique<td::VarianceHeuristic>(
+                        std::make_unique<td::BottomUpHeuristicGPU>(nullptr),
+                        1.0, 0.2, 0.8))
+                    ->Get(g)
+                    .treedepth);
+  EXPECT_EQ(res_dyncgpu.treedepth, tdbnbgpu);
 }
+
 INSTANTIATE_TEST_SUITE_P(Paths,
                          CTF,
                          ::testing::Values(Path(7),
