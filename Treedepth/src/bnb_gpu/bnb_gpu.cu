@@ -134,11 +134,16 @@ __device__ void FinishPermutation(int8_t* const component_belong_info,
       --cur_perm_len;
     }
     do {
-      if (perm[cur_perm_len] != -1)
+      if (perm[cur_perm_len] != -1) {
         taken[perm[cur_perm_len]] = false;
+        ncomponent =
+            EliminatePermutation(component_belong_info, component_depth_info,
+                                 perm, cur_perm_len, n, offsets, out_edges);
+      }
       do {
         ++perm[cur_perm_len];
-      } while (perm[cur_perm_len] < n && taken[perm[cur_perm_len]]);
+      } while (perm[cur_perm_len] < n && taken[perm[cur_perm_len]] &&
+               component_belong_info[perm[cur_perm_len]] != 0);
       if (perm[cur_perm_len] >= n)
         break;
       ncomponent =
