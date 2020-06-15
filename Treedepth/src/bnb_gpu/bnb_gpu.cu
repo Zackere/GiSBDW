@@ -80,7 +80,7 @@ __device__ int LowerBound(int8_t* component_belong_info,
   for (int i = 0; i < ncomponent; ++i) {
     int nverts = 0;
     int nedges = 0;
-    int vert = 0;
+    int vert = -1;
     for (int v = 0; v < n; ++v) {
       if (component_belong_info[v] != i)
         continue;
@@ -174,7 +174,8 @@ __global__ void GenerateKernel(int* const in,
   extern __shared__ int8_t buf_shared[];
   int8_t* perm = &buf_shared[threadIdx.x * n];
   for (int i = 0; i < n; ++i)
-    perm[i] = -1;
+    buf_shared[i * blockDim.x + threadIdx.x] = -1;
+  __syncthreads();
   for (int i = threadIdx.x; i < blockDim.x * n; i += blockDim.x)
     buf_shared[i] = in[i + blockIdx.x * blockDim.x * n];
   __syncthreads();
@@ -213,7 +214,7 @@ __global__ void GenerateKernel(int* const in,
     return;
   }
   // sprobuj wsadzic nowe
-  if (perm_len > n - kBruteForceLen)
+  if (__syncthreads_and(perm_len > n - kBruteForceLen))
     return FinishPermutation(component_belong_info, component_depth_info, perm,
                              perm_len, n, offsets, out_edges, best_td);
   for (int i = 0; i < n; ++i) {
@@ -246,7 +247,8 @@ __global__ void BruteForceKernel(int* const buf,
   int8_t* component_belong_info =
       &buf_shared[threadIdx.x * n + 2 * blockDim.x * n];
   for (int i = 0; i < n; ++i)
-    perm[i] = -1;
+    buf_shared[i * blockDim.x + threadIdx.x] = -1;
+  __syncthreads();
   for (int i = threadIdx.x; i < blockDim.x * n; i += blockDim.x) {
     buf_shared[i] = buf[my_perm_index * n + i];
     buf[my_perm_index * n + i] = -1;

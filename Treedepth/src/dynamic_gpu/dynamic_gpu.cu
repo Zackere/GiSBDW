@@ -48,18 +48,22 @@ __global__ void DynamicStepKernel(int2* const history,
   int8_t* component_belong_info = &buf_shared[n * threadIdx.x];
   int set_code = thread_offset + blockDim.x * blockIdx.x + threadIdx.x;
   for (int i = 0; i < n; ++i)
-    component_belong_info[i] = -1;
+    buf_shared[i * blockDim.x + threadIdx.x] = -1;
+  __syncthreads();
   set_encoder::Decode(n, step_number, set_code, component_belong_info);
   for (int i = 0; i < n; ++i) {
-    while (component_belong_info[i] != i && component_belong_info[i] != -1) {
-      auto tmp = component_belong_info[component_belong_info[i]];
-      component_belong_info[component_belong_info[i]] =
-          component_belong_info[i];
-      component_belong_info[i] = tmp;
+    auto belong = component_belong_info[i];
+    while (belong != i && belong != -1) {
+      auto tmp = component_belong_info[i] = component_belong_info[belong];
+      component_belong_info[belong] = belong;
+      belong = tmp;
     }
   }
+  __syncthreads();
   for (int i = 0; i < n; ++i)
-    component_belong_info[i] = component_belong_info[i] == -1 ? -1 : -2;
+    buf_shared[i * blockDim.x + threadIdx.x] =
+        buf_shared[i * blockDim.x + threadIdx.x] == -1 ? -1 : -2;
+  __syncthreads();
   int ncomponent = GetComponents(component_belong_info, n, offsets, out_edges);
   if (ncomponent == 1) {
     std::size_t graph_code = 0;
@@ -76,8 +80,9 @@ __global__ void DynamicStepKernel(int2* const history,
       for (int k = 0; k < n; ++k)
         if (component_belong_info[k] == 0 && k != v)
           code += set_encoder::NChooseK(k, ++element_index);
-      if (history[nk[graph_verts - 1] + code].x + 1 < tdinfo.x) {
-        tdinfo.x = history[nk[graph_verts - 1] + code].x + 1;
+      auto td = history[nk[graph_verts - 1] + code].x;
+      if (td + 1 < tdinfo.x) {
+        tdinfo.x = td + 1;
         tdinfo.y = v;
       }
     }
@@ -88,7 +93,6 @@ __global__ void DynamicStepKernel(int2* const history,
       int component_vertices = 0;
       for (int j = 0; j < n; ++j)
         component_vertices += component_belong_info[j] == comp_num;
-
       for (int j = 0; j < component_vertices; ++j) {
         std::size_t code = 0;
         std::size_t x = 0;

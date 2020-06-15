@@ -61,8 +61,8 @@ TEST_P(CTF, CorrectnessTest) {
   td::EliminationTree eltree(GetParam());
   for (auto v : el)
     eltree.Eliminate(v);
-  auto res_dyncgpu = eltree.Decompose();
-  EXPECT_EQ(res_bnb.treedepth, res_dyncgpu.treedepth);
+  auto res_dyngpu = eltree.Decompose();
+  EXPECT_EQ(res_bnb.treedepth, res_dyngpu.treedepth);
 
   td::BnBGPU bnbgpu;
   auto tdbnbgpu =
@@ -72,7 +72,7 @@ TEST_P(CTF, CorrectnessTest) {
                         1.0, 0.2, 0.8))
                     ->Get(g)
                     .treedepth);
-  EXPECT_EQ(res_dyncgpu.treedepth, tdbnbgpu);
+  EXPECT_EQ(res_bnb.treedepth, tdbnbgpu);
 }
 
 INSTANTIATE_TEST_SUITE_P(Paths,
